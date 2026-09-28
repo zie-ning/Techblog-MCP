@@ -1,0 +1,36 @@
+[project]
+name = "techblog-mcp"
+version = "0.1.0"
+description = "국내 IT 기업 기술 블로그의 해결 사례와 실무 인사이트를 코딩 에이전트에 제공하는 MCP 서버"
+readme = "README.md"
+authors = [
+    { name = "zie-ning", email = "jeeun03@gmail.com" }
+]
+requires-python = ">=3.11"
+# MCP 서버 실행에 필요한 의존성만 둔다 (수집·추출용은 pipeline 그룹)
+dependencies = []
+
+[project.scripts]
+techblog-mcp = "techblog_mcp.server:main"
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "ruff",
+]
+
+[build-system]
+requires = ["uv_build>=0.12.19,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# 배포 패키지가 아닌 pipeline 모듈을 테스트에서 import하기 위해 루트를 경로에 추가
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]

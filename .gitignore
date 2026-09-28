@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# 환경 변수 (API 키 등)
+.env
+
+# 수집한 원문 캐시: 저작권 정책상 배포하지 않음
+data/raw/
+
+# 빌드 산출물: 검색 DB는 entries.jsonl에서 생성
+*.sqlite
+*.db
+
+# IDE
+.idea/
+.vscode/
