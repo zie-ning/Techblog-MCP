@@ -1,0 +1,83 @@
+# 문제 유형: "무슨 문제를 풀었나" 축 (docs/기획.md "문제 유형 초안")
+# 추출 프롬프트와 MCP 도구 입력 스키마의 enum이 모두 이 파일에서 만들어진다.
+# 파일럿 추출(M3) 후 조정한다. 이름을 바꾸면 data/entries.jsonl도 함께 고쳐야 한다.
+
+[[problem_type]]
+name = "동시성·락"
+description = "동시 요청으로 인한 경합, 중복 처리, 초과 발급을 락·원자 연산·큐 등으로 제어"
+
+[[problem_type]]
+name = "캐싱"
+description = "캐시 도입·전략·무효화, 캐시 일관성과 적중률 개선"
+
+[[problem_type]]
+name = "메시징·비동기 처리"
+description = "메시지 큐·이벤트 스트리밍, 비동기 작업 처리, 이벤트 기반 연동"
+
+[[problem_type]]
+name = "트래픽 급증 대응"
+description = "세일·이벤트 등 순간 트래픽 폭증 대비, 대기열, 부하 분산, 스로틀링"
+
+[[problem_type]]
+name = "DB 성능·쿼리 최적화"
+description = "느린 쿼리, 인덱스, 실행 계획, 커넥션 풀 등 DB 성능 개선"
+
+[[problem_type]]
+name = "DB 마이그레이션·샤딩"
+description = "DB 엔진·스키마 이전, 데이터 이관, 샤딩·파티셔닝"
+
+[[problem_type]]
+name = "데이터 정합성·트랜잭션"
+description = "분산 트랜잭션, 정합성 보장, 중복·누락 방지, 정산 오차"
+
+[[problem_type]]
+name = "장애 대응·복구"
+description = "장애 원인 분석과 복구, 장애 격리·회복성 설계, 재발 방지"
+
+[[problem_type]]
+name = "모니터링·관측성"
+description = "로그·메트릭·트레이싱, 알림, 대시보드, APM"
+
+[[problem_type]]
+name = "배포·CI/CD"
+description = "빌드·배포 파이프라인, 무중단 배포, 릴리스 전략"
+
+[[problem_type]]
+name = "인프라·컨테이너"
+description = "클라우드 인프라 구성, 쿠버네티스·컨테이너, 네트워크, IaC"
+
+[[problem_type]]
+name = "비용 절감"
+description = "클라우드·인프라·API 사용 비용을 줄이는 작업"
+
+[[problem_type]]
+name = "MSA"
+description = "서비스 분리, 모놀리스 전환, 서비스 간 경계·통신 설계"
+
+[[problem_type]]
+name = "API 설계·외부 연동"
+description = "API 설계, 외부 시스템·파트너 연동, 인터페이스 표준화"
+
+[[problem_type]]
+name = "인증·보안"
+description = "인증·인가, 개인정보 보호, 보안 취약점 대응"
+
+[[problem_type]]
+name = "데이터 파이프라인"
+description = "데이터 수집·적재·변환, CDC, 배치·스트리밍 처리, 데이터 플랫폼"
+
+[[problem_type]]
+name = "클라이언트 성능(웹·앱)"
+description = "웹 프론트엔드·모바일 앱의 렌더링·로딩·번들·메모리 성능 개선"
+
+[[problem_type]]
+name = "테스트 자동화"
+description = "단위·통합·E2E 테스트, 테스트 데이터·환경, QA 자동화"
+
+[[problem_type]]
+name = "업무·운영 자동화"
+description = "AI와 무관한 사내 봇, 운영 스크립트, 반복 업무 자동화"
+
+[[problem_type]]
+name = "개발 생산성"
+description = "코드 구조·컨벤션, 리팩터링 방법론, 개발 도구·환경, 협업 방식 개선"

@@ -1,0 +1,42 @@
+# 도메인: "어떤 영역에서 일어났나" 축 (docs/기획.md "도메인 초안")
+# 사례당 1개. 모호하면 "범용". 파일럿 추출(M3) 후 조정한다.
+
+[[domain]]
+name = "LLM·AI"
+description = "LLM 애플리케이션, AI 에이전트, AI 코딩 도구, ML 모델 서빙"
+
+[[domain]]
+name = "결제·금융"
+description = "결제, 송금, 정산, 대출·투자 등 금융 서비스"
+
+[[domain]]
+name = "커머스·주문·재고"
+description = "상품, 주문, 장바구니, 쿠폰·프로모션, 재고, 매장"
+
+[[domain]]
+name = "배달·물류"
+description = "배달, 배송, 물류 센터, 픽업"
+
+[[domain]]
+name = "채팅·메시징 서비스"
+description = "메신저, 채팅, 알림·푸시 발송 서비스"
+
+[[domain]]
+name = "검색·추천"
+description = "검색, 랭킹, 추천, 개인화"
+
+[[domain]]
+name = "광고·마케팅"
+description = "광고, 마케팅, CRM, 캠페인"
+
+[[domain]]
+name = "콘텐츠·미디어"
+description = "콘텐츠, 리뷰, 이미지·영상 등 미디어 처리"
+
+[[domain]]
+name = "사내 플랫폼·개발 도구"
+description = "사내 공통 플랫폼, 백오피스, 개발·운영 도구"
+
+[[domain]]
+name = "범용"
+description = "특정 도메인에 묶이지 않는 일반 기술 주제"
