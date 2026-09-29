@@ -1,0 +1,23 @@
+# M1 수직 슬라이스 추출 대상 (올리브영 20편)
+# 완료 기준 질문("선착순 쿠폰 발급")에 답할 쿠폰 글 4편 + 주제가 고르게 섞이도록 고른 글.
+# 마지막 글은 분류 점검용으로 넣은 "제외" 예상 글이다.
+2025-12-15_fcfs-coupon
+2024-12-11_oliveyoung-coupon-mess-issue
+2023-09-18_oliveyoung-coupon-rabbit
+2025-10-28_coupon-mq-issue
+2024-12-10_present-promotion-multi-layer-cache
+2025-11-11_sdui_with_caffein
+2024-10-16_oliveyoung-scm-oms-kafka
+2026-04-22_display-benefits-migration
+2025-12-15_kafka-streams-for-out-of-stock
+2025-12-30_alimtalk_improve_event_driven_architecture
+2024-11-07_cdc-failover
+2025-10-28_oliveyoung-zero-downtime-oauth2-migration
+2025-12-24_amazon-connect
+2026-01-21_oy_sllm
+2024-09-11_introduce-oy-ai-bedrock
+2025-08-20_amazonq-vscode
+2025-07-23_redis-tips-for-developer
+2026-03-30_chaos-host-level
+2023-12-15_seller-service-1
+2026-08-31_a-lunch-that-builds-collaboration-culture
