@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 올리브영 RSS 구조를 본뜬 테스트용 샘플 (본문은 원문이 아닌 임의 문장) -->
+<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" version="2.0">
+  <channel>
+    <title>올리브영 테크블로그</title>
+    <link>https://oliveyoung.tech</link>
+    <item>
+      <title><![CDATA[쿠폰 발급 개선기]]></title>
+      <link>https://oliveyoung.tech/2025-03-12/coupon-issue/</link>
+      <guid isPermaLink="false">https://oliveyoung.tech/2025-03-12/coupon-issue/</guid>
+      <pubDate>Wed, 12 Mar 2025 00:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[<p>세일 기간에 쿠폰이 한도를 넘어 발급되었습니다.</p><h2 id="해결"><a href="#해결" class="anchor before"><svg></svg></a>해결</h2><p>Redis 원자 연산으로 수량을 관리했습니다.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title><![CDATA[경계일 글]]></title>
+      <link>https://oliveyoung.tech/2023-09-01/boundary/</link>
+      <guid isPermaLink="false">https://oliveyoung.tech/2023-09-01/boundary/</guid>
+      <pubDate>Fri, 01 Sep 2023 00:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[<p>경계일에 발행된 글입니다.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title><![CDATA[오래된 글]]></title>
+      <link>https://oliveyoung.tech/2023-08-31/old-post/</link>
+      <guid isPermaLink="false">https://oliveyoung.tech/2023-08-31/old-post/</guid>
+      <pubDate>Thu, 31 Aug 2023 00:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[<p>수집 기간 밖의 글입니다.</p>]]></content:encoded>
+    </item>
+  </channel>
+</rss>
