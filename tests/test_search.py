@@ -1,0 +1,105 @@
+import pytest
+
+from techblog_mcp import db
+from techblog_mcp.search import analyzer
+from techblog_mcp.search import query as q
+
+
+@pytest.fixture
+def conn(sample_db):
+    connection = db.connect(sample_db)
+    yield connection
+    connection.close()
+
+
+def test_analyzer_keeps_content_morphemes():
+    tokens = analyzer.tokenize("선착순 쿠폰 발급을 Redis로 해결했습니다")
+    assert {"선착순", "쿠폰", "발급", "redis", "해결"} <= set(tokens)
+    assert "을" not in tokens and "로" not in tokens
+
+
+def ids(result: q.SearchResult) -> list[str]:
+    return [e["id"] for e in result.entries]
+
+
+def test_search_ranks_relevant_first(conn):
+    result = q.search(conn, "선착순 쿠폰 동시성", q.Filters(), 5)
+    assert ids(result)[0] == "case_0001"
+
+
+def test_search_by_korean_alias_finds_english_name(conn):
+    # "카프카"는 색인된 "Kafka"로도 찾는다
+    result = q.search(conn, "카프카 정산", q.Filters(), 5)
+    assert ids(result)[0] == "case_0003"
+
+
+def test_search_filters(conn):
+    assert ids(q.search(conn, "쿠폰", q.Filters(kind="인사이트"), 5)) == []
+    assert ids(q.search(conn, "에이전트", q.Filters(kind="인사이트"), 5)) == ["case_0004"]
+    # 보조 문제 유형으로도 매칭
+    assert ids(q.search(conn, "쿠폰", q.Filters(problem_type="트래픽 급증 대응"), 5)) == [
+        "case_0001"
+    ]
+    assert ids(q.search(conn, "적재", q.Filters(domain="결제·금융"), 5)) == ["case_0003"]
+    # 기술 필터는 하나라도 쓴 항목
+    tech = q.Filters(technologies=["RabbitMQ", "Kafka"])
+    assert sorted(ids(q.search(conn, "발급 적재", tech, 5))) == ["case_0002", "case_0003"]
+
+
+def test_search_limit_and_total(conn):
+    result = q.search(conn, "쿠폰 발급", q.Filters(), 1)
+    assert len(result.entries) == 1
+    assert result.total == 2
+
+
+def test_search_without_tokens_falls_back_to_filters(conn):
+    result = q.search(conn, "!!!", q.Filters(domain="LLM·AI"), 5)
+    assert ids(result) == ["case_0004"]
+
+
+def test_resolve_technologies():
+    resolution = q.resolve_technologies(["카프카", "Kafka", "Kafak", " "])
+    assert resolution.normalized == ["Kafka"]
+    assert list(resolution.unknown) == ["Kafak"]
+    assert "Kafka" in resolution.unknown["Kafak"]
+
+
+def test_get_details_with_siblings(conn):
+    details, missing = q.get_details(conn, ["case_0001", "case_9999"])
+    assert missing == ["case_9999"]
+    assert details[0].entry["id"] == "case_0001"
+    assert details[0].siblings == ["case_0002"]
+
+
+def test_aggregate_by_technology(conn):
+    result = q.aggregate(conn, "technology", q.Filters(), 10)
+    assert (result.cases, result.insights, result.companies) == (3, 1, 2)
+    groups = {g.key: g for g in result.groups}
+    assert groups["Kafka"].companies == ["토스"]
+    assert groups["Claude Code"].insights == 1
+
+
+def test_aggregate_problem_type_counts_primary_only(conn):
+    result = q.aggregate(conn, "problem_type", q.Filters(), 10)
+    groups = {g.key: g.total for g in result.groups}
+    assert "트래픽 급증 대응" not in groups  # 보조 유형은 세지 않는다
+    assert groups["동시성·락"] == 1
+
+
+def test_aggregate_rejected_alternatives_only_cases_with_them(conn):
+    result = q.aggregate(conn, "rejected_alternative", q.Filters(), 10)
+    assert result.cases == 2 and result.insights == 0
+    assert {g.key for g in result.groups} == {"DB 비관적 락", "Kafka"}
+
+
+def test_aggregate_top_n_and_examples(conn):
+    result = q.aggregate(conn, "company", q.Filters(), 1)
+    assert result.group_count == 2
+    [top] = result.groups
+    assert top.key == "올리브영" and top.total == 3
+    assert len(top.examples) == q.EXAMPLES_PER_GROUP
+
+
+def test_connect_missing_db(tmp_path):
+    with pytest.raises(db.DatabaseNotFound):
+        db.connect(tmp_path / "none.sqlite")
