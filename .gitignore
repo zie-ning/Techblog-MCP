@@ -17,6 +17,7 @@ data/raw/
 # 빌드 산출물: 검색 DB는 entries.jsonl에서 생성
 *.sqlite
 *.db
+*.sqlite.tmp
 
 # IDE
 .idea/
