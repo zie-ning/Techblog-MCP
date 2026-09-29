@@ -1,0 +1,270 @@
+"""글 한 편 추출: 글 유형 분류 → 구조화 → 발췌 검증 → 기술명 정규화.
+
+발췌 검증에 실패한 항목이 있으면 실패 목록을 알려 주고 한 번 다시 구조화한 뒤,
+두 시도 중 검증을 통과한 내용이 더 많은 쪽을 쓴다. 그래도 실패한 항목은 버리고,
+필수 필드가 비는 사례는 통째로 버린다. 버린 발췌는 글별 기록에 남긴다.
+"""
+
+import hashlib
+from dataclasses import dataclass
+from datetime import UTC, datetime
+from typing import Protocol, TypeVar
+
+from pydantic import BaseModel
+
+from pipeline.collect import COMPANY_NAMES
+from pipeline.collect.raw import RawPost
+from pipeline.extract import prompt_version, prompts
+from pipeline.extract.evidence import SourceText
+from pipeline.extract.schema import (
+    MAX_SECONDARY_PROBLEM_TYPES,
+    CaseDraft,
+    CaseExtraction,
+    Classification,
+    Entry,
+    Evidenced,
+    InsightDraft,
+    InsightExtraction,
+    Point,
+    PostRecord,
+    RejectedAlternative,
+)
+from pipeline.extract.text import html_to_text
+from pipeline.normalize import renormalize
+
+T = TypeVar("T", bound=BaseModel)
+
+
+class LLM(Protocol):
+    model: str
+
+    def parse(self, instructions: str, messages: list[dict], schema: type[T]) -> T: ...
+
+
+class OpenAILLM:
+    def __init__(self, model: str, reasoning_effort: str = "medium"):
+        from openai import OpenAI
+
+        self.model = model
+        self._reasoning_effort = reasoning_effort
+        self._client = OpenAI()
+
+    def parse(self, instructions: str, messages: list[dict], schema: type[T]) -> T:
+        response = self._client.responses.parse(
+            model=self.model,
+            instructions=instructions,
+            input=messages,
+            text_format=schema,
+            reasoning={"effort": self._reasoning_effort},
+        )
+        if response.output_parsed is None:
+            raise RuntimeError(f"구조화 출력을 받지 못했습니다: {response.output_text[:200]}")
+        return response.output_parsed
+
+
+@dataclass
+class ExtractResult:
+    record: PostRecord  # entry_ids는 저장 시 채운다
+    entries: list[Entry]  # id는 저장 시 채운다
+
+
+def content_hash(post: RawPost) -> str:
+    return hashlib.sha256(post.content_html.encode("utf-8")).hexdigest()[:16]
+
+
+def extraction_reason(
+    previous: PostRecord | None,
+    post: RawPost,
+    model: str,
+    current_prompt_version: str,
+    outdated: bool,
+) -> str | None:
+    """이 글을 (다시) 추출해야 하는 이유. 건너뛸 글이면 None.
+
+    기본은 새 글과 원문이 바뀐 글만 추출한다. `outdated`면 다른 프롬프트·모델로 추출한 글도
+    다시 추출한다. 프롬프트를 고칠 때마다 자동으로 전체를 다시 돌리면 비용이 크므로 명시적으로 켠다.
+    """
+    if previous is None:
+        return "신규"
+    if previous.content_hash != content_hash(post):
+        return "원문 변경"
+    if outdated and previous.prompt_version != current_prompt_version:
+        return f"프롬프트 변경 {previous.prompt_version} → {current_prompt_version}"
+    if outdated and previous.model != model:
+        return f"모델 변경 {previous.model} → {model}"
+    return None
+
+
+def extract_post(post: RawPost, llm: LLM) -> ExtractResult:
+    text = html_to_text(post.content_html)
+    source = SourceText(text)
+    user_input = [{"role": "user", "content": prompts.post_input(post.title, text)}]
+
+    classification = llm.parse(prompts.CLASSIFY, user_input, Classification)
+
+    drafts: list[CaseDraft | InsightDraft] = []
+    dropped: list[str] = []
+    if classification.kind != "제외":
+        if classification.kind == "사례":
+            instructions, schema = prompts.structure_case(), CaseExtraction
+        else:
+            instructions, schema = prompts.structure_insight(), InsightExtraction
+
+        result = llm.parse(instructions, user_input, schema)
+        drafts, dropped = _verify_all(result, source)
+        if dropped:
+            retry_input = [
+                *user_input,
+                {"role": "assistant", "content": result.model_dump_json()},
+                {"role": "user", "content": prompts.evidence_retry(dropped)},
+            ]
+            retry = _verify_all(llm.parse(instructions, retry_input, schema), source)
+            # 재시도가 항상 낫지는 않으므로 검증을 통과한 내용이 더 많은 쪽을 쓴다
+            if _score(retry) > _score((drafts, dropped)):
+                drafts, dropped = retry
+
+    record = PostRecord(
+        source=post.source,
+        post_id=post.post_id,
+        url=post.url,
+        title=post.title,
+        published_at=post.published_at.date().isoformat(),
+        post_type=classification.post_type,
+        kind=classification.kind,
+        reason=classification.reason,
+        content_hash=content_hash(post),
+        model=llm.model,
+        prompt_version=prompt_version.version(),
+        extracted_at=datetime.now(UTC).isoformat(timespec="seconds"),
+        entry_ids=[],
+        dropped_evidence=len(dropped),
+        dropped_evidences=dropped,
+    )
+    return ExtractResult(record=record, entries=[to_entry(d, post) for d in drafts])
+
+
+Verified = tuple[list[CaseDraft | InsightDraft], list[str]]
+
+
+def _verify_all(result: CaseExtraction | InsightExtraction, source: SourceText) -> Verified:
+    """(검증을 통과한 항목들, 버린 발췌 목록)"""
+    drafts: list[CaseDraft | InsightDraft] = []
+    dropped: list[str] = []
+    for draft in _drafts_of(result):
+        verified, failed = verify_draft(draft, source)
+        dropped += failed
+        if verified is not None:
+            drafts.append(verified)
+    return drafts, dropped
+
+
+def _score(verified: Verified) -> tuple[int, int, int]:
+    """남은 항목 수 → 남은 발췌 수 → 버린 발췌가 적은 순으로 비교한다."""
+    drafts, dropped = verified
+    return len(drafts), sum(len(_evidences(d)) for d in drafts), -len(dropped)
+
+
+def _drafts_of(result: CaseExtraction | InsightExtraction) -> list[CaseDraft | InsightDraft]:
+    if isinstance(result, CaseExtraction):
+        return list(result.cases)
+    return [result.insight]
+
+
+def _evidences(draft: CaseDraft | InsightDraft) -> list[str]:
+    if isinstance(draft, CaseDraft):
+        points = [*draft.problem_situation, *draft.solution, *draft.performance_ops]
+        return [p.evidence for p in points] + [r.evidence for r in draft.rejected_alternatives]
+    return [p.evidence for p in [*draft.key_points, *draft.takeaways]]
+
+
+def verify_draft(
+    draft: CaseDraft | InsightDraft, source: SourceText
+) -> tuple[CaseDraft | InsightDraft | None, list[str]]:
+    """발췌가 원문에 없는 항목을 버린다. 필수 필드가 비면 None. (결과, 버린 발췌 목록)"""
+    dropped: list[str] = []
+
+    def keep(points: list[Point]) -> list[Point]:
+        kept = []
+        for p in points:
+            if source.contains(p.evidence):
+                kept.append(p)
+            else:
+                dropped.append(p.evidence)
+        return kept
+
+    if isinstance(draft, CaseDraft):
+        rejected = []
+        for r in draft.rejected_alternatives:
+            if source.contains(r.evidence):
+                rejected.append(r)
+            else:
+                dropped.append(r.evidence)
+        verified = draft.model_copy(
+            update={
+                "problem_situation": keep(draft.problem_situation),
+                "solution": keep(draft.solution),
+                "performance_ops": keep(draft.performance_ops),
+                "rejected_alternatives": rejected,
+            }
+        )
+        ok = verified.problem_situation and verified.solution
+    else:
+        verified = draft.model_copy(
+            update={"key_points": keep(draft.key_points), "takeaways": keep(draft.takeaways)}
+        )
+        ok = bool(verified.key_points)
+    return (verified if ok else None), dropped
+
+
+def _dedupe(items: list[str]) -> list[str]:
+    return list(dict.fromkeys(i.strip() for i in items if i.strip()))
+
+
+def to_entry(draft: CaseDraft | InsightDraft, post: RawPost) -> Entry:
+    secondary = [
+        t for t in _dedupe(draft.secondary_problem_types) if t != draft.primary_problem_type
+    ]
+
+    def evidenced(points: list[Point]) -> list[Evidenced]:
+        return [Evidenced(text=p.text, evidence=p.evidence) for p in points]
+
+    common = dict(
+        id="",
+        source=post.source,
+        company=COMPANY_NAMES[post.source],
+        post_url=post.url,
+        post_title=post.title,
+        published_at=post.published_at.date().isoformat(),
+        primary_problem_type=draft.primary_problem_type,
+        secondary_problem_types=secondary[:MAX_SECONDARY_PROBLEM_TYPES],
+        domain=draft.domain,
+        technologies=[],  # 아래 renormalize에서 채운다
+        technologies_raw=_dedupe(draft.technologies),
+        tags=_dedupe(draft.tags),
+    )
+    if isinstance(draft, CaseDraft):
+        entry = Entry(
+            kind="사례",
+            problem_situation=evidenced(draft.problem_situation),
+            solution=evidenced(draft.solution),
+            performance_ops=evidenced(draft.performance_ops),
+            rejected_alternatives=[
+                RejectedAlternative(
+                    name=r.name.strip(),  # 아래 renormalize에서 정규화한다
+                    name_raw=r.name.strip(),
+                    reason=r.reason,
+                    evidence=r.evidence,
+                )
+                for r in draft.rejected_alternatives
+            ],
+            **common,
+        )
+    else:
+        entry = Entry(
+            kind="인사이트",
+            key_points=evidenced(draft.key_points),
+            takeaways=evidenced(draft.takeaways),
+            **common,
+        )
+    # 기술명 정규화 규칙은 사전 보강 후 재정규화(pipeline.normalize)와 같은 함수 하나로 적용한다
+    return renormalize(entry)[0]
