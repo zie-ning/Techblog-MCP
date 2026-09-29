@@ -20,7 +20,16 @@ uv run pytest tests/test_smoke.py::test_package_importable   # 단일 테스트
 uv run ruff check                         # 린트
 uv run ruff format                        # 포맷 (CI는 --check로 검사)
 uv run --python 3.11 --isolated pytest    # 최소 지원 버전(3.11)에서 테스트
+
+uv run python -m pipeline.collect oliveyoung                                   # 원문 수집
+uv run python -m pipeline.extract oliveyoung --post-ids-file eval/m1_posts.txt # 추출 (OPENAI_API_KEY 필요, .env 가능)
+uv run python -m pipeline.extract oliveyoung --outdated                        # 프롬프트·모델이 바뀐 글만 재추출
+uv run python -m pipeline.normalize [--apply]                                  # 기술명 재정규화·미등록 리포트
+uv run python -m pipeline.build_index                                          # 검색 DB 빌드
+uv run techblog-mcp                                                            # MCP 서버 (stdio)
 ```
+
+파이프라인 의존성은 `pipeline` 의존성 그룹에 있고 `[tool.uv] default-groups`로 기본 설치된다.
 
 CI(`.github/workflows/ci.yml`)는 Python 3.11과 3.14에서 `uv sync --locked` → ruff check → ruff format --check → pytest를 실행한다. 의존성을 바꾸면 `uv.lock`도 커밋해야 한다.
 
@@ -44,8 +53,10 @@ CI(`.github/workflows/ci.yml`)는 Python 3.11과 3.14에서 `uv sync --locked` �
 
 - **구조화 유형 두 가지**: 사례형(문제 상황 / 해결 방법 / 성능·운영 포인트 + 글에 명시된 경우에만 버린 대안, 1글 = N개)과 인사이트형(핵심 내용 / 적용해볼 점, 1글 = 1개). 모든 항목 필드는 `{text, evidence}` 형태로 원문 발췌를 함께 가진다.
 - **발췌 검증**: 추출된 `evidence`는 원문에 실제로 존재하는지 코드로 검사한다. LLM이 지어낸 내용을 거르는 핵심 장치이므로 우회하지 않는다.
-- **`taxonomy/`는 추출과 서버가 공유**한다. 문제 유형·도메인 정의에서 MCP 도구 입력 스키마의 `enum`을 자동 생성하므로 두 곳의 값이 항상 같아야 한다. 기술명은 기술 사전(표준 이름 + 별칭)으로 정규화한다.
-- **형태소 분석은 색인과 검색에서 같은 방식**을 써야 한다 (kiwipiepy). 한쪽만 바꾸면 검색이 깨진다.
+- **프롬프트 버전**: 추출 프롬프트·출력 스키마를 고치면 `pipeline/extract/prompt_version.py`의 해시가 자동으로 바뀐다. `data/prompt_versions/`의 스냅샷은 자동 생성물이라 직접 고치지 않는다.
+- **`src/techblog_mcp/taxonomy/`는 추출과 서버가 공유**한다 (설치 패키지에 포함돼야 해서 패키지 안에 둠). 문제 유형·도메인 정의에서 MCP 도구 입력 스키마의 `enum`을 자동 생성하므로 두 곳의 값이 항상 같아야 한다. 기술명은 기술 사전(표준 이름 + 별칭)으로 정규화한다.
+- **형태소 분석은 색인과 검색에서 같은 방식**을 써야 한다 (kiwipiepy, `techblog_mcp.search.analyzer`). 한쪽만 바꾸면 검색이 깨진다. DB 스키마를 바꾸면 `search/schema.py`의 `SCHEMA_VERSION`을 올린다.
+- **MCP SDK는 2.x**다. `FastMCP`가 아니라 `mcp.server.mcpserver.MCPServer`를 쓴다.
 - **DB 경로 로딩은 `src/techblog_mcp/db.py` 한 곳**에 둔다. 나중에 GitHub Release에서 DB를 내려받는 방식으로 교체할 지점이다.
 
 ### MCP 도구 계약
