@@ -3,8 +3,8 @@
 WordPress 공식 REST API(`/wp-json/wp/v2/posts`)가 발행일과 본문 HTML을 함께 주므로
 목록 요청만으로 수집한다. 사이트맵의 lastmod는 수정일이라 쓰지 않는다.
 
-2026-09-30 확인: 사이트의 Cloudflare 규칙이 이 수집기(httpx)의 요청을 robots.txt까지 403으로
-막는다. 차단을 우회하지 않는다는 원칙에 따라 실제 수집은 보류했다 (docs/기획.md 미결정 사항).
+사이트의 WAF가 Python TLS 클라이언트(httpx)의 요청을 robots.txt까지 403으로 막는다.
+운영 측 허락을 받아(2026-09-30) 이 호스트만 시스템 curl로 요청한다 (`http.CURL_HOSTS`).
 """
 
 import html
