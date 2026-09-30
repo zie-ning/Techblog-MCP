@@ -10,13 +10,14 @@ import sys
 
 import httpx
 
-from pipeline.collect import d2, kakao, kakaopay, ly, oliveyoung, raw, toss, woowahan
+from pipeline.collect import d2, kakao, kakaopay, kurly, ly, oliveyoung, raw, toss, woowahan
 from pipeline.collect.http import DisallowedByRobots, PoliteClient
 
 COLLECTORS = {
     d2.SOURCE: d2.collect,
     kakao.SOURCE: kakao.collect,
     kakaopay.SOURCE: kakaopay.collect,
+    kurly.SOURCE: kurly.collect,
     ly.SOURCE: ly.collect,
     oliveyoung.SOURCE: oliveyoung.collect,
     toss.SOURCE: toss.collect,
