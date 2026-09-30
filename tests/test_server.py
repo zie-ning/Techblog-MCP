@@ -32,7 +32,11 @@ def test_tools_and_prompt_registered():
 
 def test_search_card_format():
     text = call("search", query="선착순 쿠폰 동시성", limit=1)
-    assert "[사례 case_0001] 올리브영 · 2025-03-12 · 동시성·락 / 커머스·주문·재고" in text
+    assert (
+        "[사례 case_0001] 올리브영 · 2025-03-12 · 동시성·락 / 커머스·주문·재고\n"
+        "제목: 선착순 쿠폰 발급 개선기\n"
+        "문제 상황:"
+    ) in text
     assert "문제 상황: 선착순 쿠폰 발급 시 한도 초과 발급 발생 (초당 최대 3만 요청)" in text
     assert "기술: Redis, Spring Boot" in text
     assert "버린 대안: DB 비관적 락" in text
@@ -43,6 +47,7 @@ def test_search_card_format():
 def test_search_insight_card():
     text = call("search", query="AI 에이전트", kind="인사이트")
     assert "[인사이트 case_0004]" in text
+    assert "제목: AI 코딩 에이전트 활용 팁" in text
     assert "핵심 내용: AI 코딩 에이전트의 완료 조건을 측정 가능하게 설계" in text
 
 

@@ -43,7 +43,8 @@ def _first(points: list[dict]) -> str:
 
 
 def card(entry: dict) -> str:
-    lines = [_header(entry)]
+    # 제목은 에이전트가 get_details로 열 글을 고르는 단서 (요약 한 줄로는 주제가 안 보일 때가 있음)
+    lines = [_header(entry), f"제목: {entry['post_title']}"]
     if entry["kind"] == "사례":
         lines.append(f"문제 상황: {_first(entry['problem_situation'])}")
         lines.append(f"해결 방법: {_first(entry['solution'])}")
