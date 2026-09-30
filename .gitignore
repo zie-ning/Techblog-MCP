@@ -19,6 +19,9 @@ data/raw/
 *.db
 *.sqlite.tmp
 
+# 보기용 변환 산출물 (pipeline.view)
+data/.view/
+
 # IDE
 .idea/
 .vscode/
