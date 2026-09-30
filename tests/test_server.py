@@ -80,15 +80,37 @@ def test_get_details_format():
     assert "없는 ID: case_0404" in text
 
 
-def test_get_details_limits_to_three():
-    text = call("get_details", ids=["case_0001", "case_0002", "case_0003", "case_0004"])
-    assert "제외된 ID: case_0004" in text
+def test_get_details_limits_to_five():
+    ids = ["case_0001", "case_0002", "case_0003", "case_0004", "case_0404", "case_0405"]
+    text = call("get_details", ids=ids)
+    assert "[사례 case_0003]" in text and "[인사이트 case_0004]" in text
+    assert "없는 ID: case_0404" in text
+    assert "한 번에 5건까지만 조회합니다. 제외된 ID: case_0405" in text
 
 
 def test_aggregate_format():
     text = call("aggregate", group_by="technology", kind="사례")
     assert "조건: 유형 = 사례 → 사례 3건 · 인사이트 0건 / 2개사" in text
     assert "Kafka  사례 1건 · 인사이트 0건 · 1개사 (토스)  예시: case_0003" in text
+
+
+def test_aggregate_by_company_omits_redundant_company_list():
+    text = call("aggregate", group_by="company")
+    assert "1. 올리브영  사례 2건 · 인사이트 1건  예시:" in text
+    assert "개사 (올리브영)" not in text
+
+
+def test_tools_are_marked_read_only():
+    for tool in asyncio.run(server.server.list_tools()):
+        assert tool.annotations.read_only_hint is True
+        assert tool.annotations.destructive_hint is False
+
+
+def test_descriptions_ask_to_open_every_cited_case():
+    tools = {t.name: t for t in asyncio.run(server.server.list_tools())}
+    assert "소개할 사례는 모두 get_details로 열어" in tools["search"].description
+    assert "다른 선택을 한 사례" in tools["search"].description
+    assert "최대 5건" in tools["get_details"].description
 
 
 def test_prompt():

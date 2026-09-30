@@ -146,13 +146,18 @@ def detail(d: Detail) -> str:
     return "\n".join(lines)
 
 
-def details_result(details: list[Detail], missing: list[str], dropped: list[str]) -> str:
+def details_result(
+    details: list[Detail], missing: list[str], dropped: list[str], max_ids: int
+) -> str:
     parts = [detail(d) for d in details]
     notes = []
     if missing:
         notes.append(f"※ 없는 ID: {', '.join(missing)} (search 결과의 ID를 쓰세요)")
     if dropped:
-        notes.append(f"※ 한 번에 3건까지만 조회합니다. 제외된 ID: {', '.join(dropped)}")
+        notes.append(
+            f"※ 한 번에 {max_ids}건까지만 조회합니다. 제외된 ID: {', '.join(dropped)} "
+            "(필요하면 나눠서 다시 호출하세요)"
+        )
     if parts:
         notes.append(CITATION_RULE)
         notes.append(REFERENCE_RULE)
@@ -181,11 +186,16 @@ def aggregate_result(
 
     lines.append("")
     for rank, g in enumerate(result.groups, start=1):
-        names = ", ".join(g.companies[:_MAX_COMPANY_NAMES])
-        if len(g.companies) > _MAX_COMPANY_NAMES:
-            names += ", …"
+        if group_by == "company":
+            # 회사로 묶었으면 회사 수·이름은 항목 이름과 같아 중복이다
+            companies = ""
+        else:
+            names = ", ".join(g.companies[:_MAX_COMPANY_NAMES])
+            if len(g.companies) > _MAX_COMPANY_NAMES:
+                names += ", …"
+            companies = f" · {len(g.companies)}개사 ({names})"
         lines.append(
-            f"{rank}. {g.key}  {_count(g.cases, g.insights)} · {len(g.companies)}개사 ({names})"
+            f"{rank}. {g.key}  {_count(g.cases, g.insights)}{companies}"
             f"  예시: {', '.join(g.examples)}"
         )
     lines.append("")

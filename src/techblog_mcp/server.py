@@ -8,6 +8,7 @@ from functools import cache
 from typing import Annotated, Literal
 
 from mcp.server.mcpserver import MCPServer
+from mcp.types import ToolAnnotations
 from pydantic import Field
 
 from techblog_mcp import db, render, taxonomy
@@ -16,7 +17,12 @@ from techblog_mcp.search import query as q
 ProblemType = Literal[taxonomy.problem_type_names()]  # type: ignore[valid-type]
 Domain = Literal[taxonomy.domain_names()]  # type: ignore[valid-type]
 
-MAX_DETAIL_IDS = 3
+MAX_DETAIL_IDS = 5  # search 기본 결과 수와 같게 두어 기본 검색 결과를 한 번에 열 수 있게 함
+
+# 세 도구 모두 검색 DB를 읽기만 하고 외부와 통신하지 않는다
+READ_ONLY = ToolAnnotations(
+    read_only_hint=True, destructive_hint=False, idempotent_hint=True, open_world_hint=False
+)
 
 COMPANIES = "토스, 우아한형제들, 카카오, 카카오페이, 네이버, LY, 컬리, 올리브영"
 
@@ -36,16 +42,20 @@ SEARCH_DESCRIPTION = f"""\
 어떻게 풀었는지 확인할 것. 단순 CRUD, 버그 수정, 리팩터링에는 호출하지 않는다.
 
 결과는 관련도 순 요약 카드([사례]/[인사이트])이고 근거 발췌는 get_details로 본다.
+답변에 소개할 사례는 모두 get_details로 열어 확인한 뒤 인용하고,
+카드에 없는 내용을 추측으로 채우지 말 것.
+같은 문제에 다른 선택을 한 사례가 있으면 비교 자료로 함께 소개할 가치가 있다.
 결과를 인용할 때는 회사명과 원문 링크를 함께 밝히고,
 결과에 없는 사례를 지어내지 말 것. 결과가 없거나 적으면 그렇다고 말할 것.
 {render.REFERENCE_PRINCIPLE}"""
 
-GET_DETAILS_DESCRIPTION = """\
-search나 aggregate 결과의 항목 ID(case_0001 형식)로 전체 내용을 조회한다. 한 번에 최대 3건.
+GET_DETAILS_DESCRIPTION = f"""\
+search나 aggregate 결과의 항목 ID(case_0001 형식)로 전체 내용을 조회한다.
+한 번에 최대 {MAX_DETAIL_IDS}건.
 
 문제 상황·해결 방법·성능/운영 포인트·버린 대안(사례) 또는 핵심 내용·적용해볼 점(인사이트)을
 필드마다 원문 근거 발췌와 함께 돌려주고, 원문 제목·링크와 같은 글의 다른 항목 ID도 알려 준다.
-사례를 소개하거나 인용하기 전에 호출해 실제 내용을 확인할 것."""
+답변에 소개할 사례는 모두 이 도구로 열어 확인할 것. 소개하지 않을 사례까지 열 필요는 없다."""
 
 AGGREGATE_DESCRIPTION = """\
 조건에 맞는 사례·인사이트를 기술, 문제 유형, 도메인, 회사, 버린 대안별로 센다.
@@ -91,7 +101,7 @@ def _filters(
     return filters, render.unknown_technologies(resolution)
 
 
-@server.tool(description=SEARCH_DESCRIPTION, structured_output=False)
+@server.tool(description=SEARCH_DESCRIPTION, structured_output=False, annotations=READ_ONLY)
 def search(
     query: QueryArg,
     problem_type: ProblemTypeArg = None,
@@ -107,17 +117,19 @@ def search(
     return render.search_result(query, filters, limit, result, notes)
 
 
-@server.tool(description=GET_DETAILS_DESCRIPTION, structured_output=False)
+@server.tool(description=GET_DETAILS_DESCRIPTION, structured_output=False, annotations=READ_ONLY)
 def get_details(
-    ids: Annotated[list[str], Field(min_length=1, description="항목 ID 목록. 최대 3건")],
+    ids: Annotated[
+        list[str], Field(min_length=1, description=f"항목 ID 목록. 최대 {MAX_DETAIL_IDS}건")
+    ],
 ) -> str:
     ids = list(dict.fromkeys(i.strip() for i in ids if i.strip()))
     wanted, dropped = ids[:MAX_DETAIL_IDS], ids[MAX_DETAIL_IDS:]
     details, missing = q.get_details(_connection(), wanted)
-    return render.details_result(details, missing, dropped)
+    return render.details_result(details, missing, dropped, MAX_DETAIL_IDS)
 
 
-@server.tool(description=AGGREGATE_DESCRIPTION, structured_output=False)
+@server.tool(description=AGGREGATE_DESCRIPTION, structured_output=False, annotations=READ_ONLY)
 def aggregate(
     group_by: Annotated[q.GroupBy, Field(description="집계 기준")],
     problem_type: ProblemTypeArg = None,
@@ -141,7 +153,8 @@ def techblog(topic: Annotated[str, Field(description="찾아볼 설계 주제나
 다음 주제에 대해 techblog MCP 도구로 국내 기업 사례를 찾아 참고 자료로 소개해 줘: {topic}
 
 1. search로 관련 사례를 찾는다. 결과가 적으면 검색어를 바꾸거나 필터를 빼서 한 번 더 찾는다.
-2. 관련도가 높은 2~3건을 get_details로 열어 근거 발췌를 확인한다.
+2. 소개할 사례는 모두 get_details로 열어 근거 발췌를 확인한다. 같은 문제에 다른 선택을 한 사례가
+   있으면 비교 자료로 함께 연다.
 3. 회사별 접근 방식(문제 상황, 해결 방법, 성능·운영 포인트, 버린 대안)을 출처와 함께 소개한다.
 4. 각 사례의 조건(규모, 제약, 기존 인프라)이 지금 작업과 어떻게 다른지 짚는다.
 5. 사례에 얽매이지 않고, 지금 작업에 맞는 선택지를 트레이드오프와 함께 제안한다.
