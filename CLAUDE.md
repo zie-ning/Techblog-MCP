@@ -22,7 +22,8 @@ uv run ruff check                         # 린트
 uv run ruff format                        # 포맷 (CI는 --check로 검사)
 uv run --python 3.11 --isolated pytest    # 최소 지원 버전(3.11)에서 테스트
 
-uv run python -m pipeline.collect oliveyoung                                   # 원문 수집
+uv run python -m pipeline.collect all                                          # 원문 수집 (블로그 이름 지정 가능, 캐시된 글은 건너뜀)
+uv run python -m pipeline.collect kakao --refresh                              # 캐시 무시하고 다시 수집
 uv run python -m pipeline.extract oliveyoung --post-ids-file eval/m1_posts.txt # 추출 (OPENAI_API_KEY 필요, .env 가능)
 uv run python -m pipeline.extract oliveyoung --outdated                        # 프롬프트·모델이 바뀐 글만 재추출
 uv run python -m pipeline.normalize [--apply]                                  # 기술명 재정규화·미등록 리포트

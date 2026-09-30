@@ -17,7 +17,7 @@ uv run ruff check
 ## 데이터 파이프라인 (개발용)
 
 ```bash
-uv run python -m pipeline.collect oliveyoung                                   # 원문 수집 → data/raw/
+uv run python -m pipeline.collect all                                          # 원문 수집 → data/raw/ (블로그 이름으로 골라 받기 가능)
 uv run python -m pipeline.extract oliveyoung --post-ids-file eval/m1_posts.txt # 구조화 → data/entries.jsonl
 uv run python -m pipeline.normalize                                            # 기술 사전에 없는 이름 리포트
 uv run python -m pipeline.build_index                                          # 검색 DB → data/techblog.sqlite
