@@ -1,0 +1,6 @@
+{
+  "content": [
+    {"postTitle": "오래된 글", "postHtml": "잘린 요약", "postPublishedAt": "1693493999000", "url": "/helloworld/1000000"}
+  ],
+  "page": {"size": 3, "totalElements": 5, "totalPages": 2, "number": 1}
+}
