@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - 기획·설계상 선택지가 있는 결정은 임의로 정하지 말고 사용자에게 질문한다. 결정되면 `docs/기획.md`에 반영한다.
 - 커밋 메시지, 코드 주석, 문서는 한국어. 식별자는 영어.
-- `main`에 직접 커밋하지 않고 작업 단위 브랜치 → PR → Merge commit으로 병합한다. 세부 규칙은 `.claude/rules/`의 커밋·PR 규칙을 따른다.
+- `main`에 직접 커밋하지 않고 브랜치(마일스톤 단위 가능) → PR → Merge commit으로 병합한다. 세부 규칙은 `.claude/rules/`의 커밋·PR 규칙을 따른다.
 
 ## 명령어
 
