@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 카카오 사이트맵 구조를 본뜬 테스트용 샘플 -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://tech.kakao.com/</loc><changefreq>weekly</changefreq></url>
+  <url><loc>https://tech.kakao.com/tags</loc><changefreq>weekly</changefreq></url>
+  <url><loc>https://tech.kakao.com/posts/837</loc><lastmod>2025-03-12</lastmod></url>
+  <url><loc>https://tech.kakao.com/posts/600</loc><lastmod>2023-08-31</lastmod></url>
+  <url><loc>https://tech.kakao.com/posts/306</loc><lastmod>2014-05-28</lastmod></url>
+</urlset>
