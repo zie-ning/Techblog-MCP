@@ -27,6 +27,7 @@ uv run python -m pipeline.extract oliveyoung --post-ids-file eval/m1_posts.txt #
 uv run python -m pipeline.extract oliveyoung --outdated                        # 프롬프트·모델이 바뀐 글만 재추출
 uv run python -m pipeline.normalize [--apply]                                  # 기술명 재정규화·미등록 리포트
 uv run python -m pipeline.build_index                                          # 검색 DB 빌드
+uv run python -m pipeline.view                                                 # jsonl을 보기 좋은 json으로 변환 (data/.view/, git 제외)
 uv run techblog-mcp                                                            # MCP 서버 (stdio)
 ```
 
