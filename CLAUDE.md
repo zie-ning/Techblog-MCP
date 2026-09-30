@@ -72,6 +72,6 @@ CI(`.github/workflows/ci.yml`)는 Python 3.11과 3.14에서 `uv sync --locked` �
 
 ## 수집 규칙
 
-- 정직한 User-Agent(예: `TechblogCaseBot/0.1 (+저장소 URL)`)를 쓰고 브라우저로 위장하지 않는다. robots.txt를 지키고, Cloudflare 등 봇 확인은 우회하지 않으며, 요청 사이에 간격을 둔다.
+- 정직한 User-Agent(예: `TechblogCaseBot/0.1 (+저장소 URL)`)를 쓰고 브라우저로 위장하지 않는다. robots.txt를 지키고 요청 사이에 간격을 둔다. Cloudflare 등 봇 확인 우회는 운영 측 허락을 받은 사이트에 한해 브라우저 위장 없이만 허용하고, 대상 호스트는 `pipeline/collect/http.py`의 `CURL_HOSTS`에 둔다.
 - 원문 전체는 `data/raw/`에만 두고 배포하지 않는다. 배포 데이터에는 요약, 짧은 발췌(필드당 1~2문장), 원문 링크만 넣는다.
 - 블로그별 수집 경로(피드, 사이트맵, 공개 JSON API, WordPress REST API)와 주의점은 `docs/기획.md`의 "블로그 수집 조사 결과"에 정리되어 있다.
