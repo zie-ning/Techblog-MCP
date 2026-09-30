@@ -8,11 +8,14 @@ uv run python -m pipeline.collect kakao --refresh # 캐시된 글도 다시 받�
 import argparse
 import sys
 
-from pipeline.collect import oliveyoung
-from pipeline.collect.http import PoliteClient
+import httpx
+
+from pipeline.collect import oliveyoung, raw, woowahan
+from pipeline.collect.http import DisallowedByRobots, PoliteClient
 
 COLLECTORS = {
     oliveyoung.SOURCE: oliveyoung.collect,
+    woowahan.SOURCE: woowahan.collect,
 }
 
 
@@ -28,11 +31,17 @@ def main() -> None:
     failed = False
     with PoliteClient() as client:
         for source in sources:
-            result = COLLECTORS[source](client, refresh=args.refresh)
+            try:
+                result = COLLECTORS[source](client, refresh=args.refresh)
+            except (httpx.HTTPError, DisallowedByRobots, ValueError) as e:
+                # 목록 요청 자체가 막히면 그 블로그만 실패로 두고 나머지는 계속 수집한다
+                failed = True
+                print(f"{source}: 수집 실패 ({type(e).__name__}: {e})", file=sys.stderr)
+                continue
             oldest = min((p.published_at for p in result.saved), default=None)
             summary = f"{source}: {len(result.saved)}편 저장"
             if oldest:
-                summary += f" (가장 오래된 글: {oldest:%Y-%m-%d})"
+                summary += f" (가장 오래된 글: {oldest.astimezone(raw.KST):%Y-%m-%d})"
             if result.skipped:
                 summary += f", 캐시 {result.skipped}편 건너뜀"
             if result.out_of_period:
