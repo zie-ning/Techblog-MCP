@@ -4,6 +4,7 @@
     "page": 2, "pageSize": 3, "count": 5, "next": null,
     "results": [
       {"key": "draft", "title": "공개 전 글", "category": "Engineering", "publishedTime": "2023-08-31T23:59:00+09:00", "isPublished": false, "fullDescription": ""},
+      {"key": "slash-session", "title": "외부 발표 링크", "category": "Engineering", "publishedTime": "2024-09-12T10:00:00+09:00", "isPublished": true, "fullDescription": ""},
       {"key": "old-post", "title": "오래된 글", "category": "Engineering", "publishedTime": "2023-08-31T23:59:00+09:00", "isPublished": true, "fullDescription": "평문 본문"}
     ]
   }

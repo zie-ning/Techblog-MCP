@@ -40,7 +40,10 @@ def list_url(page: int) -> str:
 
 
 def parse_list(body: bytes) -> tuple[list[ListItem], bool]:
-    """목록 한 페이지를 파싱해 (공개된 글 목록, 다음 페이지 존재 여부)를 돌려준다."""
+    """목록 한 페이지를 파싱해 (공개된 글 목록, 다음 페이지 존재 여부)를 돌려준다.
+
+    본문이 빈 글은 외부 페이지(SLASH 발표 영상 등)로 넘어가는 링크 글이라 제외한다.
+    """
     data = json.loads(body)["success"]
     items = [
         ListItem(
@@ -50,7 +53,7 @@ def parse_list(body: bytes) -> tuple[list[ListItem], bool]:
             published_at=datetime.fromisoformat(item["publishedTime"]),
         )
         for item in data["results"]
-        if item["isPublished"]
+        if item["isPublished"] and item["fullDescription"].strip()
     ]
     return items, data["next"] is not None
 

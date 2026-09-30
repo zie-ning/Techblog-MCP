@@ -24,7 +24,7 @@ def test_parse_list():
     assert items[0].published_at == datetime(2025, 3, 12, 10, tzinfo=KST)
 
 
-def test_parse_list_drops_unpublished():
+def test_parse_list_drops_unpublished_and_link_posts():
     items, has_next = toss.parse_list((FIXTURES / "toss_list_2.json").read_bytes())
     assert not has_next
     assert [i.key for i in items] == ["old-post"]
