@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 프로젝트 개요
 
-국내 IT 기업 기술 블로그 8곳(토스, 우아한형제들, 카카오, 카카오페이, 네이버 D2, LY, 컬리, 올리브영)의 2023-09 이후 글을 수집해 LLM으로 구조화하고, 코딩 에이전트가 MCP 도구로 검색·집계하게 하는 로컬 stdio MCP 서버. 결정 사항과 그 근거는 [docs/기획.md](docs/기획.md), 마일스톤과 진행 상황은 [docs/구현계획.md](docs/구현계획.md)에 있다. 설계를 바꾸는 작업은 이 두 문서를 먼저 읽고, 결정이 바뀌면 문서도 함께 고친다.
+국내 IT 기업 기술 블로그 8곳(토스, 우아한형제들, 카카오, 카카오페이, 네이버 D2, LY, 컬리, 올리브영)의 2023-09 이후 글을 수집해 LLM으로 구조화하고, 코딩 에이전트가 MCP 도구로 검색·집계하게 하는 로컬 stdio MCP 서버. 전체 문서와 마일스톤 현황은 허브 문서 [docs/README.md](docs/README.md)에서 시작한다. 결정 사항과 그 근거는 [docs/기획.md](docs/기획.md), 원칙·기술 선택·구조는 [docs/구현계획.md](docs/구현계획.md), 마일스톤별 작업과 진행 기록은 [docs/milestones/](docs/milestones/)에 있다. 설계를 바꾸는 작업은 기획.md와 구현계획.md를 먼저 읽고, 결정이 바뀌면 문서도 함께 고친다. 진행 상황이 바뀌면 해당 마일스톤 문서와 허브 문서를 함께 갱신한다.
 
 ## 작업 방식
 
