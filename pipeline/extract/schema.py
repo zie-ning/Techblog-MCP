@@ -122,6 +122,20 @@ class Entry(BaseModel):
     takeaways: list[Evidenced] = []
 
 
+class Usage(BaseModel):
+    """글 한 편을 추출하는 데 쓴 LLM 호출 수와 토큰 (분류 + 구조화 + 재시도 합계)."""
+
+    calls: int = 0
+    input_tokens: int = 0
+    cached_input_tokens: int = 0
+    output_tokens: int = 0
+    reasoning_tokens: int = 0  # output_tokens에 포함된 값
+
+    def add(self, other: "Usage") -> None:
+        for name in type(self).model_fields:
+            setattr(self, name, getattr(self, name) + getattr(other, name))
+
+
 class PostRecord(BaseModel):
     """추출을 거친 글 한 편의 기록. 제외된 글도 남겨 다시 추출하지 않게 한다."""
 
@@ -140,3 +154,7 @@ class PostRecord(BaseModel):
     entry_ids: list[str]
     dropped_evidence: int  # 발췌 검증에 실패해 버린 항목 수
     dropped_evidences: list[str] = []  # 버린 발췌 (검증 기준 점검용)
+    # 아래는 M3 평가용으로 추가. M1 기록에는 없어 기본값을 둔다
+    reasoning_effort: str = ""
+    evidence_total: int = 0  # 채택한 시도의 검증 전 발췌 수 (발췌 원문 존재율의 분모)
+    usage: Usage = Usage()

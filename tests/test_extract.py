@@ -1,7 +1,11 @@
+import json
 from datetime import UTC, datetime
+
+import pytest
 
 from pipeline.collect.raw import RawPost
 from pipeline.extract import prompt_version
+from pipeline.extract.__main__ import parse_post_ids
 from pipeline.extract.extractor import ExtractResult, extract_post
 from pipeline.extract.schema import (
     CaseDraft,
@@ -11,6 +15,7 @@ from pipeline.extract.schema import (
     InsightExtraction,
     Point,
     RejectedAlternativeDraft,
+    Usage,
 )
 from pipeline.extract.store import Store
 
@@ -34,13 +39,15 @@ class FakeLLM:
     """스키마별로 미리 정한 응답을 순서대로 돌려준다."""
 
     model = "fake-model"
+    reasoning_effort = "medium"
 
     def __init__(self, responses):
         self.responses = list(responses)
         self.calls = []
 
-    def parse(self, instructions, messages, schema):
+    def parse(self, instructions, messages, schema, usage):
         self.calls.append((schema, messages))
+        usage.add(Usage(calls=1, input_tokens=100, output_tokens=10))
         response = self.responses.pop(0)
         assert isinstance(response, schema)
         return response
@@ -196,3 +203,66 @@ def test_store_assigns_stable_ids(tmp_path):
     final = Store(tmp_path / "posts.jsonl", tmp_path / "entries.jsonl")
     assert [e.id for e in final.entries] == ["case_0003"]
     assert final.record_for(POST.url).entry_ids == ["case_0003"]
+
+
+def test_record_keeps_usage_and_evidence_total():
+    # 첫 시도 발췌 5개(1개 탈락) → 재시도도 같아서 첫 시도를 쓴다. 호출 3회의 사용량 합계
+    llm = FakeLLM([CLASSIFIED_CASE, CaseExtraction(cases=[case()]), CaseExtraction(cases=[case()])])
+    result = extract_post(POST, llm)
+    assert result.record.evidence_total == 5
+    assert result.record.reasoning_effort == "medium"
+    assert result.record.usage == Usage(calls=3, input_tokens=300, output_tokens=30)
+    # 검증 전 출력은 재시도까지 모두 남긴다
+    assert result.raw_outputs["classification"]["kind"] == "사례"
+    assert len(result.raw_outputs["attempts"]) == 2
+
+
+def test_store_in_dir_saves_drafts(tmp_path):
+    store = Store.in_dir(tmp_path / "run", save_drafts=True)
+    store.add(_result(1))
+    store.save()
+    [line] = (tmp_path / "run" / "drafts.jsonl").read_text(encoding="utf-8").splitlines()
+    draft = json.loads(line)
+    assert (draft["source"], draft["post_id"]) == ("oliveyoung", "2025-03-12_coupon")
+    assert len(draft["attempts"]) == 1
+    assert (tmp_path / "run" / "posts.jsonl").exists()
+
+    # drafts를 끄면 파일을 만들지 않는다
+    plain = Store.in_dir(tmp_path / "plain")
+    plain.add(_result(1))
+    plain.save()
+    assert not (tmp_path / "plain" / "drafts.jsonl").exists()
+
+
+def test_old_post_record_without_new_fields_loads():
+    old = {
+        "source": "oliveyoung",
+        "post_id": "x",
+        "url": "u",
+        "title": "t",
+        "published_at": "2025-01-01",
+        "post_type": "문제 해결형",
+        "kind": "사례",
+        "reason": "r",
+        "content_hash": "h",
+        "model": "gpt-5-mini",
+        "prompt_version": "v",
+        "extracted_at": "2026-09-28T00:00:00+00:00",
+        "entry_ids": [],
+        "dropped_evidence": 0,
+    }
+    from pipeline.extract.schema import PostRecord
+
+    record = PostRecord.model_validate_json(json.dumps(old))
+    assert record.usage == Usage() and record.evidence_total == 0
+
+
+def test_parse_post_ids():
+    lines = ["# 주석", "kakao/599  # 제목", "", "2023-09-18_coupon"]
+    assert parse_post_ids(lines, "oliveyoung") == [
+        ("kakao", "599"),
+        ("oliveyoung", "2023-09-18_coupon"),
+    ]
+    assert parse_post_ids(["d2/0004394"], "all") == [("d2", "0004394")]
+    with pytest.raises(ValueError):
+        parse_post_ids(["599"], "all")

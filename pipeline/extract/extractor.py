@@ -28,6 +28,7 @@ from pipeline.extract.schema import (
     Point,
     PostRecord,
     RejectedAlternative,
+    Usage,
 )
 from pipeline.extract.text import html_to_text
 from pipeline.normalize import renormalize
@@ -37,8 +38,11 @@ T = TypeVar("T", bound=BaseModel)
 
 class LLM(Protocol):
     model: str
+    reasoning_effort: str
 
-    def parse(self, instructions: str, messages: list[dict], schema: type[T]) -> T: ...
+    def parse(self, instructions: str, messages: list[dict], schema: type[T], usage: Usage) -> T:
+        """구조화 출력을 받고 이번 호출의 사용량을 `usage`에 더한다."""
+        ...
 
 
 class OpenAILLM:
@@ -46,26 +50,44 @@ class OpenAILLM:
         from openai import OpenAI
 
         self.model = model
-        self._reasoning_effort = reasoning_effort
+        self.reasoning_effort = reasoning_effort
         self._client = OpenAI()
 
-    def parse(self, instructions: str, messages: list[dict], schema: type[T]) -> T:
+    def parse(self, instructions: str, messages: list[dict], schema: type[T], usage: Usage) -> T:
         response = self._client.responses.parse(
             model=self.model,
             instructions=instructions,
             input=messages,
             text_format=schema,
-            reasoning={"effort": self._reasoning_effort},
+            reasoning={"effort": self.reasoning_effort},
         )
+        usage.add(_usage_of(response))
         if response.output_parsed is None:
             raise RuntimeError(f"구조화 출력을 받지 못했습니다: {response.output_text[:200]}")
         return response.output_parsed
+
+
+def _usage_of(response) -> Usage:
+    u = response.usage
+    if u is None:
+        return Usage(calls=1)
+    input_details = getattr(u, "input_tokens_details", None)
+    output_details = getattr(u, "output_tokens_details", None)
+    return Usage(
+        calls=1,
+        input_tokens=u.input_tokens,
+        cached_input_tokens=getattr(input_details, "cached_tokens", 0) or 0,
+        output_tokens=u.output_tokens,
+        reasoning_tokens=getattr(output_details, "reasoning_tokens", 0) or 0,
+    )
 
 
 @dataclass
 class ExtractResult:
     record: PostRecord  # entry_ids는 저장 시 채운다
     entries: list[Entry]  # id는 저장 시 채운다
+    # 검증 전 LLM 출력(분류, 구조화 시도들). 발췌 검증 기준을 LLM 재호출 없이 비교하는 데 쓴다
+    raw_outputs: dict
 
 
 def content_hash(post: RawPost) -> str:
@@ -100,28 +122,33 @@ def extract_post(post: RawPost, llm: LLM) -> ExtractResult:
     source = SourceText(text)
     user_input = [{"role": "user", "content": prompts.post_input(post.title, text)}]
 
-    classification = llm.parse(prompts.CLASSIFY, user_input, Classification)
+    usage = Usage()
+    classification = llm.parse(prompts.CLASSIFY, user_input, Classification, usage)
+    raw_outputs: dict = {"classification": classification.model_dump(), "attempts": []}
 
-    drafts: list[CaseDraft | InsightDraft] = []
-    dropped: list[str] = []
+    chosen = _Attempt(drafts=[], dropped=[], total=0)
     if classification.kind != "제외":
         if classification.kind == "사례":
             instructions, schema = prompts.structure_case(), CaseExtraction
         else:
             instructions, schema = prompts.structure_insight(), InsightExtraction
 
-        result = llm.parse(instructions, user_input, schema)
-        drafts, dropped = _verify_all(result, source)
-        if dropped:
+        result = llm.parse(instructions, user_input, schema, usage)
+        raw_outputs["attempts"].append(result.model_dump())
+        chosen = _verify_all(result, source)
+        if chosen.dropped:
             retry_input = [
                 *user_input,
                 {"role": "assistant", "content": result.model_dump_json()},
-                {"role": "user", "content": prompts.evidence_retry(dropped)},
+                {"role": "user", "content": prompts.evidence_retry(chosen.dropped)},
             ]
-            retry = _verify_all(llm.parse(instructions, retry_input, schema), source)
+            retry_result = llm.parse(instructions, retry_input, schema, usage)
+            raw_outputs["attempts"].append(retry_result.model_dump())
+            retry = _verify_all(retry_result, source)
             # 재시도가 항상 낫지는 않으므로 검증을 통과한 내용이 더 많은 쪽을 쓴다
-            if _score(retry) > _score((drafts, dropped)):
-                drafts, dropped = retry
+            if retry.score() > chosen.score():
+                chosen = retry
+    drafts, dropped = chosen.drafts, chosen.dropped
 
     record = PostRecord(
         source=post.source,
@@ -134,34 +161,45 @@ def extract_post(post: RawPost, llm: LLM) -> ExtractResult:
         reason=classification.reason,
         content_hash=content_hash(post),
         model=llm.model,
+        reasoning_effort=llm.reasoning_effort,
         prompt_version=prompt_version.version(),
         extracted_at=datetime.now(UTC).isoformat(timespec="seconds"),
         entry_ids=[],
         dropped_evidence=len(dropped),
         dropped_evidences=dropped,
+        evidence_total=chosen.total,
+        usage=usage,
     )
-    return ExtractResult(record=record, entries=[to_entry(d, post) for d in drafts])
+    return ExtractResult(
+        record=record, entries=[to_entry(d, post) for d in drafts], raw_outputs=raw_outputs
+    )
 
 
-Verified = tuple[list[CaseDraft | InsightDraft], list[str]]
+@dataclass
+class _Attempt:
+    """구조화 시도 한 번의 검증 결과."""
+
+    drafts: list[CaseDraft | InsightDraft]  # 검증을 통과한 항목들
+    dropped: list[str]  # 버린 발췌
+    total: int  # 검증 전 발췌 수
+
+    def score(self) -> tuple[int, int, int]:
+        """남은 항목 수 → 남은 발췌 수 → 버린 발췌가 적은 순으로 비교한다."""
+        kept = sum(len(_evidences(d)) for d in self.drafts)
+        return len(self.drafts), kept, -len(self.dropped)
 
 
-def _verify_all(result: CaseExtraction | InsightExtraction, source: SourceText) -> Verified:
-    """(검증을 통과한 항목들, 버린 발췌 목록)"""
+def _verify_all(result: CaseExtraction | InsightExtraction, source: SourceText) -> _Attempt:
     drafts: list[CaseDraft | InsightDraft] = []
     dropped: list[str] = []
+    total = 0
     for draft in _drafts_of(result):
+        total += len(_evidences(draft))
         verified, failed = verify_draft(draft, source)
         dropped += failed
         if verified is not None:
             drafts.append(verified)
-    return drafts, dropped
-
-
-def _score(verified: Verified) -> tuple[int, int, int]:
-    """남은 항목 수 → 남은 발췌 수 → 버린 발췌가 적은 순으로 비교한다."""
-    drafts, dropped = verified
-    return len(drafts), sum(len(_evidences(d)) for d in drafts), -len(dropped)
+    return _Attempt(drafts=drafts, dropped=dropped, total=total)
 
 
 def _drafts_of(result: CaseExtraction | InsightExtraction) -> list[CaseDraft | InsightDraft]:
