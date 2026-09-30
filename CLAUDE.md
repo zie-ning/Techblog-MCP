@@ -61,9 +61,10 @@ CI(`.github/workflows/ci.yml`)는 Python 3.11과 3.14에서 `uv sync --locked` �
 
 ### MCP 도구 계약
 
-- 도구는 `search`, `get_details`(ID 최대 3개), `aggregate` 세 개와 MCP prompt `techblog`.
+- 도구는 `search`, `get_details`(ID 최대 5개), `aggregate` 세 개와 MCP prompt `techblog`.
+- 세 도구 모두 읽기 전용 annotation(`readOnlyHint` 등)을 단다. DB에 쓰는 도구를 추가하면 annotation도 바꾼다.
 - 결과는 JSON이 아니라 읽기 쉬운 텍스트로 반환한다. `search` 카드에는 근거 발췌를 넣지 않고 `[사례]`/`[인사이트]` 유형을 표시한다.
-- `search` 필터는 문제 유형·도메인(enum), 기술(자유 입력 → 서버 정규화), `kind`, `limit`(기본 5, 최대 10). 회사·날짜 필터는 의도적으로 없다.
+- `search` 필터는 문제 유형·도메인(enum), 기술(자유 입력 → 서버 정규화), `kind`, `limit`(기본 5, 최대 10). 회사·날짜 필터는 의도적으로 없다. `limit`은 M5에서 제거하고 서버가 관련도 기준으로 최대 10건을 돌려주도록 바꿀 예정이다.
 - `aggregate`는 모수(전체 건수·회사 수)와 예시 ID를 함께 반환하고, 건수를 사례/인사이트로 나눠 표시한다. 문제 유형은 주 유형 기준으로 센다.
 - 결과가 없거나 적으면 그 사실을 명시해 에이전트가 사례를 지어내지 않게 한다.
 
