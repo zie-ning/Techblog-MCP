@@ -51,6 +51,7 @@ M3 전체를 **브랜치 하나 `feat/m3-pilot-eval`** 에서 진행한다.
 | --- | --- | --- |
 | 1 | 평가 기반 도구 | 추출 CLI 확장, 사용량 기록, 파일럿 표본 추출 |
 | 2 | 파일럿 baseline | 현재 프롬프트로 파일럿 80편 추출, 점검 리포트 |
+| 2.5 | LangSmith 도입 | 추출 트레이싱(원문 포함), 파일럿 Dataset, baseline을 Experiment로 등록 |
 | 3 | 프롬프트 v2 | 점검 결과를 반영한 프롬프트·스키마·분류 목록 수정 |
 | 4 | 정답셋 | 정답셋 24편 초안 작성과 검수 |
 | 5 | 평가 지표 | 자동 지표와 LLM 채점 스크립트 |
@@ -147,6 +148,23 @@ run 디렉터리를 읽어 마크다운 리포트 `eval/reports/{run}.md`를 만
 
 **결과물**: `eval/runs/baseline-*/`(커밋), `eval/reports/baseline-*.md`, M3 진행 기록.
 
+## 2.5 LangSmith 도입 (2026-09-30 결정 추가)
+
+결정과 근거는 `docs/기획.md` "평가·관측 도구" 행. 원문을 트레이스에 올리는 방향으로 확정했다.
+
+- **트레이싱**: `extract_post`를 `@traceable`로 감싸고 OpenAI 클라이언트를 `wrap_openai`로 감싼다.
+  - 글 하나가 트레이스 하나이고, 분류 → 구조화 → 재시도 호출이 하위 단계로 보인다.
+  - 메타데이터: source/post_id, URL, 모델, effort, 프롬프트 버전, run 이름
+  - `LANGSMITH_TRACING` 환경 변수로 켜고 기본은 끈다. 키가 없으면 지금과 똑같이 동작한다.
+  - `langsmith`는 `pipeline` 의존성 그룹에 넣는다. 서버 의존성에는 넣지 않는다.
+- **Dataset**
+  - `techblog-pilot-80`: 입력은 글 ID·제목·평문
+  - 정답셋(4단계)은 정답 출력을 포함한 별도 Dataset으로 둔다.
+  - 실패 사례 회귀셋은 3단계에서 트레이스를 보며 추가한다.
+- **Experiment**: baseline run을 API 재호출 없이 `evaluate()`로 등록한다. target은 run 파일을 읽어 돌려주는 함수다.
+- **사용자 준비물**: LangSmith 계정과 `LANGSMITH_API_KEY`(`.env`). 계정 생성과 키 입력은 사용자가 직접 한다.
+- **테스트**: 트레이싱을 끈 상태에서 기존 동작이 같은지, 메타데이터 구성 함수
+
 ## 3. 프롬프트·스키마·분류 목록 수정
 
 2의 점검 결과를 근거로 고친다. 선택지가 있는 결정은 그때 데이터를 보여 주고 사용자에게 묻는다. 결정되면 `docs/기획.md`에 반영한다.
@@ -240,7 +258,7 @@ run 디렉터리를 읽어 마크다운 리포트 `eval/reports/{run}.md`를 만
 | 발췌 원문 존재율 | `1 - dropped_evidence / evidence_total` (전체 80편에서도 계산 가능) |
 | 비용 | 편당 토큰·비용, 1,262편 추정 비용 |
 
-**`eval/judge.py`**: OpenAI API 채점
+**`eval/judge.py`**: OpenAI API 채점 (LangSmith `evaluate()`의 evaluator로도 등록)
 
 - 입력: 원문 평문 + 추출 결과 + 정답 항목
 - 출력: structured output으로 받는다.
@@ -253,7 +271,7 @@ run 디렉터리를 읽어 마크다운 리포트 `eval/reports/{run}.md`를 만
 
 **채점 신뢰도 확인**
 
-- 채점 10건을 뽑아 사용자가 직접 점수를 매긴다.
+- 채점 10건을 뽑아 사용자가 LangSmith Annotation queue에서 원문을 보며 직접 점수를 매긴다.
 - 채점기와의 일치 정도를 `docs/milestones/M3.md`에 기록한다.
 
 **비교 리포트** `eval/compare.py`
