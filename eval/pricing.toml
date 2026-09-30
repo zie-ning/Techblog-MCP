@@ -1,0 +1,9 @@
+# 모델별 단가 (USD / 100만 토큰). 평가 리포트가 run 비용과 전체 1,262편 추출 비용을 추정하는 데 쓴다.
+# 값은 실행 시점의 OpenAI 공식 가격을 확인해 채운다. 확인한 날짜를 checked에 적는다.
+# cached_input은 캐시된 입력 토큰 단가, reasoning 토큰은 output 단가로 계산한다.
+#
+# [models."gpt-5-mini"]
+# input = 0.0
+# cached_input = 0.0
+# output = 0.0
+# checked = "YYYY-MM-DD"
