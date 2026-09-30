@@ -4,6 +4,8 @@
 - 누가 왜 수집하는지 밝히는 User-Agent를 쓰고 브라우저로 위장하지 않는다.
 - 요청 전에 robots.txt를 확인해 금지된 경로는 요청하지 않는다.
 - 같은 호스트에 대한 요청 사이에 간격을 둔다.
+- 봇 확인은 원칙적으로 우회하지 않는다. 운영 측 허락을 받은 호스트만 `CURL_HOSTS`에 두고
+  시스템 curl로 요청한다 (위 세 원칙은 그대로 적용).
 """
 
 import time
@@ -12,7 +14,15 @@ from urllib.robotparser import RobotFileParser
 
 import httpx
 
+from pipeline.collect.curl_transport import CurlTransport
+
 USER_AGENT = "TechblogCaseBot/0.1 (+https://github.com/zie-ning/Techblog-Search-MCP)"
+
+# WAF가 Python TLS 클라이언트를 막아 curl로 요청하는 호스트.
+# 운영 측 허락을 받은 곳만 추가한다 (docs/기획.md "수집 예절")
+CURL_HOSTS = {
+    "techblog.woowahan.com",  # 2026-09-30 허락
+}
 
 
 class DisallowedByRobots(Exception):
@@ -26,6 +36,7 @@ class PoliteClient:
             headers={"User-Agent": USER_AGENT},
             timeout=timeout,
             follow_redirects=True,
+            mounts={f"https://{host}": CurlTransport(timeout) for host in CURL_HOSTS},
         )
         self._robots: dict[str, RobotFileParser] = {}
         self._last_request_at: dict[str, float] = {}

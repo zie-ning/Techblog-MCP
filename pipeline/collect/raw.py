@@ -6,13 +6,16 @@
 
 import json
 from dataclasses import asdict, dataclass
-from datetime import date, datetime
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 RAW_DIR = Path(__file__).resolve().parents[2] / "data" / "raw"
 
 # 수집 기간: 2023-09 이후 발행된 글 (docs/기획.md "수집 기간")
 COLLECT_SINCE = date(2023, 9, 1)
+
+# 국내 블로그라 발행 날짜는 한국 시간 기준으로 본다
+KST = timezone(timedelta(hours=9))
 
 
 @dataclass
@@ -40,11 +43,15 @@ class RawPost:
 
 
 def in_collect_period(published_at: datetime) -> bool:
-    return published_at.date() >= COLLECT_SINCE
+    return published_at.astimezone(KST).date() >= COLLECT_SINCE
 
 
 def raw_path(source: str, post_id: str, raw_dir: Path = RAW_DIR) -> Path:
     return raw_dir / source / f"{post_id}.json"
+
+
+def exists(source: str, post_id: str, raw_dir: Path = RAW_DIR) -> bool:
+    return raw_path(source, post_id, raw_dir).exists()
 
 
 def save(post: RawPost, raw_dir: Path = RAW_DIR) -> Path:

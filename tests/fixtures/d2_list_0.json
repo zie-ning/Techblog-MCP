@@ -1,0 +1,8 @@
+{
+  "content": [
+    {"postTitle": "추천 시스템 개선기", "postHtml": "잘린 요약", "postPublishedAt": "1741737600000", "url": "/helloworld/1000003"},
+    {"postTitle": "밋업 안내", "postHtml": "잘린 요약", "postPublishedAt": "1741651200000", "url": "/news/1000002"},
+    {"postTitle": "경계일 글", "postHtml": "잘린 요약", "postPublishedAt": "1693494000000", "url": "/helloworld/1000001"}
+  ],
+  "page": {"size": 3, "totalElements": 5, "totalPages": 2, "number": 0}
+}

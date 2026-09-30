@@ -22,7 +22,8 @@ uv run ruff check                         # 린트
 uv run ruff format                        # 포맷 (CI는 --check로 검사)
 uv run --python 3.11 --isolated pytest    # 최소 지원 버전(3.11)에서 테스트
 
-uv run python -m pipeline.collect oliveyoung                                   # 원문 수집
+uv run python -m pipeline.collect all                                          # 원문 수집 (블로그 이름 지정 가능, 캐시된 글은 건너뜀)
+uv run python -m pipeline.collect kakao --refresh                              # 캐시 무시하고 다시 수집
 uv run python -m pipeline.extract oliveyoung --post-ids-file eval/m1_posts.txt # 추출 (OPENAI_API_KEY 필요, .env 가능)
 uv run python -m pipeline.extract oliveyoung --outdated                        # 프롬프트·모델이 바뀐 글만 재추출
 uv run python -m pipeline.normalize [--apply]                                  # 기술명 재정규화·미등록 리포트
@@ -72,6 +73,6 @@ CI(`.github/workflows/ci.yml`)는 Python 3.11과 3.14에서 `uv sync --locked` �
 
 ## 수집 규칙
 
-- 정직한 User-Agent(예: `TechblogCaseBot/0.1 (+저장소 URL)`)를 쓰고 브라우저로 위장하지 않는다. robots.txt를 지키고, Cloudflare 등 봇 확인은 우회하지 않으며, 요청 사이에 간격을 둔다.
+- 정직한 User-Agent(예: `TechblogCaseBot/0.1 (+저장소 URL)`)를 쓰고 브라우저로 위장하지 않는다. robots.txt를 지키고 요청 사이에 간격을 둔다. Cloudflare 등 봇 확인 우회는 운영 측 허락을 받은 사이트에 한해 브라우저 위장 없이만 허용하고, 대상 호스트는 `pipeline/collect/http.py`의 `CURL_HOSTS`에 둔다.
 - 원문 전체는 `data/raw/`에만 두고 배포하지 않는다. 배포 데이터에는 요약, 짧은 발췌(필드당 1~2문장), 원문 링크만 넣는다.
 - 블로그별 수집 경로(피드, 사이트맵, 공개 JSON API, WordPress REST API)와 주의점은 `docs/기획.md`의 "블로그 수집 조사 결과"에 정리되어 있다.

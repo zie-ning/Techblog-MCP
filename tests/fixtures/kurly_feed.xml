@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 컬리 RSS 구조를 본뜬 테스트용 샘플 (설명은 원문이 아닌 임의 문장) -->
+<rss version="2.0">
+  <channel>
+    <title>컬리 기술 블로그</title>
+    <item>
+      <title>배송 도메인 RAG 적용기</title>
+      <link>https://helloworld.kurly.com/blog/delivery-rag/</link>
+      <guid>https://helloworld.kurly.com/blog/delivery-rag/</guid>
+      <description>짧은 요약</description>
+      <pubDate>Tue, 11 Mar 2025 15:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>경계일 글</title>
+      <link>https://helloworld.kurly.com/blog/boundary/</link>
+      <guid>https://helloworld.kurly.com/blog/boundary/</guid>
+      <description>짧은 요약</description>
+      <pubDate>Thu, 31 Aug 2023 15:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>오래된 글</title>
+      <link>https://helloworld.kurly.com/blog/old-post/</link>
+      <guid>https://helloworld.kurly.com/blog/old-post/</guid>
+      <description>짧은 요약</description>
+      <pubDate>Thu, 31 Aug 2023 14:59:00 GMT</pubDate>
+    </item>
+  </channel>
+</rss>

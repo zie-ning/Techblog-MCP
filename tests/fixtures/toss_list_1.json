@@ -1,0 +1,12 @@
+{
+  "resultType": "SUCCESS",
+  "success": {
+    "page": 1, "pageSize": 3, "count": 5,
+    "next": "/api-public/v3/ipd-thor/api/v1/workspaces/15/posts?page=2&size=3",
+    "results": [
+      {"key": "smoke-test", "title": "스모크 테스트 자동화 ", "category": "Engineering", "publishedTime": "2025-03-12T10:00:00+09:00", "isPublished": true, "fullDescription": "평문 본문"},
+      {"key": "savings-character", "title": "적금 캐릭터 디자인", "category": "Design", "publishedTime": "2025-03-11T10:00:00+09:00", "isPublished": true, "fullDescription": "평문 본문"},
+      {"key": "boundary", "title": "경계일 글", "category": "프로덕트", "publishedTime": "2023-09-01T00:00:00+09:00", "isPublished": true, "fullDescription": "평문 본문"}
+    ]
+  }
+}

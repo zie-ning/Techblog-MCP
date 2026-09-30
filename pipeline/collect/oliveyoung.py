@@ -10,6 +10,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 from pipeline.collect import raw
+from pipeline.collect.common import CollectResult
 from pipeline.collect.http import PoliteClient
 
 SOURCE = "oliveyoung"
@@ -44,11 +45,16 @@ def parse_feed(xml: bytes, collected_at: datetime) -> list[raw.RawPost]:
     return posts
 
 
-def collect(client: PoliteClient, raw_dir: Path = raw.RAW_DIR) -> list[raw.RawPost]:
-    """피드를 받아 수집 기간 안의 글을 저장하고 반환한다. 피드에 본문이 있어 항상 새로 덮어쓴다."""
+def collect(
+    client: PoliteClient, raw_dir: Path = raw.RAW_DIR, refresh: bool = False
+) -> CollectResult:
+    """피드를 받아 수집 기간 안의 글을 저장한다.
+
+    피드에 본문이 있어 `refresh`와 관계없이 항상 덮어쓴다.
+    """
     response = client.get(FEED_URL)
     posts = parse_feed(response.content, collected_at=datetime.now(UTC))
     posts = [p for p in posts if raw.in_collect_period(p.published_at)]
     for post in posts:
         raw.save(post, raw_dir)
-    return posts
+    return CollectResult(saved=posts)
