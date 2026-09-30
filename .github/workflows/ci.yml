@@ -13,7 +13,7 @@ jobs:
         python-version: ["3.11", "3.14"]
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.2.0  # v7 이후 메이저 태그(v10)가 없어 정확한 버전으로 고정
         with:
           python-version: ${{ matrix.python-version }}
       - run: uv sync --locked
