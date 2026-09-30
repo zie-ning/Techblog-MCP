@@ -47,6 +47,10 @@ def raw_path(source: str, post_id: str, raw_dir: Path = RAW_DIR) -> Path:
     return raw_dir / source / f"{post_id}.json"
 
 
+def exists(source: str, post_id: str, raw_dir: Path = RAW_DIR) -> bool:
+    return raw_path(source, post_id, raw_dir).exists()
+
+
 def save(post: RawPost, raw_dir: Path = RAW_DIR) -> Path:
     path = raw_path(post.source, post.post_id, raw_dir)
     path.parent.mkdir(parents=True, exist_ok=True)

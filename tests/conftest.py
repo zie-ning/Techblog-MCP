@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import httpx
 import pytest
 
 from pipeline.build_index import build
@@ -105,3 +106,25 @@ def sample_db(tmp_path_factory) -> Path:
     path = tmp_path_factory.mktemp("db") / "techblog.sqlite"
     build(SAMPLE_ENTRIES, path)
     return path
+
+
+class FakeClient:
+    """URL별로 정해 둔 응답을 돌려주는 PoliteClient 대역. 요청한 URL을 기록한다."""
+
+    def __init__(self, responses: dict[str, bytes | httpx.Response | Exception]):
+        self.responses = responses
+        self.requested: list[str] = []
+
+    def get(self, url: str) -> httpx.Response:
+        self.requested.append(url)
+        body = self.responses[url]
+        if isinstance(body, Exception):
+            raise body
+        if isinstance(body, httpx.Response):
+            return body
+        return httpx.Response(200, content=body, request=httpx.Request("GET", url))
+
+
+@pytest.fixture
+def fake_client():
+    return FakeClient
