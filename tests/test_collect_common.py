@@ -72,3 +72,9 @@ def test_collect_each_refresh_refetches_cached(tmp_path):
         refresh=True,
     )
     assert [p.published_at.month for p in result.saved] == [2]
+
+
+def test_collect_period_is_judged_in_kst():
+    # 한국 시간 2023-09-01 00:00 = UTC 2023-08-31 15:00
+    assert raw.in_collect_period(datetime(2023, 8, 31, 15, 0, tzinfo=UTC))
+    assert not raw.in_collect_period(datetime(2023, 8, 31, 14, 59, tzinfo=UTC))

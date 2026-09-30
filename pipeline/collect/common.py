@@ -4,15 +4,13 @@ import sys
 import xml.etree.ElementTree as ET
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import date, timedelta, timezone
+from datetime import date
 from pathlib import Path
 
 import httpx
 
 from pipeline.collect import raw
 from pipeline.collect.http import DisallowedByRobots
-
-KST = timezone(timedelta(hours=9))
 
 _SITEMAP_NS = "{http://www.sitemaps.org/schemas/sitemap/0.9}"
 
