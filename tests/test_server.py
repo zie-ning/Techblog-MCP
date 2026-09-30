@@ -90,3 +90,21 @@ def test_prompt():
     result = asyncio.run(server.server.get_prompt("techblog", {"topic": "선착순 쿠폰"}))
     text = result.messages[0].content.text
     assert "선착순 쿠폰" in text and "get_details" in text
+
+
+def test_reference_principle_is_communicated():
+    # 사례는 참고 자료라는 원칙이 서버 안내·search 설명·결과·prompt에 모두 들어 있어야 한다
+    from techblog_mcp import render
+
+    assert render.REFERENCE_PRINCIPLE in server.INSTRUCTIONS
+    tools = {t.name: t for t in asyncio.run(server.server.list_tools())}
+    assert render.REFERENCE_PRINCIPLE in tools["search"].description
+    assert "설계 판단의 근거로" not in tools["get_details"].description
+
+    assert render.REFERENCE_RULE in call("search", query="선착순 쿠폰")
+    assert render.REFERENCE_RULE in call("get_details", ids=["case_0001"])
+
+    prompt = asyncio.run(server.server.get_prompt("techblog", {"topic": "쿠폰"}))
+    text = prompt.messages[0].content.text
+    assert '"참고 사례"와 "제안"을 나눠서' in text
+    assert "그대로 적용하라고 권하지 않는다" in text
