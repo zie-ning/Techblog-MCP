@@ -273,7 +273,8 @@ run 디렉터리를 읽어 마크다운 리포트 `eval/reports/{run}.md`를 만
 
 **채점 신뢰도 확인**
 
-- 채점 10건을 뽑아 사용자가 LangSmith Annotation queue에서 원문을 보며 직접 점수를 매긴다.
+- ~~채점 10건을 뽑아 사용자가 LangSmith Annotation queue에서 원문을 보며 직접 점수를 매긴다.~~
+  2026-10-01 변경: 사람이 채점 결과를 검수하지 않는다. Claude Code 세션이 채점 결과를 원문·추출 결과와 대조한다.
 - 채점기와의 일치 정도를 `docs/milestones/M3.md`에 기록한다.
 
 **비교 리포트** `eval/compare.py`
