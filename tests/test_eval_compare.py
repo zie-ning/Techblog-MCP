@@ -27,3 +27,9 @@ def test_compare_report_lists_metrics_and_changes():
     report = build_report([a, b], {"https://e/1": 5000, "https://e/2": 300}, {"m": PRICE})
     assert "| 인사이트 글 | 0 (0%) | 1 (50%) |" in report
     assert "구조화 유형·항목 수가 달라진 글 1편" in report
+
+
+def test_kind_changes_ignores_posts_missing_from_a_run():
+    a, b = _run("a", "사례", 1), _run("b", "사례", 1)
+    b.posts = b.posts[:1]  # b에는 글 2가 없다
+    assert kind_changes([a, b]) == []

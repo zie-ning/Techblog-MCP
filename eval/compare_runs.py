@@ -106,10 +106,10 @@ def run_metrics(run: Run, lengths: dict[str, int], pricing: dict) -> dict[str, s
 
 
 def kind_changes(runs: list[Run]) -> list[list[str]]:
-    """run마다 구조화 유형이나 항목 수가 달라진 글."""
+    """run마다 구조화 유형이나 항목 수가 달라진 글. 모든 run에 있는 글만 비교한다."""
     by_run = [{(p.source, p.post_id): p for p in r.posts} for r in runs]
     counts = [Counter(e.post_url for e in r.entries) for r in runs]
-    keys = sorted(set().union(*by_run))
+    keys = sorted(set.intersection(*(set(b) for b in by_run)))
     rows = []
     for key in keys:
         records = [b.get(key) for b in by_run]
@@ -134,7 +134,7 @@ def build_report(runs: list[Run], lengths: dict[str, int], pricing: dict) -> str
         "",
     ]
     changes = kind_changes(runs)
-    lines += [f"## 구조화 유형·항목 수가 달라진 글 {len(changes)}편", ""]
+    lines += [f"## 구조화 유형·항목 수가 달라진 글 {len(changes)}편 (모든 run에 있는 글 기준)", ""]
     lines += _table(["글", *names, "제목"], changes)
     return "\n".join(lines) + "\n"
 
