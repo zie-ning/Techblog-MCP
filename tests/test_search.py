@@ -34,8 +34,7 @@ def test_search_by_korean_alias_finds_english_name(conn):
 
 
 def test_search_filters(conn):
-    assert ids(q.search(conn, "쿠폰", q.Filters(kind="인사이트"), 5)) == []
-    assert ids(q.search(conn, "에이전트", q.Filters(kind="인사이트"), 5)) == ["case_0004"]
+    assert ids(q.search(conn, "에이전트 완료 조건", q.Filters(), 5))[0] == "case_0004"
     # 보조 문제 유형으로도 매칭
     assert ids(q.search(conn, "쿠폰", q.Filters(problem_type="트래픽 급증 대응"), 5)) == [
         "case_0001"
@@ -73,10 +72,11 @@ def test_get_details_with_siblings(conn):
 
 def test_aggregate_by_technology(conn):
     result = q.aggregate(conn, "technology", q.Filters(), 10)
-    assert (result.cases, result.insights, result.companies) == (3, 1, 2)
+    assert (result.total, result.with_results, result.companies) == (4, 1, 2)
     groups = {g.key: g for g in result.groups}
     assert groups["Kafka"].companies == ["토스"]
-    assert groups["Claude Code"].insights == 1
+    assert (groups["Redis"].total, groups["Redis"].with_results) == (1, 1)
+    assert (groups["Claude Code"].total, groups["Claude Code"].with_results) == (1, 0)
 
 
 def test_aggregate_problem_type_counts_primary_only(conn):
@@ -88,8 +88,8 @@ def test_aggregate_problem_type_counts_primary_only(conn):
 
 def test_aggregate_rejected_alternatives_only_cases_with_them(conn):
     result = q.aggregate(conn, "rejected_alternative", q.Filters(), 10)
-    # 설계 방식 대안(DB 비관적 락)은 세지 않고 기술 대안이 있는 사례만 모수로 센다
-    assert result.cases == 1 and result.insights == 0
+    # 설계 방식 대안(DB 비관적 락)은 세지 않고 기술 대안이 있는 항목만 모수로 센다
+    assert result.total == 1
     assert {g.key for g in result.groups} == {"Kafka"}
 
 

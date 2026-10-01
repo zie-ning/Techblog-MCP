@@ -4,10 +4,8 @@
   "url": "https://techblog.woowahan.com/17386/",
   "title": "우리 팀은 카프카를 어떻게 사용하고 있을까",
   "post_type": "기술 선택·도입형",
-  "kind": "사례",
-  "kind_alternatives": [
-    "인사이트"
-  ],
+  "kind": "추출",
+  "kind_alternatives": [],
   "entries": [
     {
       "summary": "주문·배달 이벤트의 순서와 누락을 키 기반 파티셔닝과 Debezium을 이용한 Transactional Outbox 패턴으로 보장",
@@ -78,6 +76,6 @@
       ]
     }
   ],
-  "notes": "2년 차 개발자가 팀의 카프카 활용을 넓게 소개하는 글이라 인사이트로 볼 수도 있지만, 활용 방식마다 구체적인 문제·결정·이유가 있어 사례 3개로 봄",
+  "notes": "팀의 카프카 활용을 넓게 소개하는 글이지만 활용 방식마다 구체적인 문제·결정·이유가 있어 항목 3개로 봄",
   "reviewed": false
 }

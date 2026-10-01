@@ -91,7 +91,6 @@ def build_report(
         entries_by_url.setdefault(e.post_url, []).append(e)
     models = sorted({(p.model, p.reasoning_effort) for p in posts})
     kinds = Counter(p.kind for p in posts)
-    cases = [e for e in entries if e.kind == "사례"]
 
     # 비용
     usage = Usage()
@@ -104,9 +103,8 @@ def build_report(
     lines += [
         f"- 모델: {model_names}",
         f"- 프롬프트 버전: {', '.join(sorted({p.prompt_version for p in posts}))}",
-        f"- 글 {len(posts)}편: "
-        + ", ".join(f"{k} {kinds[k]}" for k in ("사례", "인사이트", "제외")),
-        f"- 항목 {len(entries)}개: 사례 {len(cases)}, 인사이트 {len(entries) - len(cases)}",
+        f"- 글 {len(posts)}편: " + ", ".join(f"{k} {kinds[k]}" for k in ("추출", "제외")),
+        f"- 항목 {len(entries)}개",
         f"- 토큰: 호출 {usage.calls}회, 입력 {usage.input_tokens:,}"
         f" (캐시 {usage.cached_input_tokens:,}),"
         f" 출력 {usage.output_tokens:,} (reasoning {usage.reasoning_tokens:,})",
@@ -127,22 +125,22 @@ def build_report(
     lines.append("")
 
     # 블로그별 분포
-    lines += ["## 블로그별 구조화 유형", ""]
+    lines += ["## 블로그별 추출 여부", ""]
     sources = sorted({p.source for p in posts})
     rows = []
     for s in sources:
         c = Counter(p.kind for p in posts if p.source == s)
         n_entries = sum(len(entries_by_url.get(p.url, [])) for p in posts if p.source == s)
-        rows.append([s, c["사례"], c["인사이트"], c["제외"], n_entries])
-    lines += _table(["블로그", "사례", "인사이트", "제외", "항목 수"], rows)
+        rows.append([s, c["추출"], c["제외"], n_entries])
+    lines += _table(["블로그", "추출", "제외", "항목 수"], rows)
     lines.append("")
 
-    lines += ["## 글 유형 × 구조화 유형", ""]
+    lines += ["## 글 유형 × 추출 여부", ""]
     pt = Counter((p.post_type, p.kind) for p in posts)
     post_types = sorted({p.post_type for p in posts})
     lines += _table(
-        ["글 유형", "사례", "인사이트", "제외"],
-        [[t, pt[(t, "사례")], pt[(t, "인사이트")], pt[(t, "제외")]] for t in post_types],
+        ["글 유형", "추출", "제외"],
+        [[t, pt[(t, "추출")], pt[(t, "제외")]] for t in post_types],
     )
     lines.append("")
 
@@ -206,8 +204,8 @@ def build_report(
     lines.append("")
 
     # 버린 대안
-    rejected = [(e, r) for e in cases for r in e.rejected_alternatives]
-    lines += [f"## 버린 대안 {len(rejected)}개 (사례 {len(cases)}개 중)", ""]
+    rejected = [(e, r) for e in entries for r in e.rejected_alternatives]
+    lines += [f"## 버린 대안 {len(rejected)}개 (항목 {len(entries)}개 중)", ""]
     for e, r in rejected:
         both = " **(technologies에도 있음)**" if r.name in e.technologies else ""
         raw_name = f" ← {r.name_raw}" if r.name_raw != r.name else ""

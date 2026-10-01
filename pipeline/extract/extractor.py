@@ -2,7 +2,7 @@
 
 발췌 검증에 실패한 항목이 있으면 실패 목록을 알려 주고 한 번 다시 구조화한 뒤,
 두 시도 중 검증을 통과한 내용이 더 많은 쪽을 쓴다. 그래도 실패한 항목은 버리고,
-필수 필드가 비는 사례는 통째로 버린다. 버린 발췌는 글별 기록에 남긴다.
+해결 방법이 비는 항목은 통째로 버린다. 버린 발췌는 글별 기록에 남긴다.
 """
 
 import hashlib
@@ -19,13 +19,11 @@ from pipeline.extract import prompt_version, prompts, tracing
 from pipeline.extract.evidence import SourceText
 from pipeline.extract.schema import (
     MAX_SECONDARY_PROBLEM_TYPES,
-    CaseDraft,
-    CaseExtraction,
     Classification,
     Entry,
+    EntryDraft,
     Evidenced,
-    InsightDraft,
-    InsightExtraction,
+    Extraction,
     Point,
     PostRecord,
     RejectedAlternative,
@@ -141,12 +139,8 @@ def extract_post(post: RawPost, llm: LLM) -> ExtractResult:
     raw_outputs: dict = {"classification": classification.model_dump(), "attempts": []}
 
     chosen = _Attempt(drafts=[], dropped=[], total=0)
-    if classification.kind != "제외":
-        if classification.kind == "사례":
-            instructions, schema = prompts.structure_case(), CaseExtraction
-        else:
-            instructions, schema = prompts.structure_insight(), InsightExtraction
-
+    if classification.kind == "추출":
+        instructions, schema = prompts.structure(), Extraction
         result = llm.parse(instructions, user_input, schema, usage, "구조화")
         raw_outputs["attempts"].append(result.model_dump())
         chosen = _verify_all(result, source)
@@ -193,7 +187,7 @@ def extract_post(post: RawPost, llm: LLM) -> ExtractResult:
 class _Attempt:
     """구조화 시도 한 번의 검증 결과."""
 
-    drafts: list[CaseDraft | InsightDraft]  # 검증을 통과한 항목들
+    drafts: list[EntryDraft]  # 검증을 통과한 항목들
     dropped: list[str]  # 버린 발췌
     total: int  # 검증 전 발췌 수
 
@@ -203,11 +197,11 @@ class _Attempt:
         return len(self.drafts), kept, -len(self.dropped)
 
 
-def _verify_all(result: CaseExtraction | InsightExtraction, source: SourceText) -> _Attempt:
-    drafts: list[CaseDraft | InsightDraft] = []
+def _verify_all(result: Extraction, source: SourceText) -> _Attempt:
+    drafts: list[EntryDraft] = []
     dropped: list[str] = []
     total = 0
-    for draft in _drafts_of(result):
+    for draft in result.entries:
         total += len(_evidences(draft))
         verified, failed = verify_draft(draft, source)
         dropped += failed
@@ -216,23 +210,13 @@ def _verify_all(result: CaseExtraction | InsightExtraction, source: SourceText) 
     return _Attempt(drafts=drafts, dropped=dropped, total=total)
 
 
-def _drafts_of(result: CaseExtraction | InsightExtraction) -> list[CaseDraft | InsightDraft]:
-    if isinstance(result, CaseExtraction):
-        return list(result.cases)
-    return [result.insight]
+def _evidences(draft: EntryDraft) -> list[str]:
+    points = [*draft.problem_situation, *draft.solution, *draft.performance_ops]
+    return [p.evidence for p in points] + [r.evidence for r in draft.rejected_alternatives]
 
 
-def _evidences(draft: CaseDraft | InsightDraft) -> list[str]:
-    if isinstance(draft, CaseDraft):
-        points = [*draft.problem_situation, *draft.solution, *draft.performance_ops]
-        return [p.evidence for p in points] + [r.evidence for r in draft.rejected_alternatives]
-    return [p.evidence for p in [*draft.key_points, *draft.takeaways]]
-
-
-def verify_draft(
-    draft: CaseDraft | InsightDraft, source: SourceText
-) -> tuple[CaseDraft | InsightDraft | None, list[str]]:
-    """발췌가 원문에 없는 항목을 버린다. 필수 필드가 비면 None. (결과, 버린 발췌 목록)"""
+def verify_draft(draft: EntryDraft, source: SourceText) -> tuple[EntryDraft | None, list[str]]:
+    """발췌가 원문에 없는 항목을 버린다. 해결 방법이 비면 None. (결과, 버린 발췌 목록)"""
     dropped: list[str] = []
 
     def keep(points: list[Point]) -> list[Point]:
@@ -244,35 +228,29 @@ def verify_draft(
                 dropped.append(p.evidence)
         return kept
 
-    if isinstance(draft, CaseDraft):
-        rejected = []
-        for r in draft.rejected_alternatives:
-            if source.contains(r.evidence):
-                rejected.append(r)
-            else:
-                dropped.append(r.evidence)
-        verified = draft.model_copy(
-            update={
-                "problem_situation": keep(draft.problem_situation),
-                "solution": keep(draft.solution),
-                "performance_ops": keep(draft.performance_ops),
-                "rejected_alternatives": rejected,
-            }
-        )
-        ok = verified.problem_situation and verified.solution
-    else:
-        verified = draft.model_copy(
-            update={"key_points": keep(draft.key_points), "takeaways": keep(draft.takeaways)}
-        )
-        ok = bool(verified.key_points)
-    return (verified if ok else None), dropped
+    rejected = []
+    for r in draft.rejected_alternatives:
+        if source.contains(r.evidence):
+            rejected.append(r)
+        else:
+            dropped.append(r.evidence)
+    verified = draft.model_copy(
+        update={
+            "problem_situation": keep(draft.problem_situation),
+            "solution": keep(draft.solution),
+            "performance_ops": keep(draft.performance_ops),
+            "rejected_alternatives": rejected,
+        }
+    )
+    # 문제 상황은 팁·활용 경험 글에서 비어 있을 수 있어 해결 방법만 필수로 본다
+    return (verified if verified.solution else None), dropped
 
 
 def _dedupe(items: list[str]) -> list[str]:
     return list(dict.fromkeys(i.strip() for i in items if i.strip()))
 
 
-def to_entry(draft: CaseDraft | InsightDraft, post: RawPost) -> Entry:
+def to_entry(draft: EntryDraft, post: RawPost) -> Entry:
     secondary = [
         t for t in _dedupe(draft.secondary_problem_types) if t != draft.primary_problem_type
     ]
@@ -280,7 +258,7 @@ def to_entry(draft: CaseDraft | InsightDraft, post: RawPost) -> Entry:
     def evidenced(points: list[Point]) -> list[Evidenced]:
         return [Evidenced(text=p.text, evidence=p.evidence) for p in points]
 
-    common = dict(
+    entry = Entry(
         id="",
         source=post.source,
         company=COMPANY_NAMES[post.source],
@@ -293,31 +271,19 @@ def to_entry(draft: CaseDraft | InsightDraft, post: RawPost) -> Entry:
         technologies=[],  # 아래 renormalize에서 채운다
         technologies_raw=_dedupe(draft.technologies),
         tags=_dedupe(draft.tags),
+        problem_situation=evidenced(draft.problem_situation),
+        solution=evidenced(draft.solution),
+        performance_ops=evidenced(draft.performance_ops),
+        rejected_alternatives=[
+            RejectedAlternative(
+                name=r.name.strip(),  # 아래 renormalize에서 정규화한다
+                name_raw=r.name.strip(),
+                kind=r.kind,
+                reason=r.reason,
+                evidence=r.evidence,
+            )
+            for r in draft.rejected_alternatives
+        ],
     )
-    if isinstance(draft, CaseDraft):
-        entry = Entry(
-            kind="사례",
-            problem_situation=evidenced(draft.problem_situation),
-            solution=evidenced(draft.solution),
-            performance_ops=evidenced(draft.performance_ops),
-            rejected_alternatives=[
-                RejectedAlternative(
-                    name=r.name.strip(),  # 아래 renormalize에서 정규화한다
-                    name_raw=r.name.strip(),
-                    kind=r.kind,
-                    reason=r.reason,
-                    evidence=r.evidence,
-                )
-                for r in draft.rejected_alternatives
-            ],
-            **common,
-        )
-    else:
-        entry = Entry(
-            kind="인사이트",
-            key_points=evidenced(draft.key_points),
-            takeaways=evidenced(draft.takeaways),
-            **common,
-        )
     # 기술명 정규화 규칙은 사전 보강 후 재정규화(pipeline.normalize)와 같은 함수 하나로 적용한다
     return renormalize(entry)[0]

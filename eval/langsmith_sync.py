@@ -106,7 +106,6 @@ def post_checks(inputs: dict, outputs: dict) -> dict:
     short = len(inputs.get("text", "")) < SHORT_TEXT
     results = [
         {"key": "excluded", "score": int(not extracted)},
-        {"key": "insight", "score": int(outputs["kind"] == "인사이트")},
         {"key": "entries", "score": len(outputs["entries"])},
         # 발췌가 없으면(제외 글) 존재율을 매기지 않는다
         {"key": "evidence_rate", "score": (total - dropped) / total if total else None},

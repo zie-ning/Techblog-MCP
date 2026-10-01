@@ -8,11 +8,9 @@ from pipeline.extract import prompt_version
 from pipeline.extract.__main__ import parse_post_ids
 from pipeline.extract.extractor import ExtractResult, extract_post
 from pipeline.extract.schema import (
-    CaseDraft,
-    CaseExtraction,
     Classification,
-    InsightDraft,
-    InsightExtraction,
+    EntryDraft,
+    Extraction,
     Point,
     RejectedAlternativeDraft,
     Usage,
@@ -55,7 +53,7 @@ class FakeLLM:
         return response
 
 
-def case(**overrides) -> CaseDraft:
+def case(**overrides) -> EntryDraft:
     base = dict(
         primary_problem_type="동시성·락",
         secondary_problem_types=["동시성·락", "트래픽 급증 대응", "캐싱", "비용 절감"],
@@ -84,22 +82,22 @@ def case(**overrides) -> CaseDraft:
         ],
     )
     base.update(overrides)
-    return CaseDraft(**base)
+    return EntryDraft(**base)
 
 
-CLASSIFIED_CASE = Classification(post_type="문제 해결형", kind="사례", reason="문제 해결")
+CLASSIFIED_CASE = Classification(post_type="문제 해결형", kind="추출", reason="문제 해결")
 
 
 def test_extract_case_verifies_and_normalizes():
     # 첫 결과에 지어낸 발췌가 있으면 한 번 다시 요청하고, 그래도 남은 항목은 버린다
-    llm = FakeLLM([CLASSIFIED_CASE, CaseExtraction(cases=[case()]), CaseExtraction(cases=[case()])])
+    llm = FakeLLM([CLASSIFIED_CASE, Extraction(entries=[case()]), Extraction(entries=[case()])])
     result = extract_post(POST, llm)
 
-    assert [c[0] for c in llm.calls] == [Classification, CaseExtraction, CaseExtraction]
+    assert [c[0] for c in llm.calls] == [Classification, Extraction, Extraction]
     assert llm.steps == ["분류", "구조화", "재시도"]
     assert "처리량이 10배" in llm.calls[2][1][-1]["content"]  # 재요청에 실패 발췌를 알려 줌
 
-    assert result.record.kind == "사례"
+    assert result.record.kind == "추출"
     assert result.record.prompt_version == prompt_version.version()
     assert result.record.dropped_evidence == 1
     [entry] = result.entries
@@ -127,7 +125,7 @@ def test_design_alternative_is_not_normalized_and_old_entries_get_kind():
         evidence="Kafka도 검토했지만 파티션을 줄일 수 없어 제외했습니다.",
     )
     drafted = case(rejected_alternatives=[design], performance_ops=[])
-    llm = FakeLLM([CLASSIFIED_CASE, CaseExtraction(cases=[drafted])])
+    llm = FakeLLM([CLASSIFIED_CASE, Extraction(entries=[drafted])])
     [entry] = extract_post(POST, llm).entries
     # 설계 방식은 기술 사전으로 바꾸지 않는다
     assert entry.rejected_alternatives[0].name == "Kafka 기반 비동기 발급"
@@ -159,7 +157,7 @@ def test_rejected_alternative_keeps_raw_name_when_same_as_used_technology():
         ],
         performance_ops=[],
     )
-    llm = FakeLLM([CLASSIFIED_CASE, CaseExtraction(cases=[drafted])])
+    llm = FakeLLM([CLASSIFIED_CASE, Extraction(entries=[drafted])])
     [entry] = extract_post(POST, llm).entries
     assert entry.technologies == ["Claude"]
     assert entry.rejected_alternatives[0].name == "Claude 3 Haiku"
@@ -169,7 +167,7 @@ def test_extract_drops_case_without_required_fields():
     bad = case(solution=[Point(text="지어냄", evidence="원문에 없는 해결 방법입니다.")])
     good = case(performance_ops=[])
     llm = FakeLLM(
-        [CLASSIFIED_CASE, CaseExtraction(cases=[bad, good]), CaseExtraction(cases=[bad, good])]
+        [CLASSIFIED_CASE, Extraction(entries=[bad, good]), Extraction(entries=[bad, good])]
     )
     result = extract_post(POST, llm)
     assert len(result.entries) == 1
@@ -178,14 +176,14 @@ def test_extract_drops_case_without_required_fields():
 def test_keeps_better_attempt_when_retry_is_worse():
     first = case()  # 지어낸 발췌 1개만 탈락
     worse = case(solution=[Point(text="지어냄", evidence="원문에 없는 해결 방법입니다.")])
-    llm = FakeLLM([CLASSIFIED_CASE, CaseExtraction(cases=[first]), CaseExtraction(cases=[worse])])
+    llm = FakeLLM([CLASSIFIED_CASE, Extraction(entries=[first]), Extraction(entries=[worse])])
     result = extract_post(POST, llm)
     assert len(result.entries) == 1
     assert result.record.dropped_evidences == ["처리량이 10배 늘었습니다."]
 
 
 def test_no_retry_when_all_evidence_found():
-    llm = FakeLLM([CLASSIFIED_CASE, CaseExtraction(cases=[case(performance_ops=[])])])
+    llm = FakeLLM([CLASSIFIED_CASE, Extraction(entries=[case(performance_ops=[])])])
     result = extract_post(POST, llm)
     assert len(llm.calls) == 2
     assert result.record.dropped_evidence == 0
@@ -198,29 +196,22 @@ def test_excluded_post_has_no_entries():
     assert result.entries == []
 
 
-def test_extract_insight():
-    insight = InsightDraft(
-        primary_problem_type="개발 생산성",
-        secondary_problem_types=[],
-        domain="범용",
-        technologies=[],
-        tags=[],
-        key_points=[Point(text="원자 연산", evidence="Redis의 원자 연산으로")],
-        takeaways=[],
-    )
+def test_tip_entry_without_problem_situation_is_kept():
+    # 팁·활용 경험 글은 문제 상황이 없어도 해결 방법만 있으면 항목으로 남긴다
+    tip = case(problem_situation=[], performance_ops=[], rejected_alternatives=[])
     llm = FakeLLM(
         [
-            Classification(post_type="실험·활용기", kind="인사이트", reason="팁"),
-            InsightExtraction(insight=insight),
+            Classification(post_type="실험·활용기", kind="추출", reason="팁"),
+            Extraction(entries=[tip]),
         ]
     )
     [entry] = extract_post(POST, llm).entries
-    assert entry.kind == "인사이트"
-    assert entry.key_points[0].text == "원자 연산"
+    assert entry.problem_situation == []
+    assert entry.solution[0].text == "Redis 원자 연산"
 
 
 def _result(n_entries: int) -> ExtractResult:
-    llm = FakeLLM([CLASSIFIED_CASE, CaseExtraction(cases=[case(performance_ops=[])] * n_entries)])
+    llm = FakeLLM([CLASSIFIED_CASE, Extraction(entries=[case(performance_ops=[])] * n_entries)])
     return extract_post(POST, llm)
 
 
@@ -242,13 +233,13 @@ def test_store_assigns_stable_ids(tmp_path):
 
 def test_record_keeps_usage_and_evidence_total():
     # 첫 시도 발췌 5개(1개 탈락) → 재시도도 같아서 첫 시도를 쓴다. 호출 3회의 사용량 합계
-    llm = FakeLLM([CLASSIFIED_CASE, CaseExtraction(cases=[case()]), CaseExtraction(cases=[case()])])
+    llm = FakeLLM([CLASSIFIED_CASE, Extraction(entries=[case()]), Extraction(entries=[case()])])
     result = extract_post(POST, llm)
     assert result.record.evidence_total == 5
     assert result.record.reasoning_effort == "medium"
     assert result.record.usage == Usage(calls=3, input_tokens=300, output_tokens=30)
     # 검증 전 출력은 재시도까지 모두 남긴다
-    assert result.raw_outputs["classification"]["kind"] == "사례"
+    assert result.raw_outputs["classification"]["kind"] == "추출"
     assert len(result.raw_outputs["attempts"]) == 2
 
 
@@ -290,6 +281,34 @@ def test_old_post_record_without_new_fields_loads():
 
     record = PostRecord.model_validate_json(json.dumps(old))
     assert record.usage == Usage() and record.evidence_total == 0
+    assert record.kind == "추출"  # M3 이전의 사례·인사이트는 추출로 읽는다
+
+
+def test_legacy_insight_entry_moves_points_to_solution():
+    from pipeline.extract.schema import Entry
+
+    point = {"text": "t", "evidence": "e"}
+    legacy = {
+        "id": "case_0001",
+        "kind": "인사이트",
+        "source": "kakao",
+        "company": "카카오",
+        "post_url": "u",
+        "post_title": "제목",
+        "published_at": "2025-01-01",
+        "primary_problem_type": "개발 생산성",
+        "secondary_problem_types": [],
+        "domain": "범용",
+        "technologies": [],
+        "technologies_raw": [],
+        "tags": [],
+        "key_points": [point],
+        "takeaways": [{"text": "t2", "evidence": "e2"}],
+    }
+    entry = Entry.model_validate(legacy)
+    assert [p.text for p in entry.solution] == ["t", "t2"]
+    assert entry.problem_situation == []
+    assert "kind" not in entry.model_dump()
 
 
 def test_parse_post_ids():

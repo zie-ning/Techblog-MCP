@@ -56,12 +56,11 @@ def run_metrics(run: Run, lengths: dict[str, int], pricing: dict) -> dict[str, s
     """run 하나의 요약 지표 (표의 한 열)."""
     posts, entries = run.posts, run.entries
     kinds = Counter(p.kind for p in posts)
-    cases = [e for e in entries if e.kind == "사례"]
     extracted = [p for p in posts if p.kind != "제외"]
     total_ev = sum(p.evidence_total for p in posts)
     dropped_ev = sum(p.dropped_evidence for p in posts)
     missing = Counter(name for e in entries for name in renormalize(e)[1])
-    rejected = [r for e in cases for r in e.rejected_alternatives]
+    rejected = [r for e in entries for r in e.rejected_alternatives]
     short = [p for p in posts if lengths.get(p.url, SHORT_TEXT) < SHORT_TEXT]
     primary = Counter(e.primary_problem_type for e in entries).most_common(1)
     domain = Counter(e.domain for e in entries).most_common(1)
@@ -82,10 +81,9 @@ def run_metrics(run: Run, lengths: dict[str, int], pricing: dict) -> dict[str, s
         "모델 (effort)": f"{posts[0].model} ({posts[0].reasoning_effort or '?'})" if posts else "-",
         "프롬프트 버전": ", ".join(sorted({p.prompt_version for p in posts})),
         "글 수": str(len(posts)),
-        "사례 글": _pct(kinds["사례"], len(posts)),
-        "인사이트 글": _pct(kinds["인사이트"], len(posts)),
+        "추출 글": _pct(kinds["추출"], len(posts)),
         "제외 글": _pct(kinds["제외"], len(posts)),
-        "항목 수 (사례/인사이트)": f"{len(entries)} ({len(cases)}/{len(entries) - len(cases)})",
+        "항목 수": str(len(entries)),
         "글당 항목 수 (제외 빼고)": f"{len(entries) / len(extracted):.2f}" if extracted else "-",
         f"짧은 글(<{SHORT_TEXT:,}자)에서 항목 만든 글": f"{sum(p.kind != '제외' for p in short)}"
         f" / {len(short)}",
@@ -106,7 +104,7 @@ def run_metrics(run: Run, lengths: dict[str, int], pricing: dict) -> dict[str, s
 
 
 def kind_changes(runs: list[Run]) -> list[list[str]]:
-    """run마다 구조화 유형이나 항목 수가 달라진 글. 모든 run에 있는 글만 비교한다."""
+    """run마다 추출 여부나 항목 수가 달라진 글. 모든 run에 있는 글만 비교한다."""
     by_run = [{(p.source, p.post_id): p for p in r.posts} for r in runs]
     counts = [Counter(e.post_url for e in r.entries) for r in runs]
     keys = sorted(set.intersection(*(set(b) for b in by_run)))
@@ -131,10 +129,11 @@ def build_report(runs: list[Run], lengths: dict[str, int], pricing: dict) -> str
         "",
         "- 사전에 없는 기술명은 현재 기술 사전으로 다시 정규화해 센다.",
         "- 버린 대안 유형이 없는 이전 run은 사전에 있으면 기술, 없으면 설계 방식으로 추정한다.",
+        "- 사례·인사이트로 분류한 이전 run은 둘 다 추출로 읽는다.",
         "",
     ]
     changes = kind_changes(runs)
-    lines += [f"## 구조화 유형·항목 수가 달라진 글 {len(changes)}편 (모든 run에 있는 글 기준)", ""]
+    lines += [f"## 추출 여부·항목 수가 달라진 글 {len(changes)}편 (모든 run에 있는 글 기준)", ""]
     lines += _table(["글", *names, "제목"], changes)
     return "\n".join(lines) + "\n"
 

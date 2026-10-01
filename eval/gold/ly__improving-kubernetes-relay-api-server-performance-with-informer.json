@@ -4,7 +4,7 @@
   "url": "https://techblog.lycorp.co.jp/ko/improving-kubernetes-relay-api-server-performance-with-informer",
   "title": "Informer를 사용해 쿠버네티스 중계 API 서버의 성능 개선하기",
   "post_type": "문제 해결형",
-  "kind": "사례",
+  "kind": "추출",
   "kind_alternatives": [],
   "entries": [
     {

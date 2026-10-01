@@ -20,16 +20,17 @@ def _run(name: str, kind: str, n_entries: int) -> Run:
 
 
 def test_compare_report_lists_metrics_and_changes():
-    a, b = _run("a", "사례", 3), _run("b", "인사이트", 1)
+    a, b = _run("a", "추출", 3), _run("b", "추출", 1)
     rows = kind_changes([a, b])
-    assert rows == [["kakao/1", "사례 3개", "인사이트 1개", "제목 1"]]
+    assert rows == [["kakao/1", "추출 3개", "추출 1개", "제목 1"]]
 
     report = build_report([a, b], {"https://e/1": 5000, "https://e/2": 300}, {"m": PRICE})
-    assert "| 인사이트 글 | 0 (0%) | 1 (50%) |" in report
-    assert "구조화 유형·항목 수가 달라진 글 1편" in report
+    assert "| 추출 글 | 1 (50%) | 1 (50%) |" in report
+    assert "| 항목 수 | 3 | 1 |" in report
+    assert "추출 여부·항목 수가 달라진 글 1편" in report
 
 
 def test_kind_changes_ignores_posts_missing_from_a_run():
-    a, b = _run("a", "사례", 1), _run("b", "사례", 1)
+    a, b = _run("a", "추출", 1), _run("b", "추출", 1)
     b.posts = b.posts[:1]  # b에는 글 2가 없다
     assert kind_changes([a, b]) == []

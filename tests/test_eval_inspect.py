@@ -43,7 +43,7 @@ def test_cost_counts_cached_input_separately():
 
 def test_build_report_sections():
     posts = [
-        _record("1", "사례", "https://e/1", dropped_evidence=1, dropped_evidences=["지어낸 문장"]),
+        _record("1", "추출", "https://e/1", dropped_evidence=1, dropped_evidences=["지어낸 문장"]),
         _record("2", "제외", "https://e/2", evidence_total=0),
     ]
     entry = make_entry(
@@ -61,7 +61,7 @@ def test_build_report_sections():
     report = build_report(
         "run-a", posts, [entry], {"https://e/1": 5000, "https://e/2": 300}, {"m": PRICE}
     )
-    assert "사례 1, 인사이트 0, 제외 1" in report
+    assert "추출 1, 제외 1" in report
     assert "## 짧은 글 (평문 1,500자 미만) 1편" in report
     assert "kafkaTemplate (1)" in report
     assert "(technologies에도 있음)" in report

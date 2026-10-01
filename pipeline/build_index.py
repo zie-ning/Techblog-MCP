@@ -34,7 +34,6 @@ def fts_fields(entry: Entry) -> dict[str, str]:
         "problem": points(entry.problem_situation),
         "solution": points(entry.solution),
         "ops": points(entry.performance_ops),
-        "insight": _join(points(entry.key_points), points(entry.takeaways)),
         "rejected": _join(*(f"{r.name} {r.reason}" for r in entry.rejected_alternatives)),
         "keywords": _join(
             " ".join(entry.technologies),
@@ -77,7 +76,7 @@ def _insert(conn: sqlite3.Connection, rowid: int, e: Entry) -> None:
         (
             rowid,
             e.id,
-            e.kind,
+            int(bool(e.performance_ops)),
             e.company,
             e.post_url,
             e.published_at,

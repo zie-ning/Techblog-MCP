@@ -40,7 +40,7 @@ class FakeJudge:
         return self.output
 
 
-def _gold(kind: str = "사례", **overrides) -> GoldPost:
+def _gold(kind: str = "추출", **overrides) -> GoldPost:
     entries = [
         GoldEntry(
             summary="쿠폰 초과 발급을 Redis 원자 연산으로 해결",
@@ -66,7 +66,7 @@ def _gold(kind: str = "사례", **overrides) -> GoldPost:
         title="제목 1",
         post_type="문제 해결형",
         kind=kind,
-        entries=entries if kind == "사례" else [],
+        entries=entries if kind == "추출" else [],
         notes="",
     )
     base.update(overrides)
@@ -178,7 +178,7 @@ def test_technology_counts_compares_post_level_sets():
 def test_evaluate_post_uses_judge_matches():
     gold, entries = _gold(), _entries()
     result = evaluate_post(
-        gold, _record("1", "사례", "https://e/1"), entries, _judge_record(gold, entries, _output())
+        gold, _record("1", "추출", "https://e/1"), entries, _judge_record(gold, entries, _output())
     )
     assert result.judged
     # 정답 key_facts 3개 중 항목 1의 첫 사실만 담김. 대응 없는 항목 2는 true라도 세지 않는다
@@ -237,7 +237,7 @@ def test_cache_is_invalidated_when_gold_changes(tmp_path):
 def test_evaluate_run_ignores_stale_judgements_and_builds_report():
     gold = _gold()
     entries = _entries()
-    posts = [_record("1", "사례", "https://e/1"), _record("2", "제외", "https://e/2")]
+    posts = [_record("1", "추출", "https://e/1"), _record("2", "제외", "https://e/2")]
     run = Run("r", posts, entries)
     golds = {("kakao", "1"): gold, ("kakao", "2"): _gold("제외", post_id="2", url="https://e/2")}
 
@@ -249,12 +249,12 @@ def test_evaluate_run_ignores_stale_judgements_and_builds_report():
     evals = evaluate_run(run, golds, judgements)
     metrics = run_metrics(run, evals, judgements, {"m": PRICE, "judge-model": PRICE})
     assert metrics["정답 글 / 채점된 글"] == "2 / 1"
-    assert metrics["구조화 유형 일치 (허용 답 포함)"] == "100% (2/2)"
-    assert metrics["사례 수 차이 (추출 − 정답)"] == "+0: 1편"
+    assert metrics["추출 여부 일치 (허용 답 포함)"] == "100% (2/2)"
+    assert metrics["항목 수 차이 (추출 − 정답)"] == "+0: 1편"
     assert metrics["주 문제 유형 일치 (대응 쌍)"] == "100% (1/1)"
     assert metrics["완결성 (key_facts 포함률, 글 평균)"] == "33%"
     assert metrics["채점 비용"] == "$2.00 (judge-model)"
 
     report = build_report(["r"], [metrics], [evals])
-    assert "| kakao/1 | 사례 2개 | 사례 2개 · 완결 33% · 충실 5 |" in report
+    assert "| kakao/1 | 추출 2개 | 추출 2개 · 완결 33% · 충실 5 |" in report
     assert "`kakao/1` case_0002: 지어낸 수치" in report

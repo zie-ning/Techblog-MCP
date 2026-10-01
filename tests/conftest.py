@@ -12,7 +12,6 @@ FIXTURES = Path(__file__).parent / "fixtures"
 def make_entry(entry_id: str, **overrides) -> Entry:
     base = dict(
         id=entry_id,
-        kind="사례",
         source="oliveyoung",
         company="올리브영",
         post_url=f"https://example.com/{entry_id}",
@@ -92,7 +91,6 @@ SAMPLE_ENTRIES = [
     ),
     make_entry(
         "case_0004",
-        kind="인사이트",
         post_title="AI 코딩 에이전트 활용 팁",
         post_url="https://example.com/ai",
         published_at="2026-05-02",
@@ -100,8 +98,11 @@ SAMPLE_ENTRIES = [
         domain="LLM·AI",
         technologies=["Claude Code"],
         technologies_raw=["Claude Code"],
-        key_points=[ev("AI 코딩 에이전트의 완료 조건을 측정 가능하게 설계")],
-        takeaways=[ev("테스트를 완료 조건으로 삼는다")],
+        # 팁·활용 경험 항목: 문제 상황과 성능·운영 포인트가 없다
+        solution=[
+            ev("AI 코딩 에이전트의 완료 조건을 측정 가능하게 설계"),
+            ev("테스트를 완료 조건으로 삼는다"),
+        ],
     ),
 ]
 

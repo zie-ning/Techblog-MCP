@@ -34,7 +34,7 @@ class GoldRejected(BaseModel):
 
 class GoldEntry(BaseModel):
     summary: str = Field(
-        description="이 항목의 문제와 해법(또는 핵심 내용) 한 줄. 사례 대응에 쓴다"
+        description="이 항목의 문제와 해법(팁·활용 경험 글은 요지) 한 줄. 항목 대응에 쓴다"
     )
     primary_problem_type: ProblemType
     acceptable_problem_types: list[ProblemType] = Field(
@@ -57,7 +57,7 @@ class GoldPost(BaseModel):
     post_type: PostType
     kind: PostKind
     kind_alternatives: list[PostKind] = Field(
-        default=[], description="경계 글에서 이 구조화 유형도 맞다고 볼 때"
+        default=[], description="경계 글에서 이 추출 여부도 맞다고 볼 때"
     )
     entries: list[GoldEntry]
     notes: str = Field(description="판단 근거, 특히 경계 글의 이유")
@@ -67,10 +67,8 @@ class GoldPost(BaseModel):
     def _entries_match_kind(self) -> "GoldPost":
         if self.kind == "제외" and self.entries:
             raise ValueError("제외 글에는 항목이 없어야 합니다")
-        if self.kind == "인사이트" and len(self.entries) != 1:
-            raise ValueError("인사이트 글은 항목이 1개여야 합니다")
-        if self.kind == "사례" and not self.entries:
-            raise ValueError("사례 글에는 항목이 1개 이상 있어야 합니다")
+        if self.kind == "추출" and not self.entries:
+            raise ValueError("추출 글에는 항목이 1개 이상 있어야 합니다")
         return self
 
 
@@ -117,7 +115,7 @@ def render_review(golds: dict[tuple[str, str], GoldPost]) -> str:
             f"[{g.title}]({g.url})",
             "",
             f"- 글 유형: {g.post_type}",
-            f"- 구조화 유형: **{g.kind}**{alt}",
+            f"- 추출 여부: **{g.kind}**{alt}",
             f"- 판단 근거: {g.notes}",
         ]
         for i, e in enumerate(g.entries, 1):
@@ -150,10 +148,8 @@ POST_TYPE_DEFINITIONS = {
     "회고·문화·행사": "회고, 조직 문화, 협업 방식, 직무·팀 소개, 컨퍼런스·행사, 채용, 온보딩",
 }
 KIND_DEFINITIONS = {
-    "사례": "구체적인 상황에서 기술적 선택을 내렸고 근거(수치·비교·결과)가 있는 글. "
-    "한 글에서 여러 개가 나올 수 있음",
-    "인사이트": "문제-해법 쌍은 약하지만 다른 팀이 바로 적용할 기술적 내용이 있는 글. "
-    "팁 모음, 도구 사용 경험, AI 도구 활용 경험. 한 글에 1개",
+    "추출": "다른 팀이 설계·구현 판단에 참고할 기술적 실무 내용이 있는 글. 겪은 기술 문제와 해결, "
+    "기술 선택·도입의 근거, 도구·기술을 실제 업무에 적용한 경험과 팁",
     "제외": "개념·튜토리얼, 회고·문화·행사, 그 밖에 기술적 실무 적용점이 없는 글",
 }
 REJECTED_KIND_DEFINITIONS = {
@@ -187,15 +183,17 @@ def render_reference() -> str:
         "",
         *_definition_table(_literal_values(PostType), POST_TYPE_DEFINITIONS),
         "",
-        f"## 구조화 유형 (`kind`, {len(_literal_values(PostKind))}개)",
+        f"## 추출 여부 (`kind`, {len(_literal_values(PostKind))}개)",
         "",
         *_definition_table(_literal_values(PostKind), KIND_DEFINITIONS),
         "",
-        "- 서로 독립된 팁을 여러 개 소개하는 글은 근거가 있어도 인사이트 1개.",
         "- 행사·문화·협업 글은 AI 도구나 실무 팁이 섞여 있어도 제외.",
         "- 발표 소개 글은 본문에 해결 근거(수치, 비교, 설계 결정과 이유)가 없으면 제외. "
         "목차는 근거가 아니다.",
         "- 언어 기능·개념 설명 글은 팀이 겪은 문제나 적용 결과가 없으면 제외.",
+        "",
+        "항목 나누기: 독립된 문제-해법 쌍마다 항목 하나, 같은 문제의 단계적 해결은 한 항목, "
+        "팁 모음·도구 활용 경험 글은 항목 하나.",
         "",
         f"## 주 문제 유형 (`primary_problem_type`, {len(taxonomy.problem_types())}개)",
         "",

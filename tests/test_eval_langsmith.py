@@ -10,7 +10,7 @@ def _scores(result: dict) -> dict:
 
 
 def test_run_output_and_checks_for_case():
-    record = _record("1", "사례", "https://e/1", dropped_evidence=1, dropped_evidences=["x"])
+    record = _record("1", "추출", "https://e/1", dropped_evidence=1, dropped_evidences=["x"])
     entry = make_entry(
         "case_0001",
         post_url="https://e/1",
@@ -48,7 +48,7 @@ def test_gold_checks_reports_judge_scores_only_when_judged():
     from eval.langsmith_sync import gold_checks, gold_reference
 
     gold, entries = _gold(), _entries()
-    record = _record("1", "사례", "https://e/1")
+    record = _record("1", "추출", "https://e/1")
     inputs = {"source": "kakao", "post_id": "1"}
 
     unjudged = gold_checks({("kakao", "1"): evaluate_post(gold, record, entries, None)})
@@ -64,4 +64,4 @@ def test_gold_checks_reports_judge_scores_only_when_judged():
     assert scores["unsupported_claims"] == 1
     assert gold_checks({})(inputs, {}) == {"results": [{"key": "missing", "score": 1}]}
 
-    assert "source" not in gold_reference(gold) and gold_reference(gold)["kind"] == "사례"
+    assert "source" not in gold_reference(gold) and gold_reference(gold)["kind"] == "추출"

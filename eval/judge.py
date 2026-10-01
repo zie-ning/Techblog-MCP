@@ -6,7 +6,7 @@
 정답셋(`eval/gold/`)에 있는 글마다 원문 평문, 추출 결과, 정답 항목을 채점 모델에 주고
 구조화 출력으로 다음을 받는다.
 
-- 사례 대응표: 정답 항목마다 대응하는 추출 항목과 핵심 사실(`key_facts`) 포함 여부 → 완결성
+- 항목 대응표: 정답 항목마다 대응하는 추출 항목과 핵심 사실(`key_facts`) 포함 여부 → 완결성
 - 추출 항목별 점수(1~5): 충실성(원문에 근거), 카드 요약 적합성
 - 버린 대안 판정: 정답의 어느 대안과 같은지, 원문에 버린 이유가 명시돼 있는지
 - 글 단위 분할 적절성(1~5)
@@ -60,8 +60,8 @@ INSTRUCTIONS = """\
   5 = 전부 원문에 있음, 3 = 일부 과장·추측·다른 맥락의 내용이 섞임, 1 = 핵심 내용이 원문과 다름.
   원문에 없는 주장은 unsupported_claims에 그대로 옮긴다.
 - card_summary (카드 요약 적합성): 검색 카드에 보이는 첫 줄만 읽고 이 항목을 고를 수 있는가.
-  사례는 "문제 상황"과 "해결 방법"의 첫 줄, 인사이트는 "핵심 내용"의 첫 줄이 카드에 보인다.
-  5 = 첫 줄이 문제와 최종 해결책(인사이트는 글의 요지)을 구체적으로 담음,
+  카드에는 "문제 상황"(있으면), "해결 방법", "성능·운영 포인트"(있으면)의 첫 줄이 보인다.
+  5 = 첫 줄들이 문제와 최종 해결책(팁·활용 경험 글은 글의 요지)을 구체적으로 담음,
   3 = 맞지만 막연하거나 최종 해결책이 아닌 중간 단계·배경을 담음,
   1 = 첫 줄로는 무엇을 했는지 알 수 없음.
 
@@ -73,10 +73,11 @@ INSTRUCTIONS = """\
 
 ## 분할 (split_score)
 글 전체에서 추출 항목을 나눈 방식이 적절한가. 1~5 정수.
-독립적인 문제-해법 쌍마다 사례 하나, 같은 문제의 단계적 해결은 한 사례가 기준이다.
+독립적인 문제-해법 쌍마다 항목 하나, 같은 문제의 단계적 해결은 한 항목,
+팁 모음·도구 활용 경험 글은 항목 하나가 기준이다.
 정답의 항목 수와 달라도 이 기준에 맞으면 높은 점수를 준다.
-5 = 기준에 맞음, 3 = 곁가지를 사례로 만들거나 독립된 문제를 합침,
-1 = 글의 핵심 사례가 빠지거나 뒤섞임.
+5 = 기준에 맞음, 3 = 곁가지·팁을 항목으로 만들거나 독립된 문제를 합침,
+1 = 글의 핵심 내용이 빠지거나 뒤섞임.
 정답이 제외 글이면(정답 항목 없음) 추출한 것 자체가 잘못이므로 1점.
 
 reason 필드는 한국어 한두 문장으로 쓴다.
@@ -140,23 +141,18 @@ def entry_view(e: Entry) -> dict:
     """채점 모델에 보여 줄 추출 항목. 발췌는 이미 원문 대조를 통과했으므로 요약 문장만 넣는다."""
     view: dict = {
         "id": e.id,
-        "kind": e.kind,
         "primary_problem_type": e.primary_problem_type,
         "domain": e.domain,
         "technologies": e.technologies_raw,
     }
-    if e.kind == "사례":
-        view |= {
-            "문제 상황": _points(e.problem_situation),
-            "해결 방법": _points(e.solution),
-            "성능·운영 포인트": _points(e.performance_ops),
-            "버린 대안": [
-                {"name": r.name, "kind": r.kind, "reason": r.reason}
-                for r in e.rejected_alternatives
-            ],
-        }
-    else:
-        view |= {"핵심 내용": _points(e.key_points), "적용해볼 점": _points(e.takeaways)}
+    view |= {
+        "문제 상황": _points(e.problem_situation),
+        "해결 방법": _points(e.solution),
+        "성능·운영 포인트": _points(e.performance_ops),
+        "버린 대안": [
+            {"name": r.name, "kind": r.kind, "reason": r.reason} for r in e.rejected_alternatives
+        ],
+    }
     return view
 
 

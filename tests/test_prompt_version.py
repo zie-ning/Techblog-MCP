@@ -48,7 +48,7 @@ def test_save_snapshot_writes_once(tmp_path):
     text = path.read_text(encoding="utf-8")
     assert f"# 프롬프트 버전 {version}" in text
     assert prompts.CLASSIFY.strip() in text
-    assert "출력 스키마: CaseExtraction" in text
+    assert "출력 스키마: Extraction" in text
 
     # 이미 있으면 덮어쓰지 않는다
     path.write_text("기존 내용", encoding="utf-8")
@@ -64,7 +64,7 @@ def record(**overrides) -> PostRecord:
         title="제목",
         published_at="2025-01-01",
         post_type="문제 해결형",
-        kind="사례",
+        kind="추출",
         reason="",
         content_hash=content_hash(POST),
         model="gpt-5-mini",

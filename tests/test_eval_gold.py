@@ -12,7 +12,7 @@ def _post(**overrides) -> dict:
         url="https://e/1",
         title="제목",
         post_type="문제 해결형",
-        kind="사례",
+        kind="추출",
         entries=[
             GoldEntry(
                 summary="요약",
@@ -33,9 +33,9 @@ def test_gold_post_checks_entries_against_kind():
     with pytest.raises(ValidationError):
         GoldPost(**_post(kind="제외"))  # 제외 글에 항목이 있음
     with pytest.raises(ValidationError):
-        GoldPost(**_post(entries=[]))  # 사례 글에 항목이 없음
+        GoldPost(**_post(entries=[]))  # 추출 글에 항목이 없음
     with pytest.raises(ValidationError):
-        GoldPost(**_post(entries=[]) | {"entries": [_post()["entries"][0]] * 2, "kind": "인사이트"})
+        GoldPost(**_post(kind="인사이트"))  # 없앤 값
 
 
 def test_gold_rejects_unknown_category():

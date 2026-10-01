@@ -4,7 +4,7 @@
   "url": "https://helloworld.kurly.com/blog/commit-mvcc-set-autocommit/",
   "title": "데이터가 있었는데요, 아니 없어요",
   "post_type": "문제 해결형",
-  "kind": "사례",
+  "kind": "추출",
   "kind_alternatives": [],
   "entries": [
     {
@@ -63,6 +63,6 @@
       ]
     }
   ],
-  "notes": "성능 개선(auto-commit false)은 글 끝 Q&A에 나오지만 독립된 결정과 수치가 있어 별도 항목으로 둠. 한 사례로 합쳐도 무방. 회원마케팅서비스의 멤버십 조회라 도메인은 커머스로 봄",
+  "notes": "성능 개선(auto-commit false)은 글 끝 Q&A에 나오지만 독립된 결정과 수치가 있어 별도 항목으로 둠. 한 항목으로 합쳐도 무방. 회원마케팅서비스의 멤버십 조회라 도메인은 커머스로 봄",
   "reviewed": false
 }

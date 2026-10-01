@@ -5,7 +5,7 @@
     # → eval/reports/eval-baseline-gpt-5-mini-medium-vs-v3-gpt-5-mini-medium.md
 
 정답셋(`eval/gold/`)에 있는 글만 본다. 계산만으로 정해지는 지표(분류 일치율, 항목 수, 기술명)는
-항상 나오고, 사례 대응이 필요한 지표(문제 유형·도메인, 버린 대안, 완결성, 충실성 등)는
+항상 나오고, 항목 대응이 필요한 지표(문제 유형·도메인, 버린 대안, 완결성, 충실성 등)는
 judge.py 채점 결과가 최신인 글에서만 계산한다. 비용은 run 전체 글 기준이다.
 """
 
@@ -200,8 +200,8 @@ def run_metrics(run: Run, evals: list[PostEval], judgements: dict, pricing: dict
     n = len(evals)
     judged = [e for e in evals if e.judged]
     both = [e for e in evals if e.both_extracted]
-    cases = [e for e in evals if e.gold.kind == "사례" and e.record.kind == "사례"]
-    diffs = Counter(len(e.entries) - len(e.gold.entries) for e in cases)
+    extracted = [e for e in evals if e.gold.kind == "추출" and e.record.kind == "추출"]
+    diffs = Counter(len(e.entries) - len(e.gold.entries) for e in extracted)
 
     tech = Counts()
     for e in both:
@@ -242,10 +242,10 @@ def run_metrics(run: Run, evals: list[PostEval], judgements: dict, pricing: dict
         else "-",
         "프롬프트 버전": ", ".join(sorted({p.prompt_version for p in run.posts})),
         "정답 글 / 채점된 글": f"{n} / {len(judged)}",
-        "구조화 유형 일치 (허용 답 포함)": _rate(sum(kind_ok(e.gold, e.record) for e in evals), n),
-        "구조화 유형 정확 일치": _rate(sum(e.record.kind == e.gold.kind for e in evals), n),
+        "추출 여부 일치 (허용 답 포함)": _rate(sum(kind_ok(e.gold, e.record) for e in evals), n),
+        "추출 여부 정확 일치": _rate(sum(e.record.kind == e.gold.kind for e in evals), n),
         "글 유형 일치": _rate(sum(e.record.post_type == e.gold.post_type for e in evals), n),
-        "사례 수 차이 (추출 − 정답)": ", ".join(f"{d:+d}: {diffs[d]}편" for d in sorted(diffs))
+        "항목 수 차이 (추출 − 정답)": ", ".join(f"{d:+d}: {diffs[d]}편" for d in sorted(diffs))
         or "-",
         "기술 정밀도 / 재현율": f"{_ratio(tech.precision())} / {_ratio(tech.recall())}"
         f" ({tech.hit_pred}/{tech.pred}, {tech.hit_gold}/{tech.gold})",
@@ -298,7 +298,7 @@ def build_report(names: list[str], metrics: list[dict], evals: list[list[PostEva
         "",
         "## 글별 결과",
         "",
-        "굵게 표시한 것은 구조화 유형이 정답과 다른 글. 완결은 key_facts 포함률,"
+        "굵게 표시한 것은 추출 여부가 정답과 다른 글. 완결은 key_facts 포함률,"
         " 충실은 그 글 항목 중 가장 낮은 충실성 점수.",
         "",
     ]
