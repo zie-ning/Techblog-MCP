@@ -1,0 +1,34 @@
+{
+  "source": "d2",
+  "post_id": "1155434",
+  "url": "https://d2.naver.com/helloworld/1155434",
+  "title": "C++ std::bit_cast와 reinterpret_cast — 언제 어떤 것을 써야 하는가",
+  "post_type": "개념·튜토리얼",
+  "kind": "인사이트",
+  "kind_alternatives": [
+    "제외"
+  ],
+  "entries": [
+    {
+      "summary": "바이트 패턴을 해석할 때 값 재해석은 std::bit_cast, 포인터 변환·바이트 접근·포인터↔정수 변환은 reinterpret_cast를 쓰는 기준",
+      "primary_problem_type": "개발 생산성",
+      "acceptable_problem_types": [],
+      "domain": "범용",
+      "acceptable_domains": [
+        "사내 플랫폼·개발 도구"
+      ],
+      "technologies": [
+        "C++"
+      ],
+      "rejected_alternatives": [],
+      "key_facts": [
+        "분산 DB(Dot) 스토리지 계층을 개발하며 바이트 패턴을 타입으로 해석하는 일이 잦음",
+        "포인터에 std::bit_cast를 쓰면 const가 경고 없이 제거되고 역참조 시 엄격한 앨리어싱 규칙 위반",
+        "타입 퍼닝은 memcpy·std::bit_cast가 표준상 안전하고 reinterpret_cast·union 역참조는 UB",
+        "포인터↔정수 왕복 변환은 reinterpret_cast만 표준이 보장"
+      ]
+    }
+  ],
+  "notes": "팀이 코드 리뷰에서 겪은 문제로 시작하지만 본문 대부분이 언어 기능 의미론 설명이고 적용 결과가 없음. 실무 판단 기준을 주므로 인사이트, 개념 설명으로 보고 제외해도 맞다고 봄. 사례로 보기는 어려움(해결 결정과 결과가 없음)",
+  "reviewed": false
+}

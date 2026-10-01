@@ -1,0 +1,39 @@
+{
+  "source": "kakao",
+  "post_id": "762",
+  "url": "https://tech.kakao.com/posts/762",
+  "title": "생산성 혁신의 실험: AI 마일리지 프로그램",
+  "post_type": "실험·활용기",
+  "kind": "인사이트",
+  "kind_alternatives": [
+    "사례"
+  ],
+  "entries": [
+    {
+      "summary": "개발자 100여 명에게 3개월간 상용 AI 개발 도구 크레딧을 지원해 업무 단계별 효과와 효과를 가르는 실패 패턴을 확인한 시범 운영",
+      "primary_problem_type": "개발 생산성",
+      "acceptable_problem_types": [],
+      "domain": "사내 플랫폼·개발 도구",
+      "acceptable_domains": [
+        "LLM·AI"
+      ],
+      "technologies": [
+        "Cursor",
+        "GitHub Copilot",
+        "Claude Code",
+        "OpenAI API",
+        "Gemini"
+      ],
+      "rejected_alternatives": [],
+      "key_facts": [
+        "약 3개월, 30여 개 조직의 개발자 100여 명이 40여 개 과제에서 월 마일리지 안에서 도구를 자유롭게 사용",
+        "인당 평균 3~4개 도구를 조합했고 Claude Code 사용자는 마지막 달에 처음보다 약 2배",
+        "3개월 차에 시간이 단축됐다고 답한 비율: 코드 작성 98.0%, 디버깅·테스트 86.3%, 설계 84.2%(1개월 차 대비 21.2%p 상승), 릴리즈 43.1%",
+        "68.4%가 이제 AI 도구 없이 개발하기 어렵다고 응답",
+        "효과를 떨어뜨린 패턴: 컨텍스트 부족, 사내 플랫폼과의 연동 부족, 러닝 커브, 검증 비용 증가, 이미 자동화된 영역"
+      ]
+    }
+  ],
+  "notes": "AI 도구 도입 경험이 주제라 제외는 아님. 설문 수치는 많지만 기술적 선택과 그 결과(문제-해법 쌍)는 약하고 활용 패턴·교훈 위주라 인사이트, 근거 있는 실험·활용기로 보고 사례도 허용",
+  "reviewed": false
+}

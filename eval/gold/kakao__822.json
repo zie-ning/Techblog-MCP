@@ -1,0 +1,42 @@
+{
+  "source": "kakao",
+  "post_id": "822",
+  "url": "https://tech.kakao.com/posts/822",
+  "title": "메시징 서버의 스트레스 테스트 노하우와 AI가 덜어 준 부분",
+  "post_type": "실험·활용기",
+  "kind": "인사이트",
+  "kind_alternatives": [
+    "사례"
+  ],
+  "entries": [
+    {
+      "summary": "카카오톡 메시징 서버의 상시 스트레스 테스트 환경 구성·지표 분석 순서·의사결정 원칙과, 반복되는 테스트 라운드를 Claude Code 스킬·서브에이전트로 자동화한 경험",
+      "primary_problem_type": "테스트 자동화",
+      "acceptable_problem_types": [
+        "트래픽 급증 대응",
+        "개발 생산성"
+      ],
+      "domain": "채팅·메시징 서비스",
+      "acceptable_domains": [
+        "사내 플랫폼·개발 도구"
+      ],
+      "technologies": [
+        "Locust",
+        "Claude Code",
+        "Grafana",
+        "Netty"
+      ],
+      "rejected_alternatives": [],
+      "key_facts": [
+        "테스트 서버는 운영과 같은 스펙으로 두고 Locust 워커를 수백 파드로 늘려 클라이언트 병목을 없앰",
+        "평시 정오와 신년 자정의 프로토콜 비율이 달라(메시지 전송 52% → 61%) 시나리오를 나눠 테스트",
+        "endpoint 지표 → 시스템 자원 → JVM 런타임 → 객체 수준(heap dump, 프로파일링) 순으로 내려가며 분석, heap 점유 → GC → CPU → executor 큐 → readTimeout으로 이어진 병목 사례",
+        "한 실험에 한 변수만 바꾸고 대당 RPS 기준으로 비교",
+        "한 라운드 약 50분을 10번 넘게 반복하던 배포·부하·지표 캡처·보고서 작업을 스킬로 묶고 지표 수집을 서브에이전트로 병렬화",
+        "배포 스킬이 이미지 캐시 때문에 새 이미지를 올리지 못했는데 AI 보고서는 '아주 좋음'으로 판정 → 성공·검증 기준을 사람이 명시해야 함"
+      ]
+    }
+  ],
+  "notes": "스트레스 테스트 방법론과 AI 도구 활용 노하우가 중심이고 구체적인 문제-결정-결과 쌍(수치로 확인된 개선)은 약해 인사이트. 스킬 자동화 부분을 사례로 볼 수도 있어 사례 허용",
+  "reviewed": false
+}

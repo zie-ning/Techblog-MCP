@@ -1,0 +1,95 @@
+{
+  "source": "woowahan",
+  "post_id": "20763",
+  "url": "https://techblog.woowahan.com/20763/",
+  "title": "이젠 보내줄 때가 되었다. 대규모 트래픽의 C++ 시스템 Java로 전환하기",
+  "post_type": "기술 선택·도입형",
+  "kind": "사례",
+  "kind_alternatives": [],
+  "entries": [
+    {
+      "summary": "배달 주소의 행정동을 판별하는 C++ 서버를 성능을 유지하면서 Java·Spring Boot로 전환하고 Canary 배포를 여러 번 반복해 무장애로 배포",
+      "primary_problem_type": "개발 생산성",
+      "acceptable_problem_types": [
+        "배포·CI/CD",
+        "MSA"
+      ],
+      "domain": "배달·물류",
+      "acceptable_domains": [],
+      "technologies": [
+        "Java",
+        "Spring Boot",
+        "S2 Geometry",
+        "nGrinder",
+        "AWS ALB"
+      ],
+      "rejected_alternatives": [
+        {
+          "name": "캐시 레이어 도입",
+          "kind": "설계 방식"
+        },
+        {
+          "name": "Blue/Green 배포",
+          "kind": "설계 방식"
+        }
+      ],
+      "key_facts": [
+        "피크 시간 전체 서버 기준 1분에 80만 건 이상, C++ 서버는 대당 2000TPS 이상을 10ms 이하로 응답",
+        "C++는 작은 메모리 실수로 서버가 멈출 위험이 있고 팀의 C++ 전문성이 낮으며 사내 배포·모니터링을 적용하기 어려웠음",
+        "기존 서버가 싱글스레드 이벤트 루프라 Java 멀티스레드로 성능을 맞출 수 있다고 보고 nGrinder 부하 테스트에서 최대 3500TPS 확인",
+        "약 180MB 데이터를 메모리에 올리는 구조는 유지 (캐시 레이어는 비용과 작업량 때문에 보류)",
+        "1%·5% Canary와 일시 전면 배포 후 롤백을 반복하고 ALB에 두 TargetGroup을 걸어 1분 안에 롤백할 수 있게 함",
+        "결과: 더 적은 비용의 서버로 같은 트래픽 처리, 평균 응답은 1ms 수준으로 소폭 증가"
+      ]
+    },
+    {
+      "summary": "Java 전환 뒤 힙에 올린 대용량 데이터 때문에 생긴 major GC와 CPU 급증을 fastutil primitive 컬렉션으로 해결",
+      "primary_problem_type": "인프라·컨테이너",
+      "acceptable_problem_types": [
+        "장애 대응·복구",
+        "트래픽 급증 대응",
+        "비용 절감"
+      ],
+      "domain": "배달·물류",
+      "acceptable_domains": [],
+      "technologies": [
+        "Java",
+        "fastutil"
+      ],
+      "rejected_alternatives": [
+        {
+          "name": "Hazelcast",
+          "kind": "기술"
+        },
+        {
+          "name": "Chronicle Map",
+          "kind": "기술"
+        },
+        {
+          "name": "HPPC",
+          "kind": "기술"
+        },
+        {
+          "name": "Trove",
+          "kind": "기술"
+        },
+        {
+          "name": "Koloboke",
+          "kind": "기술"
+        },
+        {
+          "name": "GC 파라미터(IHOP) 튜닝",
+          "kind": "설계 방식"
+        }
+      ],
+      "key_facts": [
+        "전체 데이터가 힙 old 영역에 있어 major GC가 잦고 STW 구간(Remark)이 30~40ms, 주기적 CPU 급증",
+        "Ramp-up 방식 부하 테스트로는 중간 트래픽을 오래 유지할 때의 CPU 급증을 찾지 못함",
+        "Hazelcast·Chronicle Map은 단순 조회에 비해 기능이 과하고 진입 장벽이 높아 제외",
+        "fastutil로 primitive 저장 전환 후 최고 3500 → 3700TPS, 힙 하단 2GB → 1.13GB, 1500TPS 유지 시 major GC 미발생"
+      ]
+    }
+  ],
+  "notes": "언어 전환과 전환 뒤 GC 개선은 문제가 달라 사례 2개로 나눔(한 사례로 묶어도 무방). 주 문제 유형: 전환의 목적은 유지보수성·사내 표준화라 개발 생산성. GC 개선은 JVM 성능 튜닝인데 맞는 문제 유형이 없음(분류 목록 공백 후보, M4에서 검토)",
+  "reviewed": false
+}

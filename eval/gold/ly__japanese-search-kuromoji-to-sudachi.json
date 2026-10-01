@@ -1,0 +1,74 @@
+{
+  "source": "ly",
+  "post_id": "japanese-search-kuromoji-to-sudachi",
+  "url": "https://techblog.lycorp.co.jp/ko/japanese-search-kuromoji-to-sudachi",
+  "title": "일본어 상품 검색 정확도 높이기: Elasticsearch + Kuromoji에서 OpenSearch + Sudachi로",
+  "post_type": "기술 선택·도입형",
+  "kind": "사례",
+  "kind_alternatives": [],
+  "entries": [
+    {
+      "summary": "오래된 IPADIC 사전과 복합어 과분해로 상품명이 검색되지 않던 문제를 Elasticsearch + Kuromoji에서 OpenSearch + Sudachi로 바꿔 해결",
+      "primary_problem_type": "DB 성능·쿼리 최적화",
+      "acceptable_problem_types": [
+        "DB 마이그레이션·샤딩"
+      ],
+      "domain": "검색·추천",
+      "acceptable_domains": [
+        "커머스·주문·재고"
+      ],
+      "technologies": [
+        "OpenSearch",
+        "Sudachi"
+      ],
+      "rejected_alternatives": [
+        {
+          "name": "Kuromoji 사용자 사전 등록",
+          "kind": "설계 방식"
+        },
+        {
+          "name": "mecab-ipadic-neologd",
+          "kind": "기술"
+        },
+        {
+          "name": "Elasticsearch 8.x 업그레이드",
+          "kind": "설계 방식"
+        }
+      ],
+      "key_facts": [
+        "IPADIC 사전은 2007년 이후 업데이트가 멈춰 신조어·고유명사(예: 2001년 등록 쌀 품종명)를 인식하지 못함",
+        "Kuromoji 기본 설정은 상품명 복합어를 잘게 쪼개 의도와 다른 상품이 검색됨",
+        "단어가 보고될 때마다 사용자 사전에 추가하던 방식은 신조어·복합어·모델명 변형을 감당하지 못함",
+        "사내 검색 플랫폼은 Elasticsearch 7.10.2에서 일몰하고 OpenSearch 2.4.1/2.15.0을 지원해 Sudachi 플러그인(2.6 이상)을 쓸 수 있는 2.15.0 선택",
+        "Sudachi 기본 C 모드로 복합어·고유명사를 한 토큰으로 유지해 동의어 확장도 안정적으로 동작"
+      ]
+    },
+    {
+      "summary": "형태소 분석으로 풀 수 없는 모델 번호·구분자 표기 차이와 자동완성을 인덱스 규모에 맞춘 Multi-field(compact, edge n-gram) 설계로 해결",
+      "primary_problem_type": "DB 성능·쿼리 최적화",
+      "acceptable_problem_types": [],
+      "domain": "검색·추천",
+      "acceptable_domains": [
+        "커머스·주문·재고"
+      ],
+      "technologies": [
+        "OpenSearch"
+      ],
+      "rejected_alternatives": [
+        {
+          "name": "상품 인덱스에 Edge N-gram 적용",
+          "kind": "설계 방식"
+        }
+      ],
+      "key_facts": [
+        "상품 인덱스 약 8억 건, 카탈로그 인덱스 약 1억 건",
+        "모델 번호(AW-10DP3, aw10dp3 등)는 구분자를 공백으로 바꾸고 whitespace tokenizer로 자르는 compact 서브 필드로 같은 토큰에 수렴",
+        "짧은 일본어 검색어에 compact 필드를 쓰면 노이즈가 생겨 영숫자가 들어간 3자 초과 검색어에만 사용",
+        "Edge N-gram 자동완성은 정제된 카탈로그 인덱스에만 두고, 8억 건 비정형 상품 인덱스는 인덱스 크기·색인 비용·Kafka 처리 지연 우려로 제외",
+        "자동완성 쿼리는 constant_score로 스코어 계산을 생략"
+      ]
+    }
+  ],
+  "notes": "분석기 교체와 Multi-field 설계는 문제가 달라 사례 2개로 나눔(1~3개 모두 무방). 적용 후 정량 결과는 없음(검색 로그로 확인 예정). 검색 품질을 다루는 문제 유형이 없어 DB 성능·쿼리 최적화로 둠(분류 목록 공백 후보, M4에서 검토)",
+  "reviewed": false
+}

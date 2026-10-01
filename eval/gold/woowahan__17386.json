@@ -1,0 +1,83 @@
+{
+  "source": "woowahan",
+  "post_id": "17386",
+  "url": "https://techblog.woowahan.com/17386/",
+  "title": "우리 팀은 카프카를 어떻게 사용하고 있을까",
+  "post_type": "기술 선택·도입형",
+  "kind": "사례",
+  "kind_alternatives": [
+    "인사이트"
+  ],
+  "entries": [
+    {
+      "summary": "주문·배달 이벤트의 순서와 누락을 키 기반 파티셔닝과 Debezium을 이용한 Transactional Outbox 패턴으로 보장",
+      "primary_problem_type": "데이터 정합성·트랜잭션",
+      "acceptable_problem_types": [
+        "메시징·비동기 처리"
+      ],
+      "domain": "배달·물류",
+      "acceptable_domains": [],
+      "technologies": [
+        "Kafka",
+        "Debezium",
+        "MySQL",
+        "Kafka Connect"
+      ],
+      "rejected_alternatives": [],
+      "key_facts": [
+        "하루 100만 건 이상 생성되는 배민배달을 여러 배달 서비스로 분배·중계",
+        "주문·배달 식별자를 메시지 키로 써서 같은 파티션·같은 컨슈머가 처리하게 해 순서를 보장",
+        "DB 저장과 이벤트 발행을 한 트랜잭션으로 묶으려고 outbox 테이블을 binlog CDC(Debezium MySQL source connector)로 발행",
+        "source connector가 태스크 하나만 써서 처리량이 부족해 토픽별·식별자 기반 N개 outbox 테이블로 분산"
+      ]
+    },
+    {
+      "summary": "배달 서버군이 인메모리로 가진 분배 규칙 변경을 카프카 이벤트 버스(Spring Cloud Bus)로 모든 서버에 반영",
+      "primary_problem_type": "메시징·비동기 처리",
+      "acceptable_problem_types": [],
+      "domain": "배달·물류",
+      "acceptable_domains": [],
+      "technologies": [
+        "Kafka",
+        "Spring Cloud Bus"
+      ],
+      "rejected_alternatives": [],
+      "key_facts": [
+        "운영자가 분배 규칙을 바꾸면 이벤트를 소비한 서버만 바뀌고 나머지는 옛 규칙을 유지하는 문제",
+        "RemoteApplicationEvent로 목적 서버군에 이벤트를 보내고 각 서버가 규칙을 다시 읽음",
+        "높은 처리량이 필요 없어 이벤트 버스 토픽은 파티션 1개, 서버마다 다른 컨슈머 그룹으로 모두 수신"
+      ]
+    },
+    {
+      "summary": "배달 이벤트를 카프카 스트림즈로 실시간 집계하고 배달 건별 통합 이벤트를 S3·Athena로 분석용 제공",
+      "primary_problem_type": "데이터 파이프라인",
+      "acceptable_problem_types": [
+        "모니터링·관측성"
+      ],
+      "domain": "배달·물류",
+      "acceptable_domains": [],
+      "technologies": [
+        "Kafka Streams",
+        "Redis",
+        "Kafka Connect",
+        "Amazon S3",
+        "Amazon Athena",
+        "Grafana"
+      ],
+      "rejected_alternatives": [
+        {
+          "name": "배치 기반 분석 데이터 제공",
+          "kind": "설계 방식"
+        }
+      ],
+      "key_facts": [
+        "배치는 실시간 데이터를 반영하기 어려워 카프카 스트림즈 상태 저장소로 배달 상태별 건수 등을 실시간 집계해 그라파나로 시각화",
+        "배달 한 건의 여러 이벤트를 Redis에 임시로 모았다가 완료 시 통합 이벤트로 분석 토픽에 발행",
+        "S3 싱크 커넥터로 분석 토픽을 S3에 영구 저장하고 Athena로 서비스 DB 부하 없이 조회",
+        "서비스 토픽과 분석 토픽·서버를 분리해 장애 영향 범위를 나눔"
+      ]
+    }
+  ],
+  "notes": "2년 차 개발자가 팀의 카프카 활용을 넓게 소개하는 글이라 인사이트로 볼 수도 있지만, 활용 방식마다 구체적인 문제·결정·이유가 있어 사례 3개로 봄",
+  "reviewed": false
+}

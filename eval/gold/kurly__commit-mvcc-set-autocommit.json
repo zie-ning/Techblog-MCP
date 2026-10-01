@@ -1,0 +1,68 @@
+{
+  "source": "kurly",
+  "post_id": "commit-mvcc-set-autocommit",
+  "url": "https://helloworld.kurly.com/blog/commit-mvcc-set-autocommit/",
+  "title": "데이터가 있었는데요, 아니 없어요",
+  "post_type": "문제 해결형",
+  "kind": "사례",
+  "kind_alternatives": [],
+  "entries": [
+    {
+      "summary": "auto-commit을 끈 커넥션에서 COMMIT이 없어 MVCC 스냅샷이 갱신되지 않아 이미 있는 회원이 간헐적으로 조회되지 않던 문제를 바깥 메서드에 읽기 전용 트랜잭션을 걸어 해결",
+      "primary_problem_type": "데이터 정합성·트랜잭션",
+      "acceptable_problem_types": [
+        "장애 대응·복구"
+      ],
+      "domain": "커머스·주문·재고",
+      "acceptable_domains": [
+        "광고·마케팅",
+        "범용"
+      ],
+      "technologies": [
+        "Amazon Aurora",
+        "HikariCP",
+        "JPA",
+        "MariaDB Connector/J"
+      ],
+      "rejected_alternatives": [
+        {
+          "name": "READ COMMITTED 격리 수준",
+          "kind": "설계 방식"
+        },
+        {
+          "name": "잠금 읽기(LOCK IN SHARE MODE)",
+          "kind": "설계 방식"
+        }
+      ],
+      "key_facts": [
+        "Aurora MySQL 5.7, REPEATABLE READ, hikari auto-commit false, open-in-view true 환경",
+        "@Transactional이 없는 JPA 쿼리 메서드는 COMMIT이 없어 Consistent Nonlocking Read 스냅샷이 갱신되지 않고 다른 세션이 넣은 회원을 못 봄(재요청하면 조회됨)",
+        "open-in-view로 커넥션이 API 끝까지 유지되고 하위 읽기 전용 트랜잭션의 COMMIT 때문에 ROLLBACK도 일어나지 않아 옛 스냅샷이 남음",
+        "READ COMMITTED는 Phantom Read로 기존 로직에 영향, 잠금 읽기는 락 경합·데드락 우려로 배제",
+        "바깥 메서드에 @Transactional(readOnly = true)를 붙여 메서드 종료 COMMIT으로 스냅샷 갱신"
+      ]
+    },
+    {
+      "summary": "HikariCP auto-commit을 꺼서 트랜잭션 전후의 set autocommit 쿼리를 없애 API 응답을 40% 개선",
+      "primary_problem_type": "DB 성능·쿼리 최적화",
+      "acceptable_problem_types": [],
+      "domain": "커머스·주문·재고",
+      "acceptable_domains": [
+        "광고·마케팅",
+        "범용"
+      ],
+      "technologies": [
+        "HikariCP",
+        "JPA"
+      ],
+      "rejected_alternatives": [],
+      "key_facts": [
+        "auto-commit true면 Hibernate가 @Transactional 전후로 set autocommit 쿼리를 추가로 실행",
+        "auto-commit false로 API 응답 시간을 1.5ms 줄여 약 40% 향상",
+        "대신 쿼리 종료 시점에 COMMIT이 실행되는지 직접 확인해야 함(이 글의 장애 원인)"
+      ]
+    }
+  ],
+  "notes": "성능 개선(auto-commit false)은 글 끝 Q&A에 나오지만 독립된 결정과 수치가 있어 별도 항목으로 둠. 한 사례로 합쳐도 무방. 회원마케팅서비스의 멤버십 조회라 도메인은 커머스로 봄",
+  "reviewed": false
+}

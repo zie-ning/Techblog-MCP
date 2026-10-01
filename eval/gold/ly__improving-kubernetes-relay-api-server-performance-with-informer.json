@@ -1,0 +1,49 @@
+{
+  "source": "ly",
+  "post_id": "improving-kubernetes-relay-api-server-performance-with-informer",
+  "url": "https://techblog.lycorp.co.jp/ko/improving-kubernetes-relay-api-server-performance-with-informer",
+  "title": "Informer를 사용해 쿠버네티스 중계 API 서버의 성능 개선하기",
+  "post_type": "문제 해결형",
+  "kind": "사례",
+  "kind_alternatives": [],
+  "entries": [
+    {
+      "summary": "모든 파드 조회 권한 없이 노드별 스케줄링 가능 리소스를 보여 주는 중계 API 서버를 Go 클라이언트의 Informer 캐시로 재구현해 응답 10초를 0.2초로 단축",
+      "primary_problem_type": "인프라·컨테이너",
+      "acceptable_problem_types": [
+        "캐싱",
+        "인증·보안",
+        "API 설계·외부 연동"
+      ],
+      "domain": "사내 플랫폼·개발 도구",
+      "acceptable_domains": [],
+      "technologies": [
+        "Kubernetes",
+        "Go"
+      ],
+      "rejected_alternatives": [
+        {
+          "name": "사용자에게 모든 파드 조회 권한 부여",
+          "kind": "설계 방식"
+        },
+        {
+          "name": "Kubernetes Python 클라이언트",
+          "kind": "기술"
+        },
+        {
+          "name": "다중 스레드 비동기 조회",
+          "kind": "설계 방식"
+        }
+      ],
+      "key_facts": [
+        "약 800대 노드의 멀티 테넌트 클러스터, 사용자 약 200명, RBAC로 네임스페이스 권한만 부여",
+        "kubectl describe node는 클러스터 전체 파드 조회 권한이 필요해 최소 권한 원칙상 별도 중계 API 서버를 둠",
+        "Python 클라이언트로 매번 전체 파드를 조회하면 스레드로 우회해도 리소스 계산에 10초가 걸리고 kube-apiserver·etcd에 부하",
+        "Python 클라이언트는 Informer를 지원하지 않아(관련 이슈가 4년째 정체) Go로 재구현하고 노드·파드 Informer 캐시에서 조회",
+        "800개 노드 계산 시간 10초 → 약 0.2초"
+      ]
+    }
+  ],
+  "notes": "주 문제 유형은 쿠버네티스 운영 성능이라 인프라·컨테이너, Informer 캐시를 쓴 점에서 캐싱도 허용",
+  "reviewed": false
+}

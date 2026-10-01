@@ -1,0 +1,12 @@
+{
+  "source": "ly",
+  "post_id": "how-to-evaluate-ai-generated-images-1",
+  "url": "https://techblog.lycorp.co.jp/ko/how-to-evaluate-ai-generated-images-1",
+  "title": "AI로 생성한 이미지는 어떻게 평가할까요? (기본편)",
+  "post_type": "개념·튜토리얼",
+  "kind": "제외",
+  "kind_alternatives": [],
+  "entries": [],
+  "notes": "이미지 생성 모델 평가 지표(PSNR, SSIM, IS, FID, CLIP Score 등)를 정리한 개념 글. 팀이 적용한 경험·결과는 후속 편에 있고 이 글에는 없음",
+  "reviewed": false
+}

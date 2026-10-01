@@ -1,0 +1,41 @@
+{
+  "source": "toss",
+  "post_id": "toss-frontend-ai-docs",
+  "url": "https://toss.tech/article/toss-frontend-ai-docs",
+  "title": "토스 프론트엔드 개발자들이 더 이상 문서를 찾지 않는 이유",
+  "post_type": "문제 해결형",
+  "kind": "사례",
+  "kind_alternatives": [
+    "인사이트"
+  ],
+  "entries": [
+    {
+      "summary": "문서를 찾느라 개발 흐름이 끊기는 문제를 RAG 챗봇(박씨)과 대화 자동 문서화 봇(실록봇)으로 해결",
+      "primary_problem_type": "개발 생산성",
+      "acceptable_problem_types": [
+        "업무·운영 자동화"
+      ],
+      "domain": "사내 플랫폼·개발 도구",
+      "acceptable_domains": [
+        "LLM·AI"
+      ],
+      "technologies": [
+        "RAG"
+      ],
+      "rejected_alternatives": [
+        {
+          "name": "문서를 더 잘 써서 방문 유도",
+          "kind": "설계 방식"
+        }
+      ],
+      "key_facts": [
+        "관찰·인터뷰 결과 개발자는 문서 검색보다 동료·메신저에 질문하는 방식으로 지식을 얻음",
+        "RAG 기반 챗봇이 문서를 근거로 답하고 출처를 제공하며 IDE와 사내 메신저에서 쓸 수 있음",
+        "메신저 대화 스레드를 AI가 요약해 문서 저장소에 PR을 올리는 봇으로 문서 양을 늘림",
+        "특정 팀원에 지식이 몰리거나 같은 질문이 반복되는 문제가 줄었다고 함 (정량 수치 없음)"
+      ]
+    }
+  ],
+  "notes": "문제-해법 쌍과 선택 이유(문서 개선 대신 질문 방식 존중)는 분명하지만 정량 근거가 없어 인사이트도 허용. 박씨·실록봇을 사례 2개로 나눠도 무방(실록봇은 박씨의 지식 기반 확보 수단)",
+  "reviewed": false
+}

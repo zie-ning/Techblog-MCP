@@ -1,0 +1,50 @@
+{
+  "source": "oliveyoung",
+  "post_id": "2025-04-25_web-worker-for-image-processing",
+  "url": "https://oliveyoung.tech/2025-04-25/web-worker-for-image-processing/",
+  "title": "Web Worker로 이미지 처리 최적화하기",
+  "post_type": "문제 해결형",
+  "kind": "사례",
+  "kind_alternatives": [],
+  "entries": [
+    {
+      "summary": "모바일 고해상도 이미지 업로드 때 메인 스레드 블로킹과 강제 새로고침을 이미지 변환·리사이징을 Dedicated Web Worker로 옮겨 해결",
+      "primary_problem_type": "클라이언트 성능(웹·앱)",
+      "acceptable_problem_types": [],
+      "domain": "콘텐츠·미디어",
+      "acceptable_domains": [
+        "커머스·주문·재고"
+      ],
+      "technologies": [
+        "Web Worker"
+      ],
+      "rejected_alternatives": [
+        {
+          "name": "WebP 포맷 변환",
+          "kind": "설계 방식"
+        },
+        {
+          "name": "메인 스레드 Canvas 리사이징",
+          "kind": "설계 방식"
+        },
+        {
+          "name": "Shared Worker",
+          "kind": "기술"
+        },
+        {
+          "name": "Service Worker",
+          "kind": "기술"
+        }
+      ],
+      "key_facts": [
+        "게시물에 이미지 최대 10장·최대 40MB 업로드, LTE 약 28초·불안정한 네트워크 약 64초 예상",
+        "모바일 대용량 이미지는 4MB·4000px 이상이 흔하고 iOS 메모리 제한으로 브라우저 강제 새로고침이 발생",
+        "WebP 변환은 복잡한 이미지에서 압축 효율이 낮고, Canvas 리사이징은 메인 스레드를 점유해 클릭이 무시됨",
+        "Shared·Service Worker는 이미지 처리에 불필요한 기능이 많아 Dedicated Worker 선택",
+        "2.31MB Base64 변환 기준 처리 시간 388ms → 137ms, 메인 스레드 블로킹 350ms → 8ms"
+      ]
+    }
+  ],
+  "notes": "Web Worker·OffscreenCanvas는 제품이 아니라 브라우저 API지만 사례의 핵심 기술이라 technologies에 Web Worker만 넣음. 버린 대안 중 Shared/Service Worker는 기술, 나머지는 설계 방식",
+  "reviewed": false
+}
