@@ -59,7 +59,7 @@ def test_gold_checks_reports_judge_scores_only_when_judged():
 
     judged = evaluate_post(gold, record, entries, _judge_record(gold, entries, _output()))
     scores = _scores(gold_checks({("kakao", "1"): judged})(inputs, {}))
-    assert scores["completeness"] == 1 / 3
+    assert scores["completeness"] == 1.5 / 3
     assert scores["faithfulness"] == 5
     assert scores["unsupported_claims"] == 1
     assert gold_checks({})(inputs, {}) == {"results": [{"key": "missing", "score": 1}]}

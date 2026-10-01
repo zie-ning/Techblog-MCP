@@ -112,11 +112,11 @@ def _output() -> JudgeOutput:
             EntryMatch(
                 gold_index=1,
                 extracted_ids=["case_0001"],
-                key_facts_covered=[True, False],
+                key_facts_coverage=["담김", "일부"],
                 reason="",
             ),
-            EntryMatch(gold_index=2, extracted_ids=[], key_facts_covered=[True], reason=""),
-            EntryMatch(gold_index=9, extracted_ids=["case_0002"], key_facts_covered=[], reason=""),
+            EntryMatch(gold_index=2, extracted_ids=[], key_facts_coverage=["담김"], reason=""),
+            EntryMatch(gold_index=9, extracted_ids=["case_0002"], key_facts_coverage=[], reason=""),
         ],
         entries=[
             EntryScore(
@@ -182,8 +182,8 @@ def test_evaluate_post_uses_judge_matches():
         gold, _record("1", "추출", "https://e/1"), entries, _judge_record(gold, entries, _output())
     )
     assert result.judged
-    # 정답 key_facts 3개 중 항목 1의 첫 사실만 담김. 대응 없는 항목 2는 true라도 세지 않는다
-    assert result.completeness == 1 / 3
+    # 정답 key_facts 3개 중 항목 1은 담김 1 + 일부 0.5. 대응 없는 항목 2는 담김이라도 세지 않는다
+    assert result.completeness == 1.5 / 3
     # 범위 밖 정답 번호(9)는 무시하고, 대응 쌍은 (1, case_0001) 하나
     assert result.pairs == 1
     t, d = result.types, result.domains
@@ -256,11 +256,11 @@ def test_evaluate_run_ignores_stale_judgements_and_builds_report():
     assert metrics["추출 여부 일치 (허용 답 포함)"] == "100% (2/2)"
     assert metrics["항목 수 차이 (추출 − 정답)"] == "+0: 1편"
     assert metrics["문제 유형 정밀도 / 재현율 (대응 쌍)"] == "50% / 0% (1/2, 0/1)"
-    assert metrics["완결성 (key_facts 포함률, 글 평균)"] == "33%"
+    assert metrics["완결성 (key_facts 포함률, 글 평균)"] == "50%"
     assert metrics["채점 비용"] == "$2.00 (judge-model)"
 
     report = build_report(["r"], [metrics], [evals])
-    assert "| kakao/1 | 추출 2개 | 추출 2개 · 완결 33% · 충실 5 |" in report
+    assert "| kakao/1 | 추출 2개 | 추출 2개 · 완결 50% · 충실 5 |" in report
     assert "`kakao/1` case_0002: 지어낸 수치" in report
 
 
@@ -280,3 +280,10 @@ def test_gold_rejected_name_strips_kind_suffix():
     )
     r = result.rejected
     assert (r.hit_pred, r.pred, r.hit_gold, r.gold) == (1, 2, 1, 1)
+
+
+def test_old_bool_coverage_record_loads():
+    match = EntryMatch.model_validate(
+        {"gold_index": 1, "extracted_ids": [], "key_facts_covered": [True, False], "reason": ""}
+    )
+    assert match.key_facts_coverage == ["담김", "없음"]

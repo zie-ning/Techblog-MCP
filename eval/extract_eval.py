@@ -23,7 +23,13 @@ if str(ROOT) not in sys.path:  # 스크립트로 실행할 때도 pipeline을 im
 from eval.compare_runs import Run  # noqa: E402
 from eval.gold import GoldPost, load_gold  # noqa: E402
 from eval.inspect_run import REPORTS, TOTAL_POSTS, _table, cost, load_pricing  # noqa: E402
-from eval.judge import JudgeRecord, input_hash, is_current, load_judgements  # noqa: E402
+from eval.judge import (  # noqa: E402
+    COVERAGE_SCORE,
+    JudgeRecord,
+    input_hash,
+    is_current,
+    load_judgements,
+)
 from eval.judge import prompt_version as judge_prompt_version  # noqa: E402
 from pipeline.extract.schema import Entry, PostRecord, Usage  # noqa: E402
 from techblog_mcp import taxonomy  # noqa: E402
@@ -80,7 +86,8 @@ class PostEval:
     record: PostRecord
     entries: list[Entry]
     judged: bool = False
-    completeness: float | None = None  # 정답 key_facts 포함률 (정답 항목이 없으면 None)
+    # 정답 key_facts 포함률. 담김 1, 일부 0.5, 없음 0 (정답 항목이 없으면 None)
+    completeness: float | None = None
     faithfulness: list[int] = field(default_factory=list)
     card_summary: list[int] = field(default_factory=list)
     split_score: int | None = None
@@ -151,7 +158,7 @@ def evaluate_post(
         g = gold.entries[m.gold_index - 1]
         matched = [by_id[i] for i in m.extracted_ids if i in by_id]
         if matched:
-            facts_hit += sum(m.key_facts_covered[: len(g.key_facts)])
+            facts_hit += sum(COVERAGE_SCORE[c] for c in m.key_facts_coverage[: len(g.key_facts)])
         for e in matched:
             ev.pairs += 1
             ev.types.add(label_counts(e.problem_types, g.problem_types, g.acceptable_problem_types))

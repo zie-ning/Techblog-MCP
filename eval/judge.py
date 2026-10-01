@@ -22,8 +22,9 @@ import json
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
+from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:  # 스크립트로 실행할 때도 pipeline을 import할 수 있게 한다
@@ -50,9 +51,12 @@ INSTRUCTIONS = """\
 - extracted_ids: 같은 문제-해법을 다룬 추출 항목 id.
   정답 하나가 추출 여러 개로 나뉘었으면 모두 넣고,
   대응하는 추출 항목이 없으면 빈 목록.
-- key_facts_covered: 정답의 key_facts 순서대로, 대응한 추출 항목들의 내용에 그 사실이 담겼는지.
-  표현이 달라도 같은 뜻이고 수치가 맞으면 true. 수치가 빠지거나 틀리면 false.
-  대응 항목이 없으면 모두 false.
+- key_facts_coverage: 정답의 key_facts 순서대로, 대응한 추출 항목들의 내용에 그 사실이 담긴 정도.
+  - 담김: 사실의 핵심 내용과 수치가 모두 있다. 표현이 달라도 같은 뜻이면 담김.
+  - 일부: 핵심 내용은 있지만 사실에 든 수치·조건·이유 중 일부가 빠졌다.
+    (key_facts 하나에 수치가 여러 개 든 경우가 많다. 하나라도 있으면 일부, 모두 있으면 담김)
+  - 없음: 그 사실이 없거나, 수치가 원문과 다르게 틀렸다.
+  대응 항목이 없으면 모두 없음.
 
 ## 추출 항목 점수 (entries)
 추출 항목마다 하나씩 쓴다. 점수는 1~5 정수.
@@ -86,11 +90,29 @@ reason 필드는 한국어 한두 문장으로 쓴다.
 """
 
 
+Coverage = Literal["담김", "일부", "없음"]
+# 완결성 점수: 일부만 담긴 사실은 반만 센다.
+# key_facts 하나에 수치가 여러 개라 전부/전무로 보면 너무 엄격하다
+COVERAGE_SCORE: dict[str, float] = {"담김": 1.0, "일부": 0.5, "없음": 0.0}
+
+
 class EntryMatch(BaseModel):
     gold_index: int = Field(description="정답 항목 번호 (1부터)")
     extracted_ids: list[str] = Field(description="대응하는 추출 항목 id. 없으면 빈 목록")
-    key_facts_covered: list[bool] = Field(description="정답 key_facts 순서대로 담겼는지")
+    key_facts_coverage: list[Coverage] = Field(
+        description="정답 key_facts 순서대로 담긴 정도 (담김/일부/없음)"
+    )
     reason: str
+
+    @model_validator(mode="before")
+    @classmethod
+    def _from_bool(cls, data):
+        """옛 채점 기록(참/거짓 `key_facts_covered`)을 읽는다: 참은 담김, 거짓은 없음."""
+        if isinstance(data, dict) and "key_facts_covered" in data:
+            data = dict(data)
+            covered = data.pop("key_facts_covered")
+            data["key_facts_coverage"] = ["담김" if c else "없음" for c in covered]
+        return data
 
 
 class EntryScore(BaseModel):
