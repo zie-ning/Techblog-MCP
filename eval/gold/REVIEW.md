@@ -2,7 +2,7 @@
 
 `uv run python eval/gold.py review`로 생성한다. 기준 데이터는 같은 폴더의 JSON이고 이 파일은 보기용이다. 원문과 대조해 고칠 점이 있으면 JSON을 고치고, 검수를 마친 글은 JSON의 `reviewed`를 `true`로 바꾼다.
 
-## d2/1155434 — 검수 전
+## d2/1155434 — 검수 완료
 
 [C++ std::bit_cast와 reinterpret_cast — 언제 어떤 것을 써야 하는가](https://d2.naver.com/helloworld/1155434)
 
@@ -21,7 +21,7 @@
   - 타입 퍼닝은 memcpy·std::bit_cast가 표준상 안전하고 reinterpret_cast·union 역참조는 UB
   - 포인터↔정수 왕복 변환은 reinterpret_cast만 표준이 보장
 
-## d2/6512234 — 검수 전
+## d2/6512234 — 검수 완료
 
 [스마트스토어센터 Oracle에서 MySQL로의 무중단 전환기](https://d2.naver.com/helloworld/6512234)
 
@@ -44,7 +44,7 @@
   - Airflow·Hive로 두 DB를 주기 비교하며 약 6개월간 불일치를 제거하고 약 3개월 QA
   - MySQL이 최적화하지 못하는 OR 조건(Index Merge)과 다중 PK 페이징 쿼리는 UNION으로 튜닝
 
-## d2/8992409 — 검수 전
+## d2/8992409 — 검수 완료
 
 [DBT, Airflow를 활용한 데이터 계보 중심 파이프라인 만들기](https://d2.naver.com/helloworld/8992409)
 
@@ -52,27 +52,15 @@
 - 추출 여부: **제외**
 - 판단 근거: NAVER ENGINEERING DAY 발표 영상 소개 글. 본문은 발표 내용 3줄·발표 대상·목차뿐이고 해결 근거(수치, 비교, 설계 결정 이유)가 없음. 글 유형은 발표 주제로는 기술 선택·도입형이지만 본문이 행사 발표 소개라 회고·문화·행사로 봄. gpt-5-mini가 v2·v3에서 계속 항목을 만든 글
 
-## kakao/762 — 검수 전
+## kakao/762 — 검수 완료
 
 [생산성 혁신의 실험: AI 마일리지 프로그램](https://tech.kakao.com/posts/762)
 
-- 글 유형: 실험·활용기
-- 추출 여부: **추출**
-- 판단 근거: AI 도구 도입 경험이 주제라 제외는 아님. 기술적 선택과 결과의 쌍보다 설문 수치와 활용 패턴·교훈 위주인 도입 경험 글이라 항목 1개
+- 글 유형: 회고·문화·행사
+- 추출 여부: **제외** (허용: 추출)
+- 판단 근거: 사용자 검수(2026-10-01): AI 마일리지 프로그램은 조직 안에서 AI 도구 사용을 독려하는 제도(조직 문화 도입)이고, 글은 그 운영과 설문 결과 위주라 제외. 실험·활용기와 회고·문화·행사 사이의 경계 글이라 추출도 허용. 초안에서는 추출(개발자 100여 명 3개월 시범 운영, 업무 단계별 시간 단축 응답률, 효과를 떨어뜨린 패턴)로 봤음
 
-### 항목 1. 개발자 100여 명에게 3개월간 상용 AI 개발 도구 크레딧을 지원해 업무 단계별 효과와 효과를 가르는 실패 패턴을 확인한 시범 운영
-
-- 문제 유형: 개발 생산성
-- 도메인: 사내 플랫폼·개발 도구 (허용: LLM·AI)
-- 기술: Cursor, GitHub Copilot, Claude Code, OpenAI API, Gemini
-- 핵심 사실:
-  - 약 3개월, 30여 개 조직의 개발자 100여 명이 40여 개 과제에서 월 마일리지 안에서 도구를 자유롭게 사용
-  - 인당 평균 3~4개 도구를 조합했고 Claude Code 사용자는 마지막 달에 처음보다 약 2배
-  - 3개월 차에 시간이 단축됐다고 답한 비율: 코드 작성 98.0%, 디버깅·테스트 86.3%, 설계 84.2%(1개월 차 대비 21.2%p 상승), 릴리즈 43.1%
-  - 68.4%가 이제 AI 도구 없이 개발하기 어렵다고 응답
-  - 효과를 떨어뜨린 패턴: 컨텍스트 부족, 사내 플랫폼과의 연동 부족, 러닝 커브, 검증 비용 증가, 이미 자동화된 영역
-
-## kakao/785 — 검수 전
+## kakao/785 — 검수 완료
 
 [if(kakao)25 Krew Day AI Talk Lounge: AI 시대의 기회와 고민을 논하며](https://tech.kakao.com/posts/785)
 
@@ -80,7 +68,7 @@
 - 추출 여부: **제외**
 - 판단 근거: 사내 행사 패널 토크를 Q&A로 정리한 글. AI 코딩 도구 토큰 절약 팁이 일부 있지만 행사 후기 형식이라 제외(기획.md 대상 글 기준: 행사·토크 후기는 실무 팁이 섞여 있어도 제외)
 
-## kakao/822 — 검수 전
+## kakao/822 — 검수 완료
 
 [메시징 서버의 스트레스 테스트 노하우와 AI가 덜어 준 부분](https://tech.kakao.com/posts/822)
 
@@ -101,7 +89,7 @@
   - 한 라운드 약 50분을 10번 넘게 반복하던 배포·부하·지표 캡처·보고서 작업을 스킬로 묶고 지표 수집을 서브에이전트로 병렬화
   - 배포 스킬이 이미지 캐시 때문에 새 이미지를 올리지 못했는데 AI 보고서는 '아주 좋음'으로 판정 → 성공·검증 기준을 사람이 명시해야 함
 
-## kakaopay/katfun-joy-kotlin — 검수 전
+## kakaopay/katfun-joy-kotlin — 검수 완료
 
 [코틀린, 저는 이렇게 쓰고 있습니다](https://tech.kakaopay.com/post/katfun-joy-kotlin/)
 
@@ -122,7 +110,7 @@
   - 확장 함수와 object declaration으로 공통 유틸 라이브러리를 만들어 프로젝트 간 중복 코드 감소
   - data class copy()로 테스트 대상 필드만 바꿔 테스트 의도를 드러냄
 
-## kakaopay/pallas-v2-log-platform — 검수 전
+## kakaopay/pallas-v2-log-platform — 검수 완료
 
 [일 41TB, 200억 건의 로그를 ClickStack으로 실시간 처리하기 - 호그와트 도서관 프로젝트](https://tech.kakaopay.com/post/pallas-v2-log-platform/)
 
@@ -145,7 +133,7 @@
   - IDC ClickHouse는 9일 보관, 이후 자체 도구로 S3 Parquet+ZSTD 아카이빙, 장기 조회는 필요할 때만 띄우는 AWS ClickHouse가 S3를 직접 조회
   - 결과: 로그 지연 20초 이내, 초당 83만 건 처리, 전체 비용 85.6% 절감(저장소 78%, 처리기 96%)
 
-## kakaopay/tech-strategy-tpm — 검수 전
+## kakaopay/tech-strategy-tpm — 검수 완료
 
 [카카오페이 TPM은 어떤 일을 하나요?](https://tech.kakaopay.com/post/tech-strategy-tpm/)
 
@@ -153,7 +141,7 @@
 - 추출 여부: **제외**
 - 판단 근거: TPM 직무 소개 인터뷰. 방화벽 작업·안정화 프로젝트 언급은 있으나 기술적 해결 내용이 없음
 
-## kurly/access-block-2 — 검수 전
+## kurly/access-block-2 — 검수 완료
 
 [nginx 설정 없이 우아하게 서비스 점검하기 (下)](https://helloworld.kurly.com/blog/access-block-2/)
 
@@ -174,7 +162,7 @@
   - 실행데이터는 API로 Redis에 바로 등록·삭제하고 클러스터·창고·제외 권한 단위로 차단
   - 화면은 VueRouter beforeEach, API는 Spring AOP로 모든 요청을 가로채 차단
 
-## kurly/claude-code-redesign-my-day — 검수 전
+## kurly/claude-code-redesign-my-day — 검수 완료
 
 [클로드 코드로 개발 팀장의 하루를 재설계한 이야기](https://helloworld.kurly.com/blog/claude-code-redesign-my-day/)
 
@@ -205,7 +193,7 @@
   - 세션 마무리마다 규칙 위반·재발·사용자 교정·환경 이슈를 점검해 규칙을 제안하고 승인된 것만 반영
   - 개별 워크플로는 공통 규칙을 직접 고치지 않고 제안함에 올리며, 둘 이상에서 반복되는 것 등을 공통 규칙으로 승격
 
-## kurly/commit-mvcc-set-autocommit — 검수 전
+## kurly/commit-mvcc-set-autocommit — 검수 완료
 
 [데이터가 있었는데요, 아니 없어요](https://helloworld.kurly.com/blog/commit-mvcc-set-autocommit/)
 
@@ -236,7 +224,7 @@
   - auto-commit false로 API 응답 시간을 1.5ms 줄여 약 40% 향상
   - 대신 쿼리 종료 시점에 COMMIT이 실행되는지 직접 확인해야 함(이 글의 장애 원인)
 
-## ly/how-to-evaluate-ai-generated-images-1 — 검수 전
+## ly/how-to-evaluate-ai-generated-images-1 — 검수 완료
 
 [AI로 생성한 이미지는 어떻게 평가할까요? (기본편)](https://techblog.lycorp.co.jp/ko/how-to-evaluate-ai-generated-images-1)
 
@@ -244,7 +232,7 @@
 - 추출 여부: **제외**
 - 판단 근거: 이미지 생성 모델 평가 지표(PSNR, SSIM, IS, FID, CLIP Score 등)를 정리한 개념 글. 팀이 적용한 경험·결과는 후속 편에 있고 이 글에는 없음
 
-## ly/improving-kubernetes-relay-api-server-performance-with-informer — 검수 전
+## ly/improving-kubernetes-relay-api-server-performance-with-informer — 검수 완료
 
 [Informer를 사용해 쿠버네티스 중계 API 서버의 성능 개선하기](https://techblog.lycorp.co.jp/ko/improving-kubernetes-relay-api-server-performance-with-informer)
 
@@ -265,7 +253,7 @@
   - Python 클라이언트는 Informer를 지원하지 않아(관련 이슈가 4년째 정체) Go로 재구현하고 노드·파드 Informer 캐시에서 조회
   - 800개 노드 계산 시간 10초 → 약 0.2초
 
-## ly/japanese-search-kuromoji-to-sudachi — 검수 전
+## ly/japanese-search-kuromoji-to-sudachi — 검수 완료
 
 [일본어 상품 검색 정확도 높이기: Elasticsearch + Kuromoji에서 OpenSearch + Sudachi로](https://techblog.lycorp.co.jp/ko/japanese-search-kuromoji-to-sudachi)
 
@@ -299,7 +287,7 @@
   - Edge N-gram 자동완성은 정제된 카탈로그 인덱스에만 두고, 8억 건 비정형 상품 인덱스는 인덱스 크기·색인 비용·Kafka 처리 지연 우려로 제외
   - 자동완성 쿼리는 constant_score로 스코어 계산을 생략
 
-## oliveyoung/2023-09-27_oliveyoung-favorite-snack — 검수 전
+## oliveyoung/2023-09-27_oliveyoung-favorite-snack — 검수 완료
 
 [올리브영 개발자가 좋아하는 과자는?](https://oliveyoung.tech/2023-09-27/oliveyoung-favorite-snack/)
 
@@ -307,7 +295,7 @@
 - 추출 여부: **제외**
 - 판단 근거: 사내 간식 설문 결과를 공유하는 조직 문화 글. 기술 내용 없음
 
-## oliveyoung/2024-12-17_catalog-mongo-transaction-2 — 검수 전
+## oliveyoung/2024-12-17_catalog-mongo-transaction-2 — 검수 완료
 
 [Spring Boot MongoDB 트랜잭션 도입 실전 가이드](https://oliveyoung.tech/2024-12-17/catalog-mongo-transaction-2/)
 
@@ -338,7 +326,7 @@
   - 지연 전송은 지연이 짧으면 문제가 남는 임시방편, Outbox·로그 테일링은 당장은 설계·구현 비용이 큼
   - ApplicationEventPublisher와 @TransactionalEventListener(AFTER_COMMIT) + @Async로 커밋 후 비동기 발행
 
-## oliveyoung/2025-04-25_web-worker-for-image-processing — 검수 전
+## oliveyoung/2025-04-25_web-worker-for-image-processing — 검수 완료
 
 [Web Worker로 이미지 처리 최적화하기](https://oliveyoung.tech/2025-04-25/web-worker-for-image-processing/)
 
@@ -359,7 +347,7 @@
   - Shared·Service Worker는 이미지 처리에 불필요한 기능이 많아 Dedicated Worker 선택
   - 2.31MB Base64 변환 기준 처리 시간 388ms → 137ms, 메인 스레드 블로킹 350ms → 8ms
 
-## toss/firesidechat_frontend_4 — 검수 전
+## toss/firesidechat_frontend_4 — 검수 완료
 
 [오픈소스에 기여하고 토스에 합격한.ssul | EP.4 모닥불](https://toss.tech/article/firesidechat_frontend_4)
 
@@ -367,7 +355,7 @@
 - 추출 여부: **제외**
 - 판단 근거: 영상 인터뷰 소개 글. 본문은 소개 문구·라이브러리 링크·타임스탬프뿐이고 기술적 해결 내용이 없음
 
-## toss/toss-frontend-ai-docs — 검수 전
+## toss/toss-frontend-ai-docs — 검수 완료
 
 [토스 프론트엔드 개발자들이 더 이상 문서를 찾지 않는 이유](https://toss.tech/article/toss-frontend-ai-docs)
 
@@ -387,7 +375,7 @@
   - 메신저 대화 스레드를 AI가 요약해 문서 저장소에 PR을 올리는 봇으로 문서 양을 늘림
   - 특정 팀원에 지식이 몰리거나 같은 질문이 반복되는 문제가 줄었다고 함 (정량 수치 없음)
 
-## toss/toss-securities-gpu-mig — 검수 전
+## toss/toss-securities-gpu-mig — 검수 완료
 
 [GPU를 밀도 있게 쓰는 방법 - 토스증권의 GPU 가상화(MIG) 도입기](https://toss.tech/article/toss-securities-gpu-mig)
 
@@ -408,7 +396,7 @@
   - MPS는 자원 격리가 어렵고 관리 부담이 커서 하드웨어 격리되는 MIG 선택
   - Kubernetes는 nvidia-device-plugin을 MIG 전략 mixed로 재배포하고 dcgm-exporter로 인스턴스별 SM 사용률을 수집
 
-## woowahan/14671 — 검수 전
+## woowahan/14671 — 검수 완료
 
 [요즘 협업 잘하는 팀은 이렇게 일합니다.](https://techblog.woowahan.com/14671/)
 
@@ -416,7 +404,7 @@
 - 추출 여부: **제외**
 - 판단 근거: 온보딩·지식 공유·이슈 처리 프로세스 등 팀 협업 방식 글. 슬랙 워크플로·지라 티켓 자동 생성이 나오지만 업무 프로세스 개선이 주제라 제외
 
-## woowahan/17386 — 검수 전
+## woowahan/17386 — 검수 완료
 
 [우리 팀은 카프카를 어떻게 사용하고 있을까](https://techblog.woowahan.com/17386/)
 
@@ -457,7 +445,7 @@
   - S3 싱크 커넥터로 분석 토픽을 S3에 영구 저장하고 Athena로 서비스 DB 부하 없이 조회
   - 서비스 토픽과 분석 토픽·서버를 분리해 장애 영향 범위를 나눔
 
-## woowahan/20763 — 검수 전
+## woowahan/20763 — 검수 완료
 
 [이젠 보내줄 때가 되었다. 대규모 트래픽의 C++ 시스템 Java로 전환하기](https://techblog.woowahan.com/20763/)
 

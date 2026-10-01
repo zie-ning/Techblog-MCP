@@ -50,5 +50,5 @@
     }
   ],
   "notes": "Web Worker·OffscreenCanvas는 제품이 아니라 브라우저 API지만 이 글의 핵심 기술이라 technologies에 Web Worker만 넣음. 버린 대안 중 Shared/Service Worker는 기술, 나머지는 설계 방식",
-  "reviewed": false
+  "reviewed": true
 }

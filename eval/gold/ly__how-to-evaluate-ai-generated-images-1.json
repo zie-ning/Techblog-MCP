@@ -8,5 +8,5 @@
   "kind_alternatives": [],
   "entries": [],
   "notes": "이미지 생성 모델 평가 지표(PSNR, SSIM, IS, FID, CLIP Score 등)를 정리한 개념 글. 팀이 적용한 경험·결과는 후속 편에 있고 이 글에는 없음",
-  "reviewed": false
+  "reviewed": true
 }

@@ -75,5 +75,5 @@
     }
   ],
   "notes": "글 앞부분의 MongoDB 트랜잭션 개념 설명(격리 수준, Write Concern 옵션 표)은 항목으로 만들지 않음",
-  "reviewed": false
+  "reviewed": true
 }

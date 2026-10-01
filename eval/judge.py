@@ -78,7 +78,9 @@ INSTRUCTIONS = """\
 정답의 항목 수와 달라도 이 기준에 맞으면 높은 점수를 준다.
 5 = 기준에 맞음, 3 = 곁가지·팁을 항목으로 만들거나 독립된 문제를 합침,
 1 = 글의 핵심 내용이 빠지거나 뒤섞임.
-정답이 제외 글이면(정답 항목 없음) 추출한 것 자체가 잘못이므로 1점.
+정답이 제외 글이고(정답 항목 없음) kind_alternatives에 추출이 없으면
+추출한 것 자체가 잘못이므로 1점.
+kind_alternatives에 추출이 있으면 추출해도 되는 경계 글이므로 위 분할 기준으로만 매긴다.
 
 reason 필드는 한국어 한두 문장으로 쓴다.
 """
@@ -159,6 +161,7 @@ def entry_view(e: Entry) -> dict:
 def gold_view(gold: GoldPost) -> dict:
     return {
         "kind": gold.kind,
+        "kind_alternatives": gold.kind_alternatives,
         "entries": [
             {
                 "index": i,

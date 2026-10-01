@@ -72,5 +72,5 @@
     }
   ],
   "notes": "성능 개선(auto-commit false)은 글 끝 Q&A에 나오지만 독립된 결정과 수치가 있어 별도 항목으로 둠. 한 항목으로 합쳐도 무방. 회원마케팅서비스의 멤버십 조회라 도메인은 커머스로 봄",
-  "reviewed": false
+  "reviewed": true
 }

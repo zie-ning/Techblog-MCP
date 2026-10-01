@@ -49,5 +49,5 @@
     }
   ],
   "notes": "주 문제 유형은 쿠버네티스 운영 성능이라 인프라·컨테이너, Informer 캐시를 쓴 점에서 캐싱도 허용",
-  "reviewed": false
+  "reviewed": true
 }
