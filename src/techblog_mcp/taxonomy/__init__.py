@@ -23,6 +23,8 @@ class Category:
 class Technology:
     name: str
     aliases: tuple[str, ...]
+    category: str  # 종류 (technologies.toml의 categories 중 하나)
+    parent: str | None = None  # 같은 계열로 묶어 셀 상위 기술 (예: Amazon MSK → Kafka)
 
 
 def _load(filename: str) -> dict:
@@ -40,11 +42,54 @@ def domains() -> tuple[Category, ...]:
 
 
 @cache
+def technology_categories() -> tuple[str, ...]:
+    return tuple(_load("technologies.toml")["categories"])
+
+
+@cache
 def technologies() -> tuple[Technology, ...]:
-    return tuple(
-        Technology(name=t["name"], aliases=tuple(t.get("aliases", [])))
+    techs = tuple(
+        Technology(
+            name=t["name"],
+            aliases=tuple(t.get("aliases", [])),
+            category=t["category"],
+            parent=t.get("parent"),
+        )
         for t in _load("technologies.toml")["technology"]
     )
+    _validate(techs)
+    return techs
+
+
+def _validate(techs: tuple[Technology, ...]) -> None:
+    """종류는 정해진 목록 안에서, 상위 기술은 사전에 있는 기술로 한 단계만 둔다."""
+    categories = set(technology_categories())
+    parents = {t.name: t.parent for t in techs}
+    for t in techs:
+        if t.category not in categories:
+            raise ValueError(f"기술 '{t.name}'의 종류 '{t.category}'가 categories에 없습니다")
+        if t.parent is None:
+            continue
+        if t.parent not in parents or t.parent == t.name:
+            raise ValueError(f"기술 '{t.name}'의 상위 기술 '{t.parent}'가 사전에 없습니다")
+        if parents[t.parent] is not None:
+            raise ValueError(f"상위 기술 '{t.parent}'에 다시 상위 기술이 있습니다 (한 단계만 허용)")
+
+
+def technology(name: str) -> Technology | None:
+    """표준 이름으로 사전 항목을 찾는다."""
+    return _by_name().get(name)
+
+
+@cache
+def _by_name() -> dict[str, Technology]:
+    return {t.name: t for t in technologies()}
+
+
+def technology_family(name: str) -> str:
+    """같은 계열로 묶어 셀 이름: 상위 기술이 있으면 상위 기술, 없으면 자기 자신."""
+    tech = technology(name)
+    return tech.parent if tech and tech.parent else name
 
 
 def problem_type_names() -> tuple[str, ...]:

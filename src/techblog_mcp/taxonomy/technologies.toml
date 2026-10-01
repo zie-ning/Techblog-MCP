@@ -1,539 +1,747 @@
-# 기술 사전: 표준 이름 + 별칭
+# 기술 사전: 표준 이름 + 별칭 + 종류(category) + 상위 기술(parent)
 # 비교할 때 대소문자, 공백, "-", "_", "." 차이는 무시한다 (예: "spring-boot" = "Spring Boot").
 # 추출 결과에서 사전에 없는 이름은 `uv run python -m pipeline.normalize`로 리포트를 뽑아 검토 후 추가한다.
+#
+# category: 아래 categories 중 하나. 집계에서 종류가 다른 기술(예: 모니터링 도구와 메시지 큐)이
+#   섞이지 않게 거르는 데 쓴다.
+# parent: 같은 계열로 묶어 셀 상위 기술 (예: Amazon MSK → Kafka). 한 단계만 두고, 호환 제품이거나
+#   같은 클라우드라는 이유로는 묶지 않는다. 결정 근거는 docs/기획.md "기술 사전 구조".
+
+categories = [
+    "언어·런타임",
+    "백엔드 프레임워크·라이브러리",
+    "프론트엔드·모바일",
+    "데이터베이스",
+    "캐시",
+    "검색 엔진",
+    "스토리지",
+    "메시지 브로커",
+    "데이터 처리·파이프라인",
+    "클라우드·인프라",
+    "CI/CD·빌드",
+    "관측성",
+    "테스트·품질",
+    "인증·보안",
+    "AI 모델·학습",
+    "LLM 애플리케이션",
+    "AI 코딩 도구",
+    "협업·개발 도구",
+    "기타 클라우드 서비스",
+]
 
 # 언어·런타임
+
 [[technology]]
 name = "Java"
 aliases = ["자바"]
+category = "언어·런타임"
 
 [[technology]]
 name = "Kotlin"
 aliases = ["코틀린"]
+category = "언어·런타임"
 
 [[technology]]
 name = "Kotlin Coroutines"
 aliases = ["Coroutine", "Coroutines", "코루틴"]
+category = "언어·런타임"
+parent = "Kotlin"
 
 [[technology]]
 name = "Python"
 aliases = ["파이썬"]
+category = "언어·런타임"
 
 [[technology]]
 name = "Go"
 aliases = ["Golang", "고랭"]
+category = "언어·런타임"
 
 [[technology]]
 name = "TypeScript"
 aliases = ["TS", "타입스크립트"]
+category = "언어·런타임"
 
 [[technology]]
 name = "JavaScript"
 aliases = ["JS", "자바스크립트"]
+category = "언어·런타임"
 
 [[technology]]
 name = "Node.js"
 aliases = ["Node", "노드"]
+category = "언어·런타임"
 
 [[technology]]
 name = "Swift"
 aliases = ["스위프트"]
+category = "언어·런타임"
 
 [[technology]]
 name = "JVM"
 aliases = []
-
-# 프레임워크·라이브러리
-[[technology]]
-name = "Spring Boot"
-aliases = ["스프링 부트", "SpringBoot"]
-
-[[technology]]
-name = "Spring Framework"
-aliases = ["Spring", "스프링"]
-
-[[technology]]
-name = "Spring Batch"
-aliases = ["스프링 배치"]
-
-[[technology]]
-name = "Spring WebFlux"
-aliases = ["WebFlux", "웹플럭스"]
-
-[[technology]]
-name = "Spring Cloud Gateway"
-aliases = ["SCG"]
-
-[[technology]]
-name = "JPA"
-aliases = ["Spring Data JPA", "Hibernate", "하이버네이트"]
-
-[[technology]]
-name = "QueryDSL"
-aliases = ["Querydsl"]
-
-[[technology]]
-name = "MyBatis"
-aliases = ["마이바티스"]
-
-[[technology]]
-name = "Resilience4j"
-aliases = []
-
-[[technology]]
-name = "Fixture Monkey"
-aliases = ["FixtureMonkey"]
-
-[[technology]]
-name = "JUnit"
-aliases = ["JUnit5"]
-
-[[technology]]
-name = "Kotest"
-aliases = []
-
-[[technology]]
-name = "React"
-aliases = ["리액트", "React.js"]
-
-[[technology]]
-name = "Next.js"
-aliases = ["NextJS", "넥스트"]
-
-[[technology]]
-name = "Vue.js"
-aliases = ["Vue", "뷰"]
-
-[[technology]]
-name = "React Native"
-aliases = ["리액트 네이티브"]
-
-[[technology]]
-name = "TanStack Query"
-aliases = ["React Query"]
-
-[[technology]]
-name = "MSW"
-aliases = ["Mock Service Worker"]
-
-[[technology]]
-name = "SwiftUI"
-aliases = []
-
-[[technology]]
-name = "Jetpack Compose"
-aliases = ["Compose"]
-
-[[technology]]
-name = "Flutter"
-aliases = ["플러터"]
-
-[[technology]]
-name = "gRPC"
-aliases = []
-
-[[technology]]
-name = "GraphQL"
-aliases = []
-
-# 데이터 저장소
-[[technology]]
-name = "MySQL"
-aliases = []
-
-[[technology]]
-name = "PostgreSQL"
-aliases = ["Postgres"]
-
-[[technology]]
-name = "Oracle"
-aliases = ["Oracle DB", "오라클"]
-
-[[technology]]
-name = "Amazon Aurora"
-aliases = ["Aurora", "Aurora MySQL"]
-
-[[technology]]
-name = "Amazon RDS"
-aliases = ["RDS"]
-
-[[technology]]
-name = "MongoDB"
-aliases = ["몽고DB"]
-
-[[technology]]
-name = "Amazon DynamoDB"
-aliases = ["DynamoDB"]
-
-[[technology]]
-name = "Redis"
-aliases = ["레디스", "ElastiCache", "Amazon ElastiCache", "Redisson", "Redis Pub/Sub", "Redis Cluster", "Redis Stream", "Redis Streams"]
-
-[[technology]]
-name = "Elasticsearch"
-aliases = ["ES", "엘라스틱서치"]
-
-[[technology]]
-name = "OpenSearch"
-aliases = ["Amazon OpenSearch", "Amazon OpenSearch Service", "AWS OpenSearch"]
-
-[[technology]]
-name = "Amazon S3"
-aliases = ["S3"]
-
-[[technology]]
-name = "Apache HBase"
-aliases = ["HBase"]
-
-[[technology]]
-name = "ClickHouse"
-aliases = []
-
-# 메시징·데이터 처리
-[[technology]]
-name = "Kafka"
-aliases = ["Apache Kafka", "카프카"]
-
-[[technology]]
-name = "Amazon MSK"
-aliases = ["MSK", "MSK Connect", "AWS MSK", "Managed Streaming for Apache Kafka"]
-
-[[technology]]
-name = "Kafka Connect"
-aliases = []
-
-[[technology]]
-name = "Kafka Streams"
-aliases = []
-
-[[technology]]
-name = "Debezium"
-aliases = []
-
-[[technology]]
-name = "RabbitMQ"
-aliases = ["Rabbit MQ", "래빗MQ"]
-
-[[technology]]
-name = "Amazon SQS"
-aliases = ["SQS"]
-
-[[technology]]
-name = "Amazon SNS"
-aliases = ["SNS"]
-
-[[technology]]
-name = "Apache Spark"
-aliases = ["Spark", "스파크"]
-
-[[technology]]
-name = "Apache Flink"
-aliases = ["Flink"]
-
-[[technology]]
-name = "Apache Airflow"
-aliases = ["Airflow"]
-
-[[technology]]
-name = "Logstash"
-aliases = []
-
-[[technology]]
-name = "Fluentd"
-aliases = ["Fluent Bit"]
-
-# 인프라·클라우드
-[[technology]]
-name = "AWS"
-aliases = ["Amazon Web Services", "AWS SDK"]
-
-[[technology]]
-name = "AWS Lambda"
-aliases = ["Lambda"]
-
-[[technology]]
-name = "Amazon ECS"
-aliases = ["ECS"]
-
-[[technology]]
-name = "Amazon EKS"
-aliases = ["EKS"]
-
-[[technology]]
-name = "Amazon CloudFront"
-aliases = ["CloudFront"]
-
-[[technology]]
-name = "Kubernetes"
-aliases = ["k8s", "쿠버네티스"]
-
-[[technology]]
-name = "Docker"
-aliases = ["도커"]
-
-[[technology]]
-name = "Helm"
-aliases = []
-
-[[technology]]
-name = "Argo CD"
-aliases = ["ArgoCD"]
-
-[[technology]]
-name = "Terraform"
-aliases = ["테라폼"]
-
-[[technology]]
-name = "Istio"
-aliases = []
-
-[[technology]]
-name = "Nginx"
-aliases = []
-
-[[technology]]
-name = "Jenkins"
-aliases = ["젠킨스"]
-
-[[technology]]
-name = "GitHub Actions"
-aliases = []
-
-[[technology]]
-name = "GitLab CI"
-aliases = []
-
-[[technology]]
-name = "Gradle"
-aliases = []
-
-# 관측성
-[[technology]]
-name = "Datadog"
-aliases = ["데이터독"]
-
-[[technology]]
-name = "Prometheus"
-aliases = ["프로메테우스"]
-
-[[technology]]
-name = "Grafana"
-aliases = ["그라파나"]
-
-[[technology]]
-name = "OpenTelemetry"
-aliases = ["OTel"]
-
-[[technology]]
-name = "Kibana"
-aliases = []
-
-[[technology]]
-name = "Sentry"
-aliases = []
-
-[[technology]]
-name = "Pinpoint"
-aliases = []
-
-# 테스트·품질
-[[technology]]
-name = "Playwright"
-aliases = []
-
-[[technology]]
-name = "Cypress"
-aliases = []
-
-[[technology]]
-name = "k6"
-aliases = []
-
-[[technology]]
-name = "nGrinder"
-aliases = []
-
-[[technology]]
-name = "Detekt"
-aliases = []
-
-[[technology]]
-name = "reviewdog"
-aliases = []
-
-# LLM·AI
-[[technology]]
-name = "OpenAI API"
-aliases = ["OpenAI", "GPT", "ChatGPT", "GPT-4", "GPT-4o", "GPT-3.5", "GPT-3.5 Turbo", "GPT-4.1", "GPT-5"]
-
-[[technology]]
-name = "Claude"
-aliases = ["Anthropic Claude", "Claude Sonnet", "Claude Haiku", "Claude Opus", "Claude 3.5 Sonnet", "Claude 3 Haiku", "Claude 3 Opus"]
-
-[[technology]]
-name = "Claude Code"
-aliases = []
-
-[[technology]]
-name = "Cursor"
-aliases = []
-
-[[technology]]
-name = "GitHub Copilot"
-aliases = ["Copilot"]
-
-[[technology]]
-name = "Amazon Bedrock"
-aliases = ["Bedrock", "AWS Bedrock"]
-
-[[technology]]
-name = "LangChain"
-aliases = ["랭체인"]
-
-[[technology]]
-name = "LangGraph"
-aliases = []
-
-[[technology]]
-name = "MCP"
-aliases = ["Model Context Protocol"]
-
-[[technology]]
-name = "RAG"
-aliases = ["Retrieval-Augmented Generation"]
-
-[[technology]]
-name = "Caffeine"
-aliases = ["Caffeine Cache", "카페인"]
-
-[[technology]]
-name = "HikariCP"
-aliases = []
-
-[[technology]]
-name = "Jackson"
-aliases = []
-
-[[technology]]
-name = "Spring Kafka"
-aliases = []
-
-[[technology]]
-name = "Spring Session"
-aliases = []
-
-[[technology]]
-name = "Spring AOP"
-aliases = []
-
-[[technology]]
-name = "Spring Cloud AWS"
-aliases = []
-
-[[technology]]
-name = "Spring Cloud Config"
-aliases = []
-
-[[technology]]
-name = "OAuth 2.0"
-aliases = ["OAuth2", "OAuth"]
-
-[[technology]]
-name = "JWT"
-aliases = ["JSON Web Token"]
+category = "언어·런타임"
 
 [[technology]]
 name = "Lua"
 aliases = ["Lua Script", "Lua 스크립트"]
+category = "언어·런타임"
+
+# 백엔드 프레임워크·라이브러리
 
 [[technology]]
-name = "Oracle GoldenGate"
-aliases = ["OGG", "GoldenGate"]
+name = "Spring Framework"
+aliases = ["Spring", "스프링"]
+category = "백엔드 프레임워크·라이브러리"
 
 [[technology]]
-name = "AKHQ"
+name = "Spring Boot"
+aliases = ["스프링 부트", "SpringBoot"]
+category = "백엔드 프레임워크·라이브러리"
+parent = "Spring Framework"
+
+[[technology]]
+name = "Spring Batch"
+aliases = ["스프링 배치"]
+category = "백엔드 프레임워크·라이브러리"
+parent = "Spring Framework"
+
+[[technology]]
+name = "Spring WebFlux"
+aliases = ["WebFlux", "웹플럭스"]
+category = "백엔드 프레임워크·라이브러리"
+parent = "Spring Framework"
+
+[[technology]]
+name = "Spring Cloud Gateway"
+aliases = ["SCG"]
+category = "백엔드 프레임워크·라이브러리"
+parent = "Spring Framework"
+
+[[technology]]
+name = "Spring Kafka"
 aliases = []
+category = "백엔드 프레임워크·라이브러리"
+parent = "Spring Framework"
 
 [[technology]]
-name = "Amazon MQ"
-aliases = ["AWS MQ"]
-
-[[technology]]
-name = "Amazon CloudWatch"
-aliases = ["CloudWatch"]
-
-[[technology]]
-name = "Amazon EventBridge"
-aliases = ["EventBridge"]
-
-[[technology]]
-name = "Amazon Kinesis Data Firehose"
-aliases = ["Kinesis Data Firehose", "AWS Kinesis Data Firehose", "Firehose"]
-
-[[technology]]
-name = "Amazon Kinesis"
-aliases = ["Kinesis", "Kinesis Data Streams"]
-
-[[technology]]
-name = "Amazon SES"
-aliases = ["SES"]
-
-[[technology]]
-name = "Amazon Connect"
+name = "Spring Session"
 aliases = []
+category = "백엔드 프레임워크·라이브러리"
+parent = "Spring Framework"
 
 [[technology]]
-name = "Amazon Polly"
+name = "Spring AOP"
 aliases = []
+category = "백엔드 프레임워크·라이브러리"
+parent = "Spring Framework"
 
 [[technology]]
-name = "Amazon Route 53"
-aliases = ["Route 53", "Route53"]
+name = "Spring Cloud AWS"
+aliases = []
+category = "백엔드 프레임워크·라이브러리"
+parent = "Spring Framework"
+
+[[technology]]
+name = "Spring Cloud Config"
+aliases = []
+category = "백엔드 프레임워크·라이브러리"
+parent = "Spring Framework"
+
+[[technology]]
+name = "JPA"
+aliases = ["Spring Data JPA", "Hibernate", "하이버네이트"]
+category = "백엔드 프레임워크·라이브러리"
+
+[[technology]]
+name = "QueryDSL"
+aliases = ["Querydsl"]
+category = "백엔드 프레임워크·라이브러리"
+
+[[technology]]
+name = "MyBatis"
+aliases = ["마이바티스"]
+category = "백엔드 프레임워크·라이브러리"
+
+[[technology]]
+name = "Resilience4j"
+aliases = []
+category = "백엔드 프레임워크·라이브러리"
+
+[[technology]]
+name = "Jackson"
+aliases = []
+category = "백엔드 프레임워크·라이브러리"
+
+[[technology]]
+name = "HikariCP"
+aliases = []
+category = "백엔드 프레임워크·라이브러리"
+
+[[technology]]
+name = "gRPC"
+aliases = []
+category = "백엔드 프레임워크·라이브러리"
+
+[[technology]]
+name = "GraphQL"
+aliases = []
+category = "백엔드 프레임워크·라이브러리"
+
+# 프론트엔드·모바일
+
+[[technology]]
+name = "React"
+aliases = ["리액트", "React.js"]
+category = "프론트엔드·모바일"
+
+[[technology]]
+name = "Next.js"
+aliases = ["NextJS", "넥스트"]
+category = "프론트엔드·모바일"
+parent = "React"
+
+[[technology]]
+name = "Vue.js"
+aliases = ["Vue", "뷰"]
+category = "프론트엔드·모바일"
+
+[[technology]]
+name = "React Native"
+aliases = ["리액트 네이티브"]
+category = "프론트엔드·모바일"
+
+[[technology]]
+name = "TanStack Query"
+aliases = ["React Query"]
+category = "프론트엔드·모바일"
+
+[[technology]]
+name = "SwiftUI"
+aliases = []
+category = "프론트엔드·모바일"
+
+[[technology]]
+name = "Jetpack Compose"
+aliases = ["Compose"]
+category = "프론트엔드·모바일"
+
+[[technology]]
+name = "Flutter"
+aliases = ["플러터"]
+category = "프론트엔드·모바일"
+
+# 데이터베이스
+
+[[technology]]
+name = "MySQL"
+aliases = []
+category = "데이터베이스"
+
+[[technology]]
+name = "PostgreSQL"
+aliases = ["Postgres"]
+category = "데이터베이스"
+
+[[technology]]
+name = "Oracle"
+aliases = ["Oracle DB", "오라클"]
+category = "데이터베이스"
+
+[[technology]]
+name = "Amazon Aurora"
+aliases = ["Aurora", "Aurora MySQL"]
+category = "데이터베이스"
+
+[[technology]]
+name = "Amazon RDS"
+aliases = ["RDS"]
+category = "데이터베이스"
+
+[[technology]]
+name = "MongoDB"
+aliases = ["몽고DB"]
+category = "데이터베이스"
 
 [[technology]]
 name = "Amazon DocumentDB"
 aliases = ["DocumentDB"]
+category = "데이터베이스"
 
 [[technology]]
-name = "Slack"
-aliases = ["슬랙"]
+name = "Amazon DynamoDB"
+aliases = ["DynamoDB"]
+category = "데이터베이스"
 
 [[technology]]
-name = "Visual Studio Code"
-aliases = ["VS Code", "VSCode"]
+name = "Apache HBase"
+aliases = ["HBase"]
+category = "데이터베이스"
 
 [[technology]]
-name = "Amazon Q"
-aliases = ["Amazon Q Developer"]
+name = "ClickHouse"
+aliases = []
+category = "데이터베이스"
+
+# 캐시
+
+[[technology]]
+name = "Redis"
+aliases = ["레디스", "ElastiCache", "Amazon ElastiCache", "Redisson", "Redis Pub/Sub", "Redis Cluster", "Redis Stream", "Redis Streams"]
+category = "캐시"
+
+[[technology]]
+name = "Caffeine"
+aliases = ["Caffeine Cache", "카페인"]
+category = "캐시"
+
+# 검색 엔진
+
+[[technology]]
+name = "Elasticsearch"
+aliases = ["ES", "엘라스틱서치"]
+category = "검색 엔진"
+
+[[technology]]
+name = "OpenSearch"
+aliases = ["Amazon OpenSearch", "Amazon OpenSearch Service", "AWS OpenSearch"]
+category = "검색 엔진"
+
+# 스토리지
+
+[[technology]]
+name = "Amazon S3"
+aliases = ["S3"]
+category = "스토리지"
+
+# 메시지 브로커
+
+[[technology]]
+name = "Kafka"
+aliases = ["Apache Kafka", "카프카"]
+category = "메시지 브로커"
+
+[[technology]]
+name = "Amazon MSK"
+aliases = ["MSK", "MSK Connect", "AWS MSK", "Managed Streaming for Apache Kafka"]
+category = "메시지 브로커"
+parent = "Kafka"
+
+[[technology]]
+name = "RabbitMQ"
+aliases = ["Rabbit MQ", "래빗MQ"]
+category = "메시지 브로커"
+
+[[technology]]
+name = "Amazon MQ"
+aliases = ["AWS MQ"]
+category = "메시지 브로커"
+
+[[technology]]
+name = "Amazon SQS"
+aliases = ["SQS"]
+category = "메시지 브로커"
+
+[[technology]]
+name = "Amazon SNS"
+aliases = ["SNS"]
+category = "메시지 브로커"
+
+[[technology]]
+name = "Amazon EventBridge"
+aliases = ["EventBridge"]
+category = "메시지 브로커"
+
+[[technology]]
+name = "Amazon Kinesis"
+aliases = ["Kinesis", "Kinesis Data Streams"]
+category = "메시지 브로커"
+
+# 데이터 처리·파이프라인
+
+[[technology]]
+name = "Kafka Connect"
+aliases = []
+category = "데이터 처리·파이프라인"
+parent = "Kafka"
+
+[[technology]]
+name = "Kafka Streams"
+aliases = []
+category = "데이터 처리·파이프라인"
+parent = "Kafka"
+
+[[technology]]
+name = "Debezium"
+aliases = []
+category = "데이터 처리·파이프라인"
+
+[[technology]]
+name = "Apache Spark"
+aliases = ["Spark", "스파크"]
+category = "데이터 처리·파이프라인"
+
+[[technology]]
+name = "Apache Flink"
+aliases = ["Flink"]
+category = "데이터 처리·파이프라인"
+
+[[technology]]
+name = "Apache Airflow"
+aliases = ["Airflow"]
+category = "데이터 처리·파이프라인"
+
+[[technology]]
+name = "Logstash"
+aliases = []
+category = "데이터 처리·파이프라인"
+
+[[technology]]
+name = "Fluentd"
+aliases = ["Fluent Bit"]
+category = "데이터 처리·파이프라인"
+
+[[technology]]
+name = "Amazon Kinesis Data Firehose"
+aliases = ["Kinesis Data Firehose", "AWS Kinesis Data Firehose", "Firehose"]
+category = "데이터 처리·파이프라인"
+parent = "Amazon Kinesis"
+
+[[technology]]
+name = "Oracle GoldenGate"
+aliases = ["OGG", "GoldenGate"]
+category = "데이터 처리·파이프라인"
+
+# 클라우드·인프라
+
+[[technology]]
+name = "AWS"
+aliases = ["Amazon Web Services", "AWS SDK"]
+category = "클라우드·인프라"
+
+[[technology]]
+name = "AWS Lambda"
+aliases = ["Lambda"]
+category = "클라우드·인프라"
+
+[[technology]]
+name = "Amazon ECS"
+aliases = ["ECS"]
+category = "클라우드·인프라"
+
+[[technology]]
+name = "Kubernetes"
+aliases = ["k8s", "쿠버네티스"]
+category = "클라우드·인프라"
+
+[[technology]]
+name = "Amazon EKS"
+aliases = ["EKS"]
+category = "클라우드·인프라"
+parent = "Kubernetes"
+
+[[technology]]
+name = "Docker"
+aliases = ["도커"]
+category = "클라우드·인프라"
+
+[[technology]]
+name = "Helm"
+aliases = []
+category = "클라우드·인프라"
+
+[[technology]]
+name = "Terraform"
+aliases = ["테라폼"]
+category = "클라우드·인프라"
+
+[[technology]]
+name = "Istio"
+aliases = []
+category = "클라우드·인프라"
+
+[[technology]]
+name = "Nginx"
+aliases = []
+category = "클라우드·인프라"
+
+[[technology]]
+name = "Amazon CloudFront"
+aliases = ["CloudFront"]
+category = "클라우드·인프라"
+
+[[technology]]
+name = "Amazon Route 53"
+aliases = ["Route 53", "Route53"]
+category = "클라우드·인프라"
+
+# CI/CD·빌드
+
+[[technology]]
+name = "Argo CD"
+aliases = ["ArgoCD"]
+category = "CI/CD·빌드"
+
+[[technology]]
+name = "Jenkins"
+aliases = ["젠킨스"]
+category = "CI/CD·빌드"
+
+[[technology]]
+name = "GitHub Actions"
+aliases = []
+category = "CI/CD·빌드"
+
+[[technology]]
+name = "GitLab CI"
+aliases = []
+category = "CI/CD·빌드"
+
+[[technology]]
+name = "Gradle"
+aliases = []
+category = "CI/CD·빌드"
+
+# 관측성
+
+[[technology]]
+name = "Datadog"
+aliases = ["데이터독"]
+category = "관측성"
+
+[[technology]]
+name = "Prometheus"
+aliases = ["프로메테우스"]
+category = "관측성"
+
+[[technology]]
+name = "Grafana"
+aliases = ["그라파나"]
+category = "관측성"
+
+[[technology]]
+name = "OpenTelemetry"
+aliases = ["OTel"]
+category = "관측성"
+
+[[technology]]
+name = "Kibana"
+aliases = []
+category = "관측성"
+
+[[technology]]
+name = "Sentry"
+aliases = []
+category = "관측성"
+
+[[technology]]
+name = "Pinpoint"
+aliases = []
+category = "관측성"
+
+[[technology]]
+name = "Amazon CloudWatch"
+aliases = ["CloudWatch"]
+category = "관측성"
+
+[[technology]]
+name = "AKHQ"
+aliases = []
+category = "관측성"
+
+# 테스트·품질
+
+[[technology]]
+name = "JUnit"
+aliases = ["JUnit5"]
+category = "테스트·품질"
+
+[[technology]]
+name = "Kotest"
+aliases = []
+category = "테스트·품질"
+
+[[technology]]
+name = "Fixture Monkey"
+aliases = ["FixtureMonkey"]
+category = "테스트·품질"
+
+[[technology]]
+name = "MSW"
+aliases = ["Mock Service Worker"]
+category = "테스트·품질"
+
+[[technology]]
+name = "Playwright"
+aliases = []
+category = "테스트·품질"
+
+[[technology]]
+name = "Cypress"
+aliases = []
+category = "테스트·품질"
+
+[[technology]]
+name = "k6"
+aliases = []
+category = "테스트·품질"
+
+[[technology]]
+name = "nGrinder"
+aliases = []
+category = "테스트·품질"
+
+[[technology]]
+name = "Detekt"
+aliases = []
+category = "테스트·품질"
+
+[[technology]]
+name = "reviewdog"
+aliases = []
+category = "테스트·품질"
+
+# 인증·보안
+
+[[technology]]
+name = "OAuth 2.0"
+aliases = ["OAuth2", "OAuth"]
+category = "인증·보안"
+
+[[technology]]
+name = "JWT"
+aliases = ["JSON Web Token"]
+category = "인증·보안"
+
+# AI 모델·학습
+
+[[technology]]
+name = "OpenAI API"
+aliases = ["OpenAI", "GPT", "ChatGPT", "GPT-4", "GPT-4o", "GPT-3.5", "GPT-3.5 Turbo", "GPT-4.1", "GPT-5"]
+category = "AI 모델·학습"
 
 [[technology]]
 name = "Azure OpenAI"
 aliases = ["Azure ChatGPT", "Azure OpenAI Service"]
+category = "AI 모델·학습"
+parent = "OpenAI API"
+
+[[technology]]
+name = "Claude"
+aliases = ["Anthropic Claude", "Claude Sonnet", "Claude Haiku", "Claude Opus", "Claude 3.5 Sonnet", "Claude 3 Haiku", "Claude 3 Opus"]
+category = "AI 모델·학습"
 
 [[technology]]
 name = "Gemini"
 aliases = ["Google Gemini"]
+category = "AI 모델·학습"
 
 [[technology]]
 name = "Gemma"
 aliases = ["Gemma 2", "Gemma 3", "Gemma2-2B", "Gemma 3-4B-IT"]
+category = "AI 모델·학습"
 
 [[technology]]
 name = "Qwen"
 aliases = ["Qwen2.5", "Qwen3", "Qwen 2.5/3"]
+category = "AI 모델·학습"
 
 [[technology]]
 name = "HyperCLOVA X"
 aliases = ["HyperCLOVA", "HyperCLOVA X SEED", "HyperCLOVA X SEED 3B"]
+category = "AI 모델·학습"
+
+[[technology]]
+name = "Amazon Bedrock"
+aliases = ["Bedrock", "AWS Bedrock"]
+category = "AI 모델·학습"
 
 [[technology]]
 name = "Hugging Face"
 aliases = ["HuggingFace"]
+category = "AI 모델·학습"
 
 [[technology]]
 name = "LoRA"
 aliases = []
+category = "AI 모델·학습"
 
 [[technology]]
 name = "QLoRA"
 aliases = []
+category = "AI 모델·학습"
+parent = "LoRA"
+
+# LLM 애플리케이션
+
+[[technology]]
+name = "LangChain"
+aliases = ["랭체인"]
+category = "LLM 애플리케이션"
+
+[[technology]]
+name = "LangGraph"
+aliases = []
+category = "LLM 애플리케이션"
+parent = "LangChain"
+
+[[technology]]
+name = "MCP"
+aliases = ["Model Context Protocol"]
+category = "LLM 애플리케이션"
+
+[[technology]]
+name = "RAG"
+aliases = ["Retrieval-Augmented Generation"]
+category = "LLM 애플리케이션"
+
+# AI 코딩 도구
+
+[[technology]]
+name = "Claude Code"
+aliases = []
+category = "AI 코딩 도구"
+
+[[technology]]
+name = "Cursor"
+aliases = []
+category = "AI 코딩 도구"
+
+[[technology]]
+name = "GitHub Copilot"
+aliases = ["Copilot"]
+category = "AI 코딩 도구"
+
+[[technology]]
+name = "Amazon Q"
+aliases = ["Amazon Q Developer"]
+category = "AI 코딩 도구"
+
+# 협업·개발 도구
+
+[[technology]]
+name = "Slack"
+aliases = ["슬랙"]
+category = "협업·개발 도구"
+
+[[technology]]
+name = "Visual Studio Code"
+aliases = ["VS Code", "VSCode"]
+category = "협업·개발 도구"
+
+# 기타 클라우드 서비스
+
+[[technology]]
+name = "Amazon SES"
+aliases = ["SES"]
+category = "기타 클라우드 서비스"
+
+[[technology]]
+name = "Amazon Connect"
+aliases = []
+category = "기타 클라우드 서비스"
+
+[[technology]]
+name = "Amazon Polly"
+aliases = []
+category = "기타 클라우드 서비스"
