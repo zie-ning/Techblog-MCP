@@ -144,8 +144,10 @@ def gold_checks(evals: dict[tuple[str, str], PostEval]):
                 {"key": "faithfulness", "score": mean(e.faithfulness)},
                 {"key": "card_summary", "score": mean(e.card_summary)},
                 {"key": "split", "score": e.split_score},
-                {"key": "problem_type_ok", "score": e.type_hits / e.pairs if e.pairs else None},
-                {"key": "domain_ok", "score": e.domain_hits / e.pairs if e.pairs else None},
+                {"key": "problem_type_precision", "score": e.types.precision()},
+                {"key": "problem_type_recall", "score": e.types.recall()},
+                {"key": "domain_precision", "score": e.domains.precision()},
+                {"key": "domain_recall", "score": e.domains.recall()},
                 {"key": "rejected_precision", "score": e.rejected.precision()},
                 {"key": "rejected_recall", "score": e.rejected.recall()},
                 {

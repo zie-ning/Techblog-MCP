@@ -62,8 +62,9 @@ def run_metrics(run: Run, lengths: dict[str, int], pricing: dict) -> dict[str, s
     missing = Counter(name for e in entries for name in renormalize(e)[1])
     rejected = [r for e in entries for r in e.rejected_alternatives]
     short = [p for p in posts if lengths.get(p.url, SHORT_TEXT) < SHORT_TEXT]
-    primary = Counter(e.primary_problem_type for e in entries).most_common(1)
-    domain = Counter(e.domain for e in entries).most_common(1)
+    # 다중 선택: 그 분류가 붙은 항목의 비율
+    primary = Counter(t for e in entries for t in e.problem_types).most_common(1)
+    domain = Counter(d for e in entries for d in e.domains).most_common(1)
 
     usage = Usage()
     for p in posts:
@@ -92,10 +93,12 @@ def run_metrics(run: Run, lengths: dict[str, int], pricing: dict) -> dict[str, s
         "사전에 없는 기술명 (종류 / 항목당)": unregistered,
         "버린 대안 (기술/설계 방식)": f"{len(rejected)} ({sum(r.kind == '기술' for r in rejected)}"
         f"/{sum(r.kind == '설계 방식' for r in rejected)})",
-        "가장 많은 주 문제 유형": f"{primary[0][0]} {primary[0][1] / len(entries):.0%}"
+        "가장 많은 문제 유형 (항목 대비)": f"{primary[0][0]} {primary[0][1] / len(entries):.0%}"
         if primary
         else "-",
-        "가장 많은 도메인": f"{domain[0][0]} {domain[0][1] / len(entries):.0%}" if domain else "-",
+        "가장 많은 도메인 (항목 대비)": f"{domain[0][0]} {domain[0][1] / len(entries):.0%}"
+        if domain
+        else "-",
         "비용 (편당 / 전체 추정)": f"${run_cost:.2f} (${run_cost / len(posts):.4f}"
         f" / ${run_cost / len(posts) * TOTAL_POSTS:.1f})"
         if run_cost is not None and posts

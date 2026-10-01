@@ -141,8 +141,8 @@ def entry_view(e: Entry) -> dict:
     """채점 모델에 보여 줄 추출 항목. 발췌는 이미 원문 대조를 통과했으므로 요약 문장만 넣는다."""
     view: dict = {
         "id": e.id,
-        "primary_problem_type": e.primary_problem_type,
-        "domain": e.domain,
+        "problem_types": e.problem_types,
+        "domains": e.domains,
         "technologies": e.technologies_raw,
     }
     view |= {

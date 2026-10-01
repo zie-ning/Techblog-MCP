@@ -44,17 +44,17 @@ def _gold(kind: str = "추출", **overrides) -> GoldPost:
     entries = [
         GoldEntry(
             summary="쿠폰 초과 발급을 Redis 원자 연산으로 해결",
-            primary_problem_type="동시성·락",
+            problem_types=["동시성·락"],
             acceptable_problem_types=["트래픽 급증 대응"],
-            domain="커머스·주문·재고",
+            domains=["커머스·주문·재고"],
             technologies=["Redis", "Spring Boot"],
             rejected_alternatives=[GoldRejected(name="DB 비관적 락", kind="설계 방식")],
             key_facts=["초당 3만 요청", "초과 발급 0건"],
         ),
         GoldEntry(
             summary="발급 이력을 Kafka로 비동기 적재",
-            primary_problem_type="메시징·비동기 처리",
-            domain="커머스·주문·재고",
+            problem_types=["메시징·비동기 처리"],
+            domains=["커머스·주문·재고"],
             technologies=["Kafka"],
             key_facts=["적재 지연 1초 이내"],
         ),
@@ -79,7 +79,8 @@ def _entries() -> list:
             "case_0001",
             source="kakao",
             post_url="https://e/1",
-            primary_problem_type="트래픽 급증 대응",  # 허용 답
+            # 허용 답 하나와 정답에 없는 값 하나. 꼭 들어갈 값(동시성·락)은 빠짐
+            problem_types=["트래픽 급증 대응", "캐싱"],
             technologies=["Redis"],
             technologies_raw=["redis", "spring-boot", "Lua"],
             problem_situation=[ev("초당 3만 요청에서 초과 발급")],
@@ -97,8 +98,8 @@ def _entries() -> list:
             "case_0002",
             source="kakao",
             post_url="https://e/1",
-            primary_problem_type="캐싱",  # 정답과 다름
-            domain="범용",  # 정답과 다름
+            problem_types=["캐싱"],
+            domains=["범용"],
             problem_situation=[ev("부가 문제")],
             solution=[ev("부가 해결")],
         ),
@@ -184,7 +185,10 @@ def test_evaluate_post_uses_judge_matches():
     # 정답 key_facts 3개 중 항목 1의 첫 사실만 담김. 대응 없는 항목 2는 true라도 세지 않는다
     assert result.completeness == 1 / 3
     # 범위 밖 정답 번호(9)는 무시하고, 대응 쌍은 (1, case_0001) 하나
-    assert (result.pairs, result.type_hits, result.domain_hits) == (1, 1, 1)
+    assert result.pairs == 1
+    t, d = result.types, result.domains
+    assert (t.hit_pred, t.pred, t.hit_gold, t.gold) == (1, 2, 0, 1)
+    assert (d.hit_pred, d.pred, d.hit_gold, d.gold) == (1, 1, 1, 1)
     assert result.faithfulness == [5, 5]
     assert result.card_summary == [4, 2]
     assert result.split_score == 4
@@ -251,7 +255,7 @@ def test_evaluate_run_ignores_stale_judgements_and_builds_report():
     assert metrics["정답 글 / 채점된 글"] == "2 / 1"
     assert metrics["추출 여부 일치 (허용 답 포함)"] == "100% (2/2)"
     assert metrics["항목 수 차이 (추출 − 정답)"] == "+0: 1편"
-    assert metrics["주 문제 유형 일치 (대응 쌍)"] == "100% (1/1)"
+    assert metrics["문제 유형 정밀도 / 재현율 (대응 쌍)"] == "50% / 0% (1/2, 0/1)"
     assert metrics["완결성 (key_facts 포함률, 글 평균)"] == "33%"
     assert metrics["채점 비용"] == "$2.00 (judge-model)"
 

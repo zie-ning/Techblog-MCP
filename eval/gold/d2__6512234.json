@@ -9,12 +9,16 @@
   "entries": [
     {
       "summary": "여러 파트가 공유하던 Oracle을 회원 파트 MySQL로 양방향 이중 쓰기를 써서 무중단·즉시 롤백 가능하게 전환",
-      "primary_problem_type": "DB 마이그레이션·샤딩",
+      "problem_types": [
+        "DB 마이그레이션·샤딩"
+      ],
       "acceptable_problem_types": [
         "비용 절감",
         "데이터 정합성·트랜잭션"
       ],
-      "domain": "커머스·주문·재고",
+      "domains": [
+        "커머스·주문·재고"
+      ],
       "acceptable_domains": [],
       "technologies": [
         "MySQL",

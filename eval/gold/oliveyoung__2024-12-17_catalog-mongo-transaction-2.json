@@ -9,11 +9,15 @@
   "entries": [
     {
       "summary": "복제 지연 때문에 트랜잭션 안에서 방금 쓴 데이터를 Secondary에서 못 읽는 문제를 트랜잭션에서만 Primary에서 읽도록 해 해결",
-      "primary_problem_type": "데이터 정합성·트랜잭션",
+      "problem_types": [
+        "데이터 정합성·트랜잭션"
+      ],
       "acceptable_problem_types": [
         "DB 성능·쿼리 최적화"
       ],
-      "domain": "커머스·주문·재고",
+      "domains": [
+        "커머스·주문·재고"
+      ],
       "acceptable_domains": [],
       "technologies": [
         "MongoDB",
@@ -39,11 +43,15 @@
     },
     {
       "summary": "트랜잭션 커밋 전에 SQS 메시지가 나가 컨슈머가 데이터를 못 찾는 문제를 커밋 후 이벤트 발행(@TransactionalEventListener)으로 해결",
-      "primary_problem_type": "데이터 정합성·트랜잭션",
+      "problem_types": [
+        "데이터 정합성·트랜잭션"
+      ],
       "acceptable_problem_types": [
         "메시징·비동기 처리"
       ],
-      "domain": "커머스·주문·재고",
+      "domains": [
+        "커머스·주문·재고"
+      ],
       "acceptable_domains": [],
       "technologies": [
         "Amazon SQS",

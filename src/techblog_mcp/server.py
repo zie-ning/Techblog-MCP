@@ -73,9 +73,13 @@ QueryArg = Annotated[
     str, Field(description="찾는 문제 상황이나 주제 (자연어). 예: 선착순 쿠폰 발급 동시성")
 ]
 ProblemTypeArg = Annotated[
-    ProblemType | None, Field(description="문제 유형 필터. 주 유형과 보조 유형 모두 매칭")
+    ProblemType | None,
+    Field(description="문제 유형 필터. 항목의 문제 유형(여러 개) 중 하나라도 맞으면 찾는다"),
 ]
-DomainArg = Annotated[Domain | None, Field(description="도메인 필터")]
+DomainArg = Annotated[
+    Domain | None,
+    Field(description="도메인 필터. 항목의 도메인(여러 개) 중 하나라도 맞으면 찾는다"),
+]
 TechnologiesArg = Annotated[
     list[str] | None,
     Field(description="기술 필터 (자유 입력, 예: 카프카 → Kafka). 하나라도 쓴 항목을 찾는다"),

@@ -9,9 +9,13 @@
   "entries": [
     {
       "summary": "모바일 고해상도 이미지 업로드 때 메인 스레드 블로킹과 강제 새로고침을 이미지 변환·리사이징을 Dedicated Web Worker로 옮겨 해결",
-      "primary_problem_type": "클라이언트 성능(웹·앱)",
+      "problem_types": [
+        "클라이언트 성능(웹·앱)"
+      ],
       "acceptable_problem_types": [],
-      "domain": "콘텐츠·미디어",
+      "domains": [
+        "콘텐츠·미디어"
+      ],
       "acceptable_domains": [
         "커머스·주문·재고"
       ],

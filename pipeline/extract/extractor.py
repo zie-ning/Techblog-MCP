@@ -18,7 +18,9 @@ from pipeline.collect.raw import RawPost
 from pipeline.extract import prompt_version, prompts, tracing
 from pipeline.extract.evidence import SourceText
 from pipeline.extract.schema import (
-    MAX_SECONDARY_PROBLEM_TYPES,
+    GENERIC_DOMAIN,
+    MAX_DOMAINS,
+    MAX_PROBLEM_TYPES,
     Classification,
     Entry,
     EntryDraft,
@@ -250,10 +252,15 @@ def _dedupe(items: list[str]) -> list[str]:
     return list(dict.fromkeys(i.strip() for i in items if i.strip()))
 
 
+def _domains(names: list[str]) -> list[str]:
+    """중복 제거, 범용은 다른 도메인이 있으면 뺀다, 최대 개수."""
+    domains = _dedupe(names)
+    if len(domains) > 1:
+        domains = [d for d in domains if d != GENERIC_DOMAIN]
+    return domains[:MAX_DOMAINS]
+
+
 def to_entry(draft: EntryDraft, post: RawPost) -> Entry:
-    secondary = [
-        t for t in _dedupe(draft.secondary_problem_types) if t != draft.primary_problem_type
-    ]
 
     def evidenced(points: list[Point]) -> list[Evidenced]:
         return [Evidenced(text=p.text, evidence=p.evidence) for p in points]
@@ -265,9 +272,8 @@ def to_entry(draft: EntryDraft, post: RawPost) -> Entry:
         post_url=post.url,
         post_title=post.title,
         published_at=post.published_at.date().isoformat(),
-        primary_problem_type=draft.primary_problem_type,
-        secondary_problem_types=secondary[:MAX_SECONDARY_PROBLEM_TYPES],
-        domain=draft.domain,
+        problem_types=_dedupe(draft.problem_types)[:MAX_PROBLEM_TYPES],
+        domains=_domains(draft.domains),
         technologies=[],  # 아래 renormalize에서 채운다
         technologies_raw=_dedupe(draft.technologies),
         tags=_dedupe(draft.tags),

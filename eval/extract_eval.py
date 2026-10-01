@@ -84,8 +84,10 @@ class PostEval:
     faithfulness: list[int] = field(default_factory=list)
     card_summary: list[int] = field(default_factory=list)
     split_score: int | None = None
-    type_hits: int = 0  # 대응된 (정답, 추출) 쌍 중 주 문제 유형이 허용 범위인 쌍
-    domain_hits: int = 0
+    # 대응된 (정답, 추출) 쌍마다 집합 비교.
+    # 정밀도는 꼭 들어갈 값 + 허용 값, 재현율은 꼭 들어갈 값 기준
+    types: Counts = field(default_factory=Counts)
+    domains: Counts = field(default_factory=Counts)
     pairs: int = 0
     rejected: Counts = field(default_factory=Counts)
     rejected_unmatched: int = 0  # 정답에 없는 버린 대안
@@ -95,6 +97,20 @@ class PostEval:
     @property
     def both_extracted(self) -> bool:
         return bool(self.gold.entries) and bool(self.entries)
+
+
+def label_counts(pred: list[str], core: list[str], acceptable: list[str]) -> Counts:
+    """다중 선택 분류 비교.
+
+    예측 중 허용 범위(꼭 들어갈 값 + 허용 값)에 드는 수와, 꼭 들어갈 값 중 맞힌 수를 센다.
+    """
+    predicted, required = set(pred), set(core)
+    return Counts(
+        hit_pred=len(predicted & (required | set(acceptable))),
+        pred=len(predicted),
+        hit_gold=len(predicted & required),
+        gold=len(required),
+    )
 
 
 def _clamp(score: int) -> int:
@@ -127,11 +143,8 @@ def evaluate_post(
             facts_hit += sum(m.key_facts_covered[: len(g.key_facts)])
         for e in matched:
             ev.pairs += 1
-            ev.type_hits += e.primary_problem_type in {
-                g.primary_problem_type,
-                *g.acceptable_problem_types,
-            }
-            ev.domain_hits += e.domain in {g.domain, *g.acceptable_domains}
+            ev.types.add(label_counts(e.problem_types, g.problem_types, g.acceptable_problem_types))
+            ev.domains.add(label_counts(e.domains, g.domains, g.acceptable_domains))
     if facts_total:
         ev.completeness = facts_hit / facts_total
 
@@ -192,6 +205,13 @@ def _kept(total: int, dropped: int) -> float | None:
     return (total - dropped) / total if total else None
 
 
+def _pr(c: Counts) -> str:
+    return (
+        f"{_ratio(c.precision())} / {_ratio(c.recall())}"
+        f" ({c.hit_pred}/{c.pred}, {c.hit_gold}/{c.gold})"
+    )
+
+
 def _mean(values: list[float]) -> str:
     return f"{sum(values) / len(values):.2f}" if values else "-"
 
@@ -211,7 +231,10 @@ def run_metrics(run: Run, evals: list[PostEval], judgements: dict, pricing: dict
         if e.both_extracted or e.gold.entries:
             rejected.add(e.rejected)
     completeness = [e.completeness for e in judged if e.completeness is not None]
-    pairs = sum(e.pairs for e in judged)
+    types, domains = Counts(), Counts()
+    for e in judged:
+        types.add(e.types)
+        domains.add(e.domains)
 
     gold_ev = sum(e.record.evidence_total for e in evals)
     gold_dropped = sum(e.record.dropped_evidence for e in evals)
@@ -247,12 +270,10 @@ def run_metrics(run: Run, evals: list[PostEval], judgements: dict, pricing: dict
         "글 유형 일치": _rate(sum(e.record.post_type == e.gold.post_type for e in evals), n),
         "항목 수 차이 (추출 − 정답)": ", ".join(f"{d:+d}: {diffs[d]}편" for d in sorted(diffs))
         or "-",
-        "기술 정밀도 / 재현율": f"{_ratio(tech.precision())} / {_ratio(tech.recall())}"
-        f" ({tech.hit_pred}/{tech.pred}, {tech.hit_gold}/{tech.gold})",
-        "주 문제 유형 일치 (대응 쌍)": _rate(sum(e.type_hits for e in judged), pairs),
-        "도메인 일치 (대응 쌍)": _rate(sum(e.domain_hits for e in judged), pairs),
-        "버린 대안 정밀도 / 재현율": f"{_ratio(rejected.precision())} / {_ratio(rejected.recall())}"
-        f" ({rejected.hit_pred}/{rejected.pred}, {rejected.hit_gold}/{rejected.gold})",
+        "기술 정밀도 / 재현율": _pr(tech),
+        "문제 유형 정밀도 / 재현율 (대응 쌍)": _pr(types),
+        "도메인 정밀도 / 재현율 (대응 쌍)": _pr(domains),
+        "버린 대안 정밀도 / 재현율": _pr(rejected),
         "정답에 없는 버린 대안 중 원문 근거 없음": _rate(
             sum(e.rejected_unsupported for e in judged), sum(e.rejected_unmatched for e in judged)
         ),
@@ -293,7 +314,9 @@ def build_report(names: list[str], metrics: list[dict], evals: list[list[PostEva
         "- 기술 정밀도·재현율은 정답과 추출 모두 항목이 있는 글에서 글 단위 집합으로 비교한다"
         " (사전에 있으면 표준 이름, 없으면 대소문자·구분자 무시).",
         "- 문제 유형·도메인 일치, 버린 대안, 완결성, 충실성은 judge.py 채점 결과가"
-        " 최신인 글만 센다. 정답에서 허용한 다른 답도 맞은 것으로 본다.",
+        " 최신인 글만 센다. 문제 유형·도메인은 다중 선택이라 집합으로 비교한다:"
+        " 정밀도는 추출한 값 중 정답(꼭 들어갈 값 + 허용 값)에 드는 비율,"
+        " 재현율은 꼭 들어갈 값 중 추출에 들어간 비율.",
         "- 완결성은 추출에서 빠진 정답 글(추출 결과가 제외)도 0%로 넣는다.",
         "",
         "## 글별 결과",

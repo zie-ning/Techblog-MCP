@@ -16,8 +16,8 @@ def _post(**overrides) -> dict:
         entries=[
             GoldEntry(
                 summary="요약",
-                primary_problem_type="캐싱",
-                domain="범용",
+                problem_types=["캐싱"],
+                domains=["범용"],
                 technologies=["Redis"],
                 key_facts=["초당 3만 요청"],
             )
@@ -42,8 +42,8 @@ def test_gold_rejects_unknown_category():
     with pytest.raises(ValidationError):
         GoldEntry(
             summary="s",
-            primary_problem_type="없는 유형",
-            domain="범용",
+            problem_types=["없는 유형"],
+            domains=["범용"],
             technologies=[],
             key_facts=[],
         )

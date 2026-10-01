@@ -9,12 +9,16 @@
   "entries": [
     {
       "summary": "배달 주소의 행정동을 판별하는 C++ 서버를 성능을 유지하면서 Java·Spring Boot로 전환하고 Canary 배포를 여러 번 반복해 무장애로 배포",
-      "primary_problem_type": "개발 생산성",
+      "problem_types": [
+        "개발 생산성"
+      ],
       "acceptable_problem_types": [
         "배포·CI/CD",
         "MSA"
       ],
-      "domain": "배달·물류",
+      "domains": [
+        "배달·물류"
+      ],
       "acceptable_domains": [],
       "technologies": [
         "Java",
@@ -44,13 +48,17 @@
     },
     {
       "summary": "Java 전환 뒤 힙에 올린 대용량 데이터 때문에 생긴 major GC와 CPU 급증을 fastutil primitive 컬렉션으로 해결",
-      "primary_problem_type": "인프라·컨테이너",
+      "problem_types": [
+        "인프라·컨테이너"
+      ],
       "acceptable_problem_types": [
         "장애 대응·복구",
         "트래픽 급증 대응",
         "비용 절감"
       ],
-      "domain": "배달·물류",
+      "domains": [
+        "배달·물류"
+      ],
       "acceptable_domains": [],
       "technologies": [
         "Java",

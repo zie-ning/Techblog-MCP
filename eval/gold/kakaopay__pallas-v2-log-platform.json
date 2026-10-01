@@ -9,12 +9,16 @@
   "entries": [
     {
       "summary": "하루 41TB로 늘어난 로그의 유입 지연·조회 지연·비용 문제를 수집부터 조회까지 ClickStack(OpenTelemetry + ClickHouse + HyperDX)으로 다시 설계해 해결",
-      "primary_problem_type": "모니터링·관측성",
+      "problem_types": [
+        "모니터링·관측성"
+      ],
       "acceptable_problem_types": [
         "비용 절감",
         "데이터 파이프라인"
       ],
-      "domain": "사내 플랫폼·개발 도구",
+      "domains": [
+        "사내 플랫폼·개발 도구"
+      ],
       "acceptable_domains": [
         "결제·금융"
       ],

@@ -9,11 +9,15 @@
   "entries": [
     {
       "summary": "보험 서비스 백엔드에서 value class·invoke 팩토리, 불변성·스마트 캐스트, 확장 함수 라이브러리, data class copy()로 안정성과 테스트 가독성을 높이는 코틀린 활용법",
-      "primary_problem_type": "개발 생산성",
+      "problem_types": [
+        "개발 생산성"
+      ],
       "acceptable_problem_types": [
         "테스트 자동화"
       ],
-      "domain": "결제·금융",
+      "domains": [
+        "결제·금융"
+      ],
       "acceptable_domains": [
         "범용"
       ],

@@ -9,11 +9,15 @@
   "entries": [
     {
       "summary": "오래된 IPADIC 사전과 복합어 과분해로 상품명이 검색되지 않던 문제를 Elasticsearch + Kuromoji에서 OpenSearch + Sudachi로 바꿔 해결",
-      "primary_problem_type": "DB 성능·쿼리 최적화",
+      "problem_types": [
+        "DB 성능·쿼리 최적화"
+      ],
       "acceptable_problem_types": [
         "DB 마이그레이션·샤딩"
       ],
-      "domain": "검색·추천",
+      "domains": [
+        "검색·추천"
+      ],
       "acceptable_domains": [
         "커머스·주문·재고"
       ],
@@ -45,9 +49,13 @@
     },
     {
       "summary": "형태소 분석으로 풀 수 없는 모델 번호·구분자 표기 차이와 자동완성을 인덱스 규모에 맞춘 Multi-field(compact, edge n-gram) 설계로 해결",
-      "primary_problem_type": "DB 성능·쿼리 최적화",
+      "problem_types": [
+        "DB 성능·쿼리 최적화"
+      ],
       "acceptable_problem_types": [],
-      "domain": "검색·추천",
+      "domains": [
+        "검색·추천"
+      ],
       "acceptable_domains": [
         "커머스·주문·재고"
       ],

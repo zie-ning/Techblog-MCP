@@ -55,9 +55,8 @@ class FakeLLM:
 
 def case(**overrides) -> EntryDraft:
     base = dict(
-        primary_problem_type="동시성·락",
-        secondary_problem_types=["동시성·락", "트래픽 급증 대응", "캐싱", "비용 절감"],
-        domain="커머스·주문·재고",
+        problem_types=["동시성·락", "동시성·락", "트래픽 급증 대응", "캐싱", "비용 절감"],
+        domains=["범용", "커머스·주문·재고"],
         technologies=["레디스", "spring-boot", "사내 발급기", "레디스"],
         tags=["쿠폰"],
         problem_situation=[
@@ -104,8 +103,9 @@ def test_extract_case_verifies_and_normalizes():
     assert entry.company == "올리브영"
     assert entry.published_at == "2025-03-12"
     assert [p.text for p in entry.performance_ops] == ["초과 발급 해소"]
-    # 보조 유형: 주 유형 제거, 중복 제거, 최대 2개
-    assert entry.secondary_problem_types == ["트래픽 급증 대응", "캐싱"]
+    # 문제 유형: 중복 제거, 최대 3개. 도메인: 범용은 다른 도메인이 있으면 뺀다
+    assert entry.problem_types == ["동시성·락", "트래픽 급증 대응", "캐싱"]
+    assert entry.domains == ["커머스·주문·재고"]
     # 기술명: 사전으로 정규화하고 사전에 없는 이름은 raw에만 남긴다
     assert entry.technologies == ["Redis", "Spring Boot"]
     assert entry.technologies_raw == ["레디스", "spring-boot", "사내 발급기"]
@@ -297,7 +297,7 @@ def test_legacy_insight_entry_moves_points_to_solution():
         "post_title": "제목",
         "published_at": "2025-01-01",
         "primary_problem_type": "개발 생산성",
-        "secondary_problem_types": [],
+        "secondary_problem_types": ["테스트 자동화"],
         "domain": "범용",
         "technologies": [],
         "technologies_raw": [],
@@ -309,6 +309,9 @@ def test_legacy_insight_entry_moves_points_to_solution():
     assert [p.text for p in entry.solution] == ["t", "t2"]
     assert entry.problem_situation == []
     assert "kind" not in entry.model_dump()
+    # 주·보조 문제 유형과 도메인 하나는 목록으로 바뀐다
+    assert entry.problem_types == ["개발 생산성", "테스트 자동화"]
+    assert entry.domains == ["범용"]
 
 
 def test_parse_post_ids():

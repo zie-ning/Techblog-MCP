@@ -9,13 +9,17 @@
   "entries": [
     {
       "summary": "모든 파드 조회 권한 없이 노드별 스케줄링 가능 리소스를 보여 주는 중계 API 서버를 Go 클라이언트의 Informer 캐시로 재구현해 응답 10초를 0.2초로 단축",
-      "primary_problem_type": "인프라·컨테이너",
+      "problem_types": [
+        "인프라·컨테이너"
+      ],
       "acceptable_problem_types": [
         "캐싱",
         "인증·보안",
         "API 설계·외부 연동"
       ],
-      "domain": "사내 플랫폼·개발 도구",
+      "domains": [
+        "사내 플랫폼·개발 도구"
+      ],
       "acceptable_domains": [],
       "technologies": [
         "Kubernetes",

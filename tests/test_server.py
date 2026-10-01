@@ -33,7 +33,7 @@ def test_tools_and_prompt_registered():
 def test_search_card_format():
     text = call("search", query="선착순 쿠폰 동시성", limit=1)
     assert (
-        "[case_0001] 올리브영 · 2025-03-12 · 동시성·락 / 커머스·주문·재고\n"
+        "[case_0001] 올리브영 · 2025-03-12 · 동시성·락, 트래픽 급증 대응 / 커머스·주문·재고\n"
         "제목: 선착순 쿠폰 발급 개선기\n"
         "문제 상황:"
     ) in text

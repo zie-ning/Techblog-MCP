@@ -9,12 +9,16 @@
   "entries": [
     {
       "summary": "서비스 점검 때 nginx 설정 없이 경로·클러스터·권한 단위로 화면과 API 접근을 막는 기능을 구글 시트·BigQuery 메타데이터와 Redis 캐시, Spring AOP로 구현",
-      "primary_problem_type": "업무·운영 자동화",
+      "problem_types": [
+        "업무·운영 자동화"
+      ],
       "acceptable_problem_types": [
         "장애 대응·복구",
         "API 설계·외부 연동"
       ],
-      "domain": "배달·물류",
+      "domains": [
+        "배달·물류"
+      ],
       "acceptable_domains": [
         "사내 플랫폼·개발 도구"
       ],

@@ -37,10 +37,12 @@ class Filters:
         """entries 테이블(별칭 e)에 거는 WHERE 조건."""
         clauses, params = ["1=1"], []
         if self.domain:
-            clauses.append("e.domain = ?")
+            # 문제 유형·도메인 필터는 항목의 값 중 하나라도 맞으면 찾는다
+            clauses.append(
+                "EXISTS (SELECT 1 FROM entry_domains d WHERE d.entry_id = e.id AND d.domain = ?)"
+            )
             params.append(self.domain)
         if self.problem_type:
-            # 검색 필터는 주·보조 유형 모두 매칭 (docs/기획.md "분류 개수")
             clauses.append(
                 "EXISTS (SELECT 1 FROM entry_problem_types p"
                 " WHERE p.entry_id = e.id AND p.problem_type = ?)"
@@ -171,6 +173,8 @@ class AggregateResult:
 
 _GROUP_KEY_SQL: dict[str, str] = {
     "technology": "SELECT technology FROM entry_technologies WHERE entry_id = ?",
+    "problem_type": "SELECT problem_type FROM entry_problem_types WHERE entry_id = ?",
+    "domain": "SELECT domain FROM entry_domains WHERE entry_id = ?",
     "rejected_alternative": (
         "SELECT name FROM entry_rejected_alternatives WHERE entry_id = ? AND kind = '기술'"
     ),
@@ -188,7 +192,7 @@ def aggregate(
             " WHERE r.entry_id = e.id AND r.kind = '기술')"
         )
     rows = conn.execute(
-        "SELECT e.id, e.has_results, e.company, e.primary_problem_type, e.domain"
+        "SELECT e.id, e.has_results, e.company"
         f" FROM entries e WHERE {where} ORDER BY e.published_at DESC, e.id DESC",
         params,
     ).fetchall()
@@ -217,11 +221,7 @@ def aggregate(
 
 
 def _group_keys(conn: sqlite3.Connection, group_by: GroupBy, row: sqlite3.Row) -> list[str]:
-    if group_by == "problem_type":
-        return [row["primary_problem_type"]]  # 주 유형 기준으로 중복 없이 센다
-    if group_by == "domain":
-        return [row["domain"]]
     if group_by == "company":
         return [row["company"]]
-    # 한 항목이 같은 키를 두 번 세지 않도록 중복 제거
+    # 한 항목은 여러 그룹에 들어갈 수 있다(기술·문제 유형·도메인). 같은 그룹에는 한 번만 센다
     return list(dict.fromkeys(r[0] for r in conn.execute(_GROUP_KEY_SQL[group_by], [row["id"]])))

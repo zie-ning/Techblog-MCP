@@ -11,9 +11,13 @@
   "entries": [
     {
       "summary": "바이트 패턴을 해석할 때 값 재해석은 std::bit_cast, 포인터 변환·바이트 접근·포인터↔정수 변환은 reinterpret_cast를 쓰는 기준",
-      "primary_problem_type": "개발 생산성",
+      "problem_types": [
+        "개발 생산성"
+      ],
       "acceptable_problem_types": [],
-      "domain": "범용",
+      "domains": [
+        "범용"
+      ],
       "acceptable_domains": [
         "사내 플랫폼·개발 도구"
       ],

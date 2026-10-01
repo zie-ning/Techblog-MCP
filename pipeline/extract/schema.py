@@ -24,7 +24,11 @@ LEGACY_POST_KINDS = ("사례", "인사이트")  # M3 이전 기록의 값. 읽�
 # 버린 대안 유형: 기술은 집계 대상, 설계 방식은 상세에서만 보여 준다
 RejectedKind = Literal["기술", "설계 방식"]
 
-MAX_SECONDARY_PROBLEM_TYPES = 2
+# 문제 유형·도메인은 다중 선택이다. 하나만 고르게 하면 판단이 자주 갈려서 M3에서 바꿨다
+# (docs/기획.md "분류 개수"). 범용은 다른 도메인이 없을 때만 쓴다
+MAX_PROBLEM_TYPES = 3
+MAX_DOMAINS = 2
+GENERIC_DOMAIN = "범용"
 
 
 # ---- LLM 출력 스키마 ----
@@ -58,11 +62,14 @@ class RejectedAlternativeDraft(BaseModel):
 
 
 class _Classified(BaseModel):
-    primary_problem_type: ProblemType
-    secondary_problem_types: list[ProblemType] = Field(
-        description=f"보조 문제 유형. 최대 {MAX_SECONDARY_PROBLEM_TYPES}개, 없으면 빈 목록"
+    problem_types: list[ProblemType] = Field(
+        description=f"이 항목이 직접 해결한 문제 유형 1~{MAX_PROBLEM_TYPES}개. "
+        "곁가지로 언급만 된 문제는 넣지 않는다"
     )
-    domain: Domain
+    domains: list[Domain] = Field(
+        description=f"이 항목의 시스템이 속한 서비스 영역 1~{MAX_DOMAINS}개. "
+        f"{GENERIC_DOMAIN}은 다른 도메인이 없을 때만"
+    )
     technologies: list[str] = Field(
         description="이 항목에서 실제로 쓴 제품·라이브러리·프레임워크·서비스 이름. "
         "클래스·메서드명, 일반 개념, 사내 시스템 이름, 버전 표기는 넣지 않음"
@@ -118,9 +125,8 @@ class Entry(BaseModel):
     post_url: str
     post_title: str
     published_at: str  # YYYY-MM-DD
-    primary_problem_type: str
-    secondary_problem_types: list[str]
-    domain: str
+    problem_types: list[str]  # 순서 없음. 검색 필터·집계 모두 하나라도 맞으면 해당
+    domains: list[str]
     technologies: list[str]  # 기술 사전의 표준 이름
     technologies_raw: list[str]  # 사전에 없는 이름도 포함한 원래 이름 (사전 보강 후 재정규화용)
     tags: list[str]
@@ -132,14 +138,25 @@ class Entry(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def _from_legacy(cls, data):
-        """M3 이전 기록을 읽는다: 사례/인사이트 `kind`를 버리고, 인사이트의 핵심 내용과
-        적용해볼 점은 해결 방법으로 옮긴다."""
-        if isinstance(data, dict) and "kind" in data:
-            data = dict(data)
+        """M3 이전 기록을 읽는다.
+
+        - 사례/인사이트 `kind`를 버리고, 인사이트의 핵심 내용과 적용해볼 점은 해결 방법으로 옮긴다.
+        - 주·보조 문제 유형은 문제 유형 목록으로, 도메인 하나는 도메인 목록으로 바꾼다.
+        """
+        if not isinstance(data, dict):
+            return data
+        data = dict(data)
+        if "kind" in data:
             del data["kind"]
             key_points, takeaways = data.pop("key_points", []), data.pop("takeaways", [])
             if key_points or takeaways:
                 data["solution"] = [*data.get("solution", []), *key_points, *takeaways]
+        if "primary_problem_type" in data:
+            primary = data.pop("primary_problem_type")
+            secondary = data.pop("secondary_problem_types", [])
+            data["problem_types"] = list(dict.fromkeys([primary, *secondary]))
+        if "domain" in data:
+            data["domains"] = [data.pop("domain")]
         return data
 
 

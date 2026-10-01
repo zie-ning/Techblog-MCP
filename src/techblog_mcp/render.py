@@ -24,7 +24,7 @@ _MAX_COMPANY_NAMES = 5
 
 GROUP_BY_LABELS: dict[str, str] = {
     "technology": "기술",
-    "problem_type": "문제 유형(주 유형 기준)",
+    "problem_type": "문제 유형",
     "domain": "도메인",
     "company": "회사",
     "rejected_alternative": "버린 대안",
@@ -34,7 +34,7 @@ GROUP_BY_LABELS: dict[str, str] = {
 def _header(entry: dict) -> str:
     return (
         f"[{entry['id']}] {entry['company']} · {entry['published_at']}"
-        f" · {entry['primary_problem_type']} / {entry['domain']}"
+        f" · {', '.join(entry['problem_types'])} / {', '.join(entry['domains'])}"
     )
 
 
@@ -116,14 +116,11 @@ def _points(title: str, points: list[dict]) -> list[str]:
 
 def detail(d: Detail) -> str:
     e = d.entry
-    secondary = e["secondary_problem_types"]
     lines = [
         f"[{e['id']}] {e['post_title']}",
         f"회사: {e['company']} · 발행일: {e['published_at']}",
         f"원문: {e['post_url']}",
-        f"문제 유형: {e['primary_problem_type']}"
-        + (f" (보조: {', '.join(secondary)})" if secondary else "")
-        + f" · 도메인: {e['domain']}",
+        f"문제 유형: {', '.join(e['problem_types'])} · 도메인: {', '.join(e['domains'])}",
     ]
     if e["technologies"]:
         lines.append(f"기술: {', '.join(e['technologies'])}")
@@ -181,6 +178,11 @@ def aggregate_result(
         lines.append(
             "※ 버린 대안이 글에 명시된 항목 중 기술·제품 대안만 셉니다."
             " 설계 방식 대안(패턴, 구현 방식)은 get_details에서 확인하세요."
+        )
+    if group_by in ("technology", "problem_type", "domain"):
+        lines.append(
+            f"※ 한 항목이 여러 {label}에 걸리면 각각 셉니다."
+            " 건수의 합은 전체 건수보다 클 수 있습니다."
         )
     if result.total == 0:
         lines.append("\n결과 없음: 이 조건에 맞는 항목이 DB에 없습니다. 수치를 지어내지 마세요.")

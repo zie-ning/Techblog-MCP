@@ -9,9 +9,13 @@
   "entries": [
     {
       "summary": "개발자 100여 명에게 3개월간 상용 AI 개발 도구 크레딧을 지원해 업무 단계별 효과와 효과를 가르는 실패 패턴을 확인한 시범 운영",
-      "primary_problem_type": "개발 생산성",
+      "problem_types": [
+        "개발 생산성"
+      ],
       "acceptable_problem_types": [],
-      "domain": "사내 플랫폼·개발 도구",
+      "domains": [
+        "사내 플랫폼·개발 도구"
+      ],
       "acceptable_domains": [
         "LLM·AI"
       ],

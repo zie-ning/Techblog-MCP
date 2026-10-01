@@ -9,11 +9,15 @@
   "entries": [
     {
       "summary": "작은 ML 워크로드가 고성능 GPU를 낭비하는 문제를 클라우드·혼합 GPU 대신 MIG GPU 가상화로 해결하고 Kubernetes 스케줄링·모니터링을 맞춤",
-      "primary_problem_type": "비용 절감",
+      "problem_types": [
+        "비용 절감"
+      ],
       "acceptable_problem_types": [
         "인프라·컨테이너"
       ],
-      "domain": "LLM·AI",
+      "domains": [
+        "LLM·AI"
+      ],
       "acceptable_domains": [
         "사내 플랫폼·개발 도구"
       ],

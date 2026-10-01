@@ -9,11 +9,15 @@
   "entries": [
     {
       "summary": "주문·배달 이벤트의 순서와 누락을 키 기반 파티셔닝과 Debezium을 이용한 Transactional Outbox 패턴으로 보장",
-      "primary_problem_type": "데이터 정합성·트랜잭션",
+      "problem_types": [
+        "데이터 정합성·트랜잭션"
+      ],
       "acceptable_problem_types": [
         "메시징·비동기 처리"
       ],
-      "domain": "배달·물류",
+      "domains": [
+        "배달·물류"
+      ],
       "acceptable_domains": [],
       "technologies": [
         "Kafka",
@@ -31,9 +35,13 @@
     },
     {
       "summary": "배달 서버군이 인메모리로 가진 분배 규칙 변경을 카프카 이벤트 버스(Spring Cloud Bus)로 모든 서버에 반영",
-      "primary_problem_type": "메시징·비동기 처리",
+      "problem_types": [
+        "메시징·비동기 처리"
+      ],
       "acceptable_problem_types": [],
-      "domain": "배달·물류",
+      "domains": [
+        "배달·물류"
+      ],
       "acceptable_domains": [],
       "technologies": [
         "Kafka",
@@ -48,11 +56,15 @@
     },
     {
       "summary": "배달 이벤트를 카프카 스트림즈로 실시간 집계하고 배달 건별 통합 이벤트를 S3·Athena로 분석용 제공",
-      "primary_problem_type": "데이터 파이프라인",
+      "problem_types": [
+        "데이터 파이프라인"
+      ],
       "acceptable_problem_types": [
         "모니터링·관측성"
       ],
-      "domain": "배달·물류",
+      "domains": [
+        "배달·물류"
+      ],
       "acceptable_domains": [],
       "technologies": [
         "Kafka Streams",

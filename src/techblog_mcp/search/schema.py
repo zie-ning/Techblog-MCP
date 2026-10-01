@@ -1,6 +1,6 @@
 """검색 DB 스키마. 색인 빌드(pipeline/build_index.py)가 만들고 서버가 읽는다."""
 
-SCHEMA_VERSION = "3"
+SCHEMA_VERSION = "4"
 
 # FTS5 열과 bm25() 가중치. 순서가 곧 bm25() 인자 순서다. 가중치는 M5 검색 평가에서 조정한다.
 FTS_COLUMNS: dict[str, float] = {
@@ -22,18 +22,16 @@ CREATE TABLE entries (
     company TEXT NOT NULL,
     post_url TEXT NOT NULL,
     published_at TEXT NOT NULL,
-    primary_problem_type TEXT NOT NULL,
-    domain TEXT NOT NULL,
     data TEXT NOT NULL  -- data/entries.jsonl의 한 줄 (JSON)
 );
 CREATE INDEX entries_post_url ON entries(post_url);
 
-CREATE TABLE entry_problem_types (
-    entry_id TEXT NOT NULL,
-    problem_type TEXT NOT NULL,
-    is_primary INTEGER NOT NULL
-);
+-- 문제 유형·도메인은 항목마다 여러 개 (주·보조 구분 없음)
+CREATE TABLE entry_problem_types (entry_id TEXT NOT NULL, problem_type TEXT NOT NULL);
 CREATE INDEX entry_problem_types_type ON entry_problem_types(problem_type);
+
+CREATE TABLE entry_domains (entry_id TEXT NOT NULL, domain TEXT NOT NULL);
+CREATE INDEX entry_domains_domain ON entry_domains(domain);
 
 CREATE TABLE entry_technologies (entry_id TEXT NOT NULL, technology TEXT NOT NULL);
 CREATE INDEX entry_technologies_tech ON entry_technologies(technology);

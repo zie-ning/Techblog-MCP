@@ -36,12 +36,14 @@ class GoldEntry(BaseModel):
     summary: str = Field(
         description="이 항목의 문제와 해법(팁·활용 경험 글은 요지) 한 줄. 항목 대응에 쓴다"
     )
-    primary_problem_type: ProblemType
-    acceptable_problem_types: list[ProblemType] = Field(
-        default=[], description="주 문제 유형으로 이것을 골라도 맞다고 볼 다른 유형"
+    problem_types: list[ProblemType] = Field(
+        min_length=1, description="추출 결과에 꼭 들어가야 할 문제 유형 (재현율 기준)"
     )
-    domain: Domain
-    acceptable_domains: list[Domain] = []
+    acceptable_problem_types: list[ProblemType] = Field(
+        default=[], description="들어가도 틀리지 않은 다른 문제 유형 (정밀도 기준에 함께 셈)"
+    )
+    domains: list[Domain] = Field(min_length=1, description="꼭 들어가야 할 도메인")
+    acceptable_domains: list[Domain] = Field(default=[], description="들어가도 되는 다른 도메인")
     technologies: list[str] = Field(description="실제로 쓴 기술. 사전에 있으면 표준 이름")
     rejected_alternatives: list[GoldRejected] = []
     key_facts: list[str] = Field(
@@ -119,13 +121,13 @@ def render_review(golds: dict[tuple[str, str], GoldPost]) -> str:
             f"- 판단 근거: {g.notes}",
         ]
         for i, e in enumerate(g.entries, 1):
-            types = e.primary_problem_type + _allowed(e.acceptable_problem_types)
-            domains = e.domain + _allowed(e.acceptable_domains)
+            types = ", ".join(e.problem_types) + _allowed(e.acceptable_problem_types)
+            domains = ", ".join(e.domains) + _allowed(e.acceptable_domains)
             lines += [
                 "",
                 f"### 항목 {i}. {e.summary}",
                 "",
-                f"- 주 문제 유형: {types}",
+                f"- 문제 유형: {types}",
                 f"- 도메인: {domains}",
                 f"- 기술: {', '.join(e.technologies) or '-'}",
             ]
@@ -177,7 +179,9 @@ def render_reference() -> str:
         "`src/techblog_mcp/taxonomy/`, 글 유형·구조화 유형은 추출 스키마와 프롬프트가 기준이다. "
         "분류 목록이 바뀌면 다시 생성한다. 라벨링 기준은 [README.md](README.md).",
         "",
-        '정답의 "(허용: …)"는 추출 결과가 그 값이어도 맞다고 보는 다른 답이다.',
+        '정답의 "(허용: …)"는 추출 결과가 그 값이어도 맞다고 보는 다른 답이다. '
+        "문제 유형·도메인은 앞의 값이 꼭 들어가야 할 값(재현율 기준), "
+        "허용 값은 들어가도 틀리지 않은 값(정밀도 기준)이다.",
         "",
         f"## 글 유형 (`post_type`, {len(_literal_values(PostType))}개)",
         "",
@@ -195,18 +199,19 @@ def render_reference() -> str:
         "항목 나누기: 독립된 문제-해법 쌍마다 항목 하나, 같은 문제의 단계적 해결은 한 항목, "
         "팁 모음·도구 활용 경험 글은 항목 하나.",
         "",
-        f"## 주 문제 유형 (`primary_problem_type`, {len(taxonomy.problem_types())}개)",
+        f"## 문제 유형 (`problem_types`, {len(taxonomy.problem_types())}개 중 1~3개)",
         "",
-        "무엇을 풀었는지(해결의 목적) 기준으로 고른다. 쓴 기술 기준이 아니다.",
+        "무엇을 풀었는지(해결의 목적) 기준으로 고른다. 쓴 기술 기준이 아니다. 하나의 해결이 여러 "
+        "문제를 함께 풀었으면 모두 고르고, 곁가지로 언급만 된 문제는 넣지 않는다.",
         "",
         *_definition_table(
             taxonomy.problem_type_names(),
             {c.name: c.description for c in taxonomy.problem_types()},
         ),
         "",
-        f"## 도메인 (`domain`, {len(taxonomy.domains())}개)",
+        f"## 도메인 (`domains`, {len(taxonomy.domains())}개 중 1~2개)",
         "",
-        "그 시스템이 속한 서비스 영역. 애매하면 범용.",
+        "그 시스템이 속한 서비스 영역. 두 영역에 걸치면 둘 다. 범용은 다른 도메인이 없을 때만.",
         "",
         *_definition_table(
             taxonomy.domain_names(), {c.name: c.description for c in taxonomy.domains()}

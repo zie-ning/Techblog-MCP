@@ -169,14 +169,18 @@ def build_report(
     lines.append("")
 
     # 분류 분포 (항목 기준)
+    # 다중 선택이라 항목 하나가 여러 분류에 들어가고, 비율의 합은 100%를 넘을 수 있다
     lines += _distribution(
-        "주 문제 유형 분포",
-        Counter(e.primary_problem_type for e in entries),
+        "문제 유형 분포 (항목 대비 비율, 다중 선택)",
+        Counter(t for e in entries for t in e.problem_types),
         taxonomy.problem_type_names(),
         len(entries),
     )
     lines += _distribution(
-        "도메인 분포", Counter(e.domain for e in entries), taxonomy.domain_names(), len(entries)
+        "도메인 분포 (항목 대비 비율, 다중 선택)",
+        Counter(d for e in entries for d in e.domains),
+        taxonomy.domain_names(),
+        len(entries),
     )
 
     # 발췌

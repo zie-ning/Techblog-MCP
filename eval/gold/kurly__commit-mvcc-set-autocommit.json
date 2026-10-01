@@ -9,11 +9,15 @@
   "entries": [
     {
       "summary": "auto-commit을 끈 커넥션에서 COMMIT이 없어 MVCC 스냅샷이 갱신되지 않아 이미 있는 회원이 간헐적으로 조회되지 않던 문제를 바깥 메서드에 읽기 전용 트랜잭션을 걸어 해결",
-      "primary_problem_type": "데이터 정합성·트랜잭션",
+      "problem_types": [
+        "데이터 정합성·트랜잭션"
+      ],
       "acceptable_problem_types": [
         "장애 대응·복구"
       ],
-      "domain": "커머스·주문·재고",
+      "domains": [
+        "커머스·주문·재고"
+      ],
       "acceptable_domains": [
         "광고·마케팅",
         "범용"
@@ -44,9 +48,13 @@
     },
     {
       "summary": "HikariCP auto-commit을 꺼서 트랜잭션 전후의 set autocommit 쿼리를 없애 API 응답을 40% 개선",
-      "primary_problem_type": "DB 성능·쿼리 최적화",
+      "problem_types": [
+        "DB 성능·쿼리 최적화"
+      ],
       "acceptable_problem_types": [],
-      "domain": "커머스·주문·재고",
+      "domains": [
+        "커머스·주문·재고"
+      ],
       "acceptable_domains": [
         "광고·마케팅",
         "범용"
