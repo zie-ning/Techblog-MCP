@@ -113,6 +113,17 @@ def label_counts(pred: list[str], core: list[str], acceptable: list[str]) -> Cou
     )
 
 
+_REJECTED_KIND_SUFFIX = re.compile(r"\s*\((기술|설계 방식)\)\s*$")
+
+
+def gold_rejected_name(name: str) -> str:
+    """정답 대안 이름에서 유형 표시를 뗀다.
+
+    채점 모델은 정답 대안을 "이름 (유형)" 형식으로 보므로 그대로 돌려줄 때가 있다.
+    """
+    return _REJECTED_KIND_SUFFIX.sub("", name.strip())
+
+
 def _clamp(score: int) -> int:
     return min(5, max(1, score))
 
@@ -158,14 +169,14 @@ def evaluate_post(
     # 버린 대안: 이름이 정답의 어느 대안과 같은지는 채점 모델이 판정한다
     gold_names = {r.name for g in gold.entries for r in g.rejected_alternatives}
     judged = [r for r in out.rejected if r.entry_id in by_id]
-    matched_gold = {r.gold_name for r in judged if r.gold_name in gold_names}
+    matched = [gold_rejected_name(r.gold_name) for r in judged]
     ev.rejected = Counts(
-        hit_pred=sum(r.gold_name in gold_names for r in judged),
+        hit_pred=sum(name in gold_names for name in matched),
         pred=len(judged),
-        hit_gold=len(matched_gold),
+        hit_gold=len(gold_names & set(matched)),
         gold=len(gold_names),
     )
-    unmatched = [r for r in judged if r.gold_name not in gold_names]
+    unmatched = [r for r, name in zip(judged, matched, strict=True) if name not in gold_names]
     ev.rejected_unmatched = len(unmatched)
     ev.rejected_unsupported = sum(not r.supported for r in unmatched)
     return ev

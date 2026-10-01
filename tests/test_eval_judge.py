@@ -262,3 +262,21 @@ def test_evaluate_run_ignores_stale_judgements_and_builds_report():
     report = build_report(["r"], [metrics], [evals])
     assert "| kakao/1 | 추출 2개 | 추출 2개 · 완결 33% · 충실 5 |" in report
     assert "`kakao/1` case_0002: 지어낸 수치" in report
+
+
+def test_gold_rejected_name_strips_kind_suffix():
+    from eval.extract_eval import gold_rejected_name
+
+    # 채점 모델은 정답 대안을 "이름 (유형)" 형식으로 보고 그대로 돌려줄 때가 있다
+    assert gold_rejected_name("OpenSearch (기술)") == "OpenSearch"
+    assert gold_rejected_name("캐시 레이어 도입 (설계 방식)") == "캐시 레이어 도입"
+    assert gold_rejected_name("잠금 읽기(LOCK IN SHARE MODE)") == "잠금 읽기(LOCK IN SHARE MODE)"
+
+    gold, entries = _gold(), _entries()
+    output = _output()
+    output.rejected[0].gold_name = "DB 비관적 락 (설계 방식)"
+    result = evaluate_post(
+        gold, _record("1", "추출", "https://e/1"), entries, _judge_record(gold, entries, output)
+    )
+    r = result.rejected
+    assert (r.hit_pred, r.pred, r.hit_gold, r.gold) == (1, 2, 1, 1)
