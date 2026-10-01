@@ -88,8 +88,9 @@ def test_aggregate_problem_type_counts_primary_only(conn):
 
 def test_aggregate_rejected_alternatives_only_cases_with_them(conn):
     result = q.aggregate(conn, "rejected_alternative", q.Filters(), 10)
-    assert result.cases == 2 and result.insights == 0
-    assert {g.key for g in result.groups} == {"DB 비관적 락", "Kafka"}
+    # 설계 방식 대안(DB 비관적 락)은 세지 않고 기술 대안이 있는 사례만 모수로 센다
+    assert result.cases == 1 and result.insights == 0
+    assert {g.key for g in result.groups} == {"Kafka"}
 
 
 def test_aggregate_top_n_and_examples(conn):

@@ -4,7 +4,7 @@
 여기서는 저장된 항목을 현재 사전으로 다시 정규화한다.
 """
 
-from pipeline.extract.schema import Entry
+from pipeline.extract.schema import Entry, RejectedAlternative
 from techblog_mcp import taxonomy
 
 
@@ -22,6 +22,16 @@ def rejected_alternative_name(name_raw: str, technologies: list[str]) -> str:
     return normalized
 
 
+def rejected_alternative_kind(r: RejectedAlternative) -> str:
+    """버린 대안 유형.
+
+    유형이 없는 M3 이전 추출은 기술 사전에 있으면 기술, 없으면 설계 방식으로 본다.
+    """
+    if r.kind:
+        return r.kind
+    return "기술" if taxonomy.normalize_technology(r.name_raw) else "설계 방식"
+
+
 def renormalize(entry: Entry) -> tuple[Entry, list[str]]:
     """(다시 정규화한 항목, 사전에 없는 원래 이름 목록)"""
     technologies: list[str] = []
@@ -33,10 +43,12 @@ def renormalize(entry: Entry) -> tuple[Entry, list[str]]:
         elif normalized not in technologies:
             technologies.append(normalized)
 
-    rejected = [
-        r.model_copy(update={"name": rejected_alternative_name(r.name_raw, technologies)})
-        for r in entry.rejected_alternatives
-    ]
+    rejected = []
+    for r in entry.rejected_alternatives:
+        kind = rejected_alternative_kind(r)
+        # 설계 방식은 기술 사전과 무관하므로 원래 이름을 그대로 쓴다
+        name = rejected_alternative_name(r.name_raw, technologies) if kind == "기술" else r.name_raw
+        rejected.append(r.model_copy(update={"name": name.strip(), "kind": kind}))
     updated = entry.model_copy(
         update={"technologies": technologies, "rejected_alternatives": rejected}
     )

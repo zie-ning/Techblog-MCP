@@ -182,7 +182,9 @@ class AggregateResult:
 
 _GROUP_KEY_SQL: dict[str, str] = {
     "technology": "SELECT technology FROM entry_technologies WHERE entry_id = ?",
-    "rejected_alternative": "SELECT name FROM entry_rejected_alternatives WHERE entry_id = ?",
+    "rejected_alternative": (
+        "SELECT name FROM entry_rejected_alternatives WHERE entry_id = ? AND kind = '기술'"
+    ),
 }
 
 
@@ -191,8 +193,11 @@ def aggregate(
 ) -> AggregateResult:
     where, params = filters.sql()
     if group_by == "rejected_alternative":
-        # 버린 대안 집계는 버린 대안이 있는 사례만 대상
-        where += " AND EXISTS (SELECT 1 FROM entry_rejected_alternatives r WHERE r.entry_id = e.id)"
+        # 버린 대안 집계는 기술 대안이 있는 사례만 대상 (설계 방식은 get_details에서만 보여 준다)
+        where += (
+            " AND EXISTS (SELECT 1 FROM entry_rejected_alternatives r"
+            " WHERE r.entry_id = e.id AND r.kind = '기술')"
+        )
     rows = conn.execute(
         "SELECT e.id, e.kind, e.company, e.primary_problem_type, e.domain"
         f" FROM entries e WHERE {where} ORDER BY e.published_at DESC, e.id DESC",

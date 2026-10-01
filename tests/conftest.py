@@ -50,6 +50,7 @@ SAMPLE_ENTRIES = [
             RejectedAlternative(
                 name="DB 비관적 락",
                 name_raw="DB 비관적 락",
+                kind="설계 방식",
                 reason="처리량 부족",
                 evidence="락 대기",
             )
@@ -67,7 +68,11 @@ SAMPLE_ENTRIES = [
         solution=[ev("RabbitMQ로 비동기 발급 처리")],
         rejected_alternatives=[
             RejectedAlternative(
-                name="Kafka", name_raw="카프카", reason="파티션 축소 불가", evidence="파티션"
+                name="Kafka",
+                name_raw="카프카",
+                kind="기술",
+                reason="파티션 축소 불가",
+                evidence="파티션",
             )
         ],
     ),

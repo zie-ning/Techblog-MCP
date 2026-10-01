@@ -1,6 +1,6 @@
 """검색 DB 스키마. 색인 빌드(pipeline/build_index.py)가 만들고 서버가 읽는다."""
 
-SCHEMA_VERSION = "1"
+SCHEMA_VERSION = "2"
 
 # FTS5 열과 bm25() 가중치. 순서가 곧 bm25() 인자 순서다. 가중치는 M5 검색 평가에서 조정한다.
 FTS_COLUMNS: dict[str, float] = {
@@ -39,7 +39,12 @@ CREATE INDEX entry_problem_types_type ON entry_problem_types(problem_type);
 CREATE TABLE entry_technologies (entry_id TEXT NOT NULL, technology TEXT NOT NULL);
 CREATE INDEX entry_technologies_tech ON entry_technologies(technology);
 
-CREATE TABLE entry_rejected_alternatives (entry_id TEXT NOT NULL, name TEXT NOT NULL);
+-- kind: 기술 / 설계 방식. 버린 대안 집계는 기술만 센다
+CREATE TABLE entry_rejected_alternatives (
+    entry_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    kind TEXT NOT NULL
+);
 
 -- 형태소 분석한 텍스트만 색인하고 원문은 entries.data에서 읽으므로 내용 없는(contentless) 테이블
 CREATE VIRTUAL TABLE entries_fts USING fts5(

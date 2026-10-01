@@ -94,8 +94,8 @@ def _insert(conn: sqlite3.Connection, rowid: int, e: Entry) -> None:
         "INSERT INTO entry_technologies VALUES (?, ?)", [(e.id, t) for t in e.technologies]
     )
     conn.executemany(
-        "INSERT INTO entry_rejected_alternatives VALUES (?, ?)",
-        [(e.id, r.name) for r in e.rejected_alternatives],
+        "INSERT INTO entry_rejected_alternatives VALUES (?, ?, ?)",
+        [(e.id, r.name, r.kind) for r in e.rejected_alternatives],
     )
     fields = fts_fields(e)
     columns = ", ".join(fields)

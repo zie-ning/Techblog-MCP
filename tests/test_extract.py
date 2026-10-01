@@ -77,6 +77,7 @@ def case(**overrides) -> CaseDraft:
         rejected_alternatives=[
             RejectedAlternativeDraft(
                 name="카프카",
+                kind="기술",
                 reason="파티션 축소 불가",
                 evidence="Kafka도 검토했지만 파티션을 줄일 수 없어 제외했습니다.",
             )
@@ -112,6 +113,36 @@ def test_extract_case_verifies_and_normalizes():
     assert entry.technologies_raw == ["레디스", "spring-boot", "사내 발급기"]
     assert entry.rejected_alternatives[0].name == "Kafka"
     assert entry.rejected_alternatives[0].name_raw == "카프카"
+    assert entry.rejected_alternatives[0].kind == "기술"
+
+
+def test_design_alternative_is_not_normalized_and_old_entries_get_kind():
+    from pipeline.extract.schema import RejectedAlternative
+    from pipeline.normalize import renormalize
+
+    design = RejectedAlternativeDraft(
+        name="Kafka 기반 비동기 발급",
+        kind="설계 방식",
+        reason="운영 부담",
+        evidence="Kafka도 검토했지만 파티션을 줄일 수 없어 제외했습니다.",
+    )
+    drafted = case(rejected_alternatives=[design], performance_ops=[])
+    llm = FakeLLM([CLASSIFIED_CASE, CaseExtraction(cases=[drafted])])
+    [entry] = extract_post(POST, llm).entries
+    # 설계 방식은 기술 사전으로 바꾸지 않는다
+    assert entry.rejected_alternatives[0].name == "Kafka 기반 비동기 발급"
+
+    # 유형이 없는 M3 이전 추출: 사전에 있으면 기술, 없으면 설계 방식으로 채운다
+    old = entry.model_copy(
+        update={
+            "rejected_alternatives": [
+                RejectedAlternative(name="카프카", name_raw="카프카", reason="r", evidence="e"),
+                RejectedAlternative(name="DB 락", name_raw="DB 락", reason="r", evidence="e"),
+            ]
+        }
+    )
+    kinds = [(r.name, r.kind) for r in renormalize(old)[0].rejected_alternatives]
+    assert kinds == [("Kafka", "기술"), ("DB 락", "설계 방식")]
 
 
 def test_rejected_alternative_keeps_raw_name_when_same_as_used_technology():
@@ -121,6 +152,7 @@ def test_rejected_alternative_keeps_raw_name_when_same_as_used_technology():
         rejected_alternatives=[
             RejectedAlternativeDraft(
                 name="Claude 3 Haiku",
+                kind="기술",
                 reason="정확도 부족",
                 evidence="Kafka도 검토했지만 파티션을 줄일 수 없어 제외했습니다.",
             )

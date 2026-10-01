@@ -135,7 +135,8 @@ def detail(d: Detail) -> str:
         if e["rejected_alternatives"]:
             lines += ["", "## 버린 대안"]
             for r in e["rejected_alternatives"]:
-                lines.append(f"- {r['name']}: {r['reason']}")
+                kind = " (설계 방식)" if r.get("kind") == "설계 방식" else ""
+                lines.append(f"- {r['name']}{kind}: {r['reason']}")
                 lines.append(f'  근거: "{r["evidence"]}"')
     else:
         lines += _points("핵심 내용", e["key_points"])
@@ -179,7 +180,10 @@ def aggregate_result(
         *notes,
     ]
     if group_by == "rejected_alternative":
-        lines.append("※ 버린 대안이 글에 명시된 사례만 셉니다.")
+        lines.append(
+            "※ 버린 대안이 글에 명시된 사례 중 기술·제품 대안만 셉니다."
+            " 설계 방식 대안(패턴, 구현 방식)은 get_details에서 확인하세요."
+        )
     if result.cases + result.insights == 0:
         lines.append("\n결과 없음: 이 조건에 맞는 항목이 DB에 없습니다. 수치를 지어내지 마세요.")
         return "\n".join(lines)

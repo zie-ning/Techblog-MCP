@@ -75,7 +75,7 @@ def test_get_details_format():
     assert "[사례 case_0001] 선착순 쿠폰 발급 개선기" in text
     assert "## 해결 방법" in text
     assert '근거: "Redis 원자 연산으로 발급 수량 관리"' in text
-    assert "## 버린 대안\n- DB 비관적 락: 처리량 부족" in text
+    assert "## 버린 대안\n- DB 비관적 락 (설계 방식): 처리량 부족" in text
     assert "같은 글의 다른 항목: case_0002" in text
     assert "없는 ID: case_0404" in text
 

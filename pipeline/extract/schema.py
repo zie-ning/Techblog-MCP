@@ -19,6 +19,8 @@ PostType = Literal[
     "문제 해결형", "기술 선택·도입형", "실험·활용기", "개념·튜토리얼", "회고·문화·행사"
 ]
 PostKind = Literal["사례", "인사이트", "제외"]
+# 버린 대안 유형: 기술은 집계 대상, 설계 방식은 상세에서만 보여 준다
+RejectedKind = Literal["기술", "설계 방식"]
 EntryKind = Literal["사례", "인사이트"]
 
 MAX_SECONDARY_PROBLEM_TYPES = 2
@@ -39,7 +41,13 @@ class Point(BaseModel):
 
 
 class RejectedAlternativeDraft(BaseModel):
-    name: str = Field(description="검토했지만 채택하지 않은 기술·방식 이름")
+    name: str = Field(
+        description="검토했지만 채택하지 않은 대안의 짧은 이름 (명사구. 예: Kafka, DB 비관적 락)"
+    )
+    kind: RejectedKind = Field(
+        description="기술: 제품·라이브러리·서비스 (예: Kafka, Redis). "
+        "설계 방식: 아키텍처·패턴·구현 방식 (예: Outbox 패턴, DB 비관적 락)"
+    )
     reason: str = Field(description="채택하지 않은 이유")
     evidence: str = Field(description="버린 이유가 드러나는 원문 문장을 글자 그대로 복사")
 
@@ -92,8 +100,10 @@ class Evidenced(BaseModel):
 
 
 class RejectedAlternative(BaseModel):
-    name: str  # 기술 사전에 있으면 표준 이름, 없으면 원문 이름
+    name: str  # 기술이고 기술 사전에 있으면 표준 이름, 아니면 원래 이름
     name_raw: str
+    # M3 이전 추출에는 없어 비어 있을 수 있다. 정규화(pipeline.normalize)에서 채운다
+    kind: str = ""
     reason: str
     evidence: str
 

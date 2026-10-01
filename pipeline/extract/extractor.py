@@ -304,6 +304,7 @@ def to_entry(draft: CaseDraft | InsightDraft, post: RawPost) -> Entry:
                 RejectedAlternative(
                     name=r.name.strip(),  # 아래 renormalize에서 정규화한다
                     name_raw=r.name.strip(),
+                    kind=r.kind,
                     reason=r.reason,
                     evidence=r.evidence,
                 )
