@@ -37,7 +37,10 @@ class Classification(BaseModel):
 
 class Point(BaseModel):
     text: str = Field(description="요약 문장. 원문에 근거한 내용만 쓴다")
-    evidence: str = Field(description="text의 근거가 되는 원문 문장 1~2개를 글자 그대로 복사")
+    evidence: str = Field(
+        description="text의 근거가 되는 원문 문장 1~2개를 글자 그대로 복사. "
+        "원문의 한 곳에서 이어지는 문장만, 앞뒤 따옴표 없이"
+    )
 
 
 class RejectedAlternativeDraft(BaseModel):
@@ -58,13 +61,17 @@ class _Classified(BaseModel):
         description=f"보조 문제 유형. 최대 {MAX_SECONDARY_PROBLEM_TYPES}개, 없으면 빈 목록"
     )
     domain: Domain
-    technologies: list[str] = Field(description="이 항목에서 실제로 쓰거나 다룬 기술·제품 이름")
+    technologies: list[str] = Field(
+        description="이 항목에서 실제로 쓴 제품·라이브러리·프레임워크·서비스 이름. "
+        "클래스·메서드명, 일반 개념, 사내 시스템 이름, 버전 표기는 넣지 않음"
+    )
     tags: list[str] = Field(description="검색에 도움이 되는 자유 키워드 3~6개 (한국어 가능)")
 
 
 class CaseDraft(_Classified):
     problem_situation: list[Point] = Field(
-        description="문제 상황. 첫 항목은 문제를 한 줄로 요약. 트래픽·데이터 규모는 원문 표현대로"
+        description="문제 상황. 첫 항목은 문제를 한 줄로 요약. 원문에 나온 트래픽·데이터 규모, "
+        "지연·가용성 요구, 기존 인프라·팀 제약은 원문 표현대로 반드시 포함"
     )
     solution: list[Point] = Field(
         description="해결 방법. 최종 채택한 방법만 쓰고 첫 항목은 그 해결책을 한 줄로 요약. "
