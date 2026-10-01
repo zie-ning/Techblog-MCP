@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from eval.gold import GoldEntry, GoldPost, load_gold
+from eval.gold import GOLD_DIR, GoldEntry, GoldPost, load_gold, render_reference
 from techblog_mcp import taxonomy
 
 
@@ -56,3 +56,11 @@ def test_saved_gold_files_are_valid():
             for name in entry.technologies:
                 normalized = taxonomy.normalize_technology(name)
                 assert normalized in (None, name), f"{gold.post_id}: {name} → {normalized}"
+
+
+def test_reference_covers_every_value_and_is_up_to_date():
+    reference = render_reference()
+    for name in (*taxonomy.problem_type_names(), *taxonomy.domain_names()):
+        assert f"| {name} |" in reference
+    # 분류 목록·정의를 바꾸고 다시 생성하지 않으면 실패한다
+    assert (GOLD_DIR / "REFERENCE.md").read_text(encoding="utf-8") == reference

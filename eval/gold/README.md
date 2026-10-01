@@ -5,6 +5,7 @@ M3 추출 평가용 정답 24편(블로그당 3편). 목록은 [../gold_posts.tx
 - 초안은 Claude Code 세션에서 원문을 읽고 작성했고, 사람이 원문과 대조해 검수한 파일은 `reviewed: true`로 바꾼다.
 - 원문 전체는 넣지 않는다. 요약과 짧은 수치만 넣는다 (`docs/기획.md` "원문 정책").
 - 분류 값은 `src/techblog_mcp/taxonomy/`의 목록을 쓴다. 목록이 바뀌면 정답도 함께 고친다.
+- 필드별 선택지와 정의는 [REFERENCE.md](REFERENCE.md)(검수 참고표), 글별 정답은 [REVIEW.md](REVIEW.md)(검수표)에서 본다.
 
 ## 라벨링 기준
 

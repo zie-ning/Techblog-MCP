@@ -22,6 +22,7 @@ from pipeline.extract.schema import (  # noqa: E402
     ProblemType,
     RejectedKind,
 )
+from techblog_mcp import taxonomy  # noqa: E402
 
 GOLD_DIR = ROOT / "eval" / "gold"
 
@@ -139,10 +140,111 @@ def render_review(golds: dict[tuple[str, str], GoldPost]) -> str:
     return "\n".join(lines) + "\n"
 
 
+# 글 유형·구조화 유형 정의는 추출 프롬프트(pipeline/extract/prompts.py CLASSIFY)와 같은 문구를 쓴다.
+# 값 목록은 스키마의 Literal에서 읽으므로, 값을 바꾸면 여기 정의가 없다는 테스트가 실패한다.
+POST_TYPE_DEFINITIONS = {
+    "문제 해결형": "겪은 기술 문제와 그 해결 과정을 다룸",
+    "기술 선택·도입형": "기술·구조를 검토해 도입하거나 바꾼 경험과 근거를 다룸",
+    "실험·활용기": "도구·기술을 실제 업무에 써 본 경험, 설계 팁, 적용 결과",
+    "개념·튜토리얼": "교과서적인 개념 설명, 입문 튜토리얼, 문법·API 소개",
+    "회고·문화·행사": "회고, 조직 문화, 협업 방식, 직무·팀 소개, 컨퍼런스·행사, 채용, 온보딩",
+}
+KIND_DEFINITIONS = {
+    "사례": "구체적인 상황에서 기술적 선택을 내렸고 근거(수치·비교·결과)가 있는 글. "
+    "한 글에서 여러 개가 나올 수 있음",
+    "인사이트": "문제-해법 쌍은 약하지만 다른 팀이 바로 적용할 기술적 내용이 있는 글. "
+    "팁 모음, 도구 사용 경험, AI 도구 활용 경험. 한 글에 1개",
+    "제외": "개념·튜토리얼, 회고·문화·행사, 그 밖에 기술적 실무 적용점이 없는 글",
+}
+REJECTED_KIND_DEFINITIONS = {
+    "기술": "제품·라이브러리·서비스 자체 (예: OpenSearch, Hazelcast, MPS). 기술별 집계에 들어감",
+    "설계 방식": "패턴, 구현·설정·운영 방법 (예: Outbox 패턴, READ COMMITTED 격리 수준). "
+    "상세 보기에서만 보임",
+}
+
+
+def _literal_values(literal) -> tuple[str, ...]:
+    return literal.__args__
+
+
+def _definition_table(values: tuple[str, ...], definitions: dict[str, str]) -> list[str]:
+    lines = ["| 값 | 정의 |", "| --- | --- |"]
+    return lines + [f"| {v} | {definitions[v]} |" for v in values]
+
+
+def render_reference() -> str:
+    """검수 참고표: 정답 필드별 선택지와 정의. 분류 목록과 스키마에서 만든다."""
+    lines = [
+        "# 정답셋 검수 참고표",
+        "",
+        "`uv run python eval/gold.py reference`로 생성한다. 문제 유형·도메인·기술 사전은 "
+        "`src/techblog_mcp/taxonomy/`, 글 유형·구조화 유형은 추출 스키마와 프롬프트가 기준이다. "
+        "분류 목록이 바뀌면 다시 생성한다. 라벨링 기준은 [README.md](README.md).",
+        "",
+        '정답의 "(허용: …)"는 추출 결과가 그 값이어도 맞다고 보는 다른 답이다.',
+        "",
+        f"## 글 유형 (`post_type`, {len(_literal_values(PostType))}개)",
+        "",
+        *_definition_table(_literal_values(PostType), POST_TYPE_DEFINITIONS),
+        "",
+        f"## 구조화 유형 (`kind`, {len(_literal_values(PostKind))}개)",
+        "",
+        *_definition_table(_literal_values(PostKind), KIND_DEFINITIONS),
+        "",
+        "- 서로 독립된 팁을 여러 개 소개하는 글은 근거가 있어도 인사이트 1개.",
+        "- 행사·문화·협업 글은 AI 도구나 실무 팁이 섞여 있어도 제외.",
+        "- 발표 소개 글은 본문에 해결 근거(수치, 비교, 설계 결정과 이유)가 없으면 제외. "
+        "목차는 근거가 아니다.",
+        "- 언어 기능·개념 설명 글은 팀이 겪은 문제나 적용 결과가 없으면 제외.",
+        "",
+        f"## 주 문제 유형 (`primary_problem_type`, {len(taxonomy.problem_types())}개)",
+        "",
+        "무엇을 풀었는지(해결의 목적) 기준으로 고른다. 쓴 기술 기준이 아니다.",
+        "",
+        *_definition_table(
+            taxonomy.problem_type_names(),
+            {c.name: c.description for c in taxonomy.problem_types()},
+        ),
+        "",
+        f"## 도메인 (`domain`, {len(taxonomy.domains())}개)",
+        "",
+        "그 시스템이 속한 서비스 영역. 애매하면 범용.",
+        "",
+        *_definition_table(
+            taxonomy.domain_names(), {c.name: c.description for c in taxonomy.domains()}
+        ),
+        "",
+        "## 버린 대안 유형 (`rejected_alternatives[].kind`, 2개)",
+        "",
+        *_definition_table(_literal_values(RejectedKind), REJECTED_KIND_DEFINITIONS),
+        "",
+        f"## 기술 사전 ({len(taxonomy.technologies())}개)",
+        "",
+        "`technologies`는 정해진 목록이 아니라 자유 입력이다. "
+        "사전에 있는 기술은 아래 표준 이름으로 "
+        "쓰고, 사전에 없는 기술도 넣을 수 있다. 괄호는 같은 계열로 묶어 세는 상위 기술.",
+        "",
+        "| 종류 | 기술 |",
+        "| --- | --- |",
+    ]
+    for category in taxonomy.technology_categories():
+        names = [
+            f"{t.name} (→ {t.parent})" if t.parent else t.name
+            for t in taxonomy.technologies()
+            if t.category == category
+        ]
+        lines.append(f"| {category} | {', '.join(names)} |")
+    return "\n".join(lines) + "\n"
+
+
 if __name__ == "__main__":
     if sys.argv[1:] == ["review"]:
         out = GOLD_DIR / "REVIEW.md"
         out.write_text(render_review(load_gold()), encoding="utf-8")
         print(f"검수표 저장: {out}")
+    elif sys.argv[1:] == ["reference"]:
+        out = GOLD_DIR / "REFERENCE.md"
+        out.write_text(render_reference(), encoding="utf-8")
+        print(f"검수 참고표 저장: {out}")
     else:
-        sys.exit("사용법: uv run python eval/gold.py review")
+        sys.exit("사용법: uv run python eval/gold.py review|reference")
