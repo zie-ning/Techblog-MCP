@@ -44,9 +44,11 @@ class FakeLLM:
     def __init__(self, responses):
         self.responses = list(responses)
         self.calls = []
+        self.steps = []
 
-    def parse(self, instructions, messages, schema, usage):
+    def parse(self, instructions, messages, schema, usage, step):
         self.calls.append((schema, messages))
+        self.steps.append(step)
         usage.add(Usage(calls=1, input_tokens=100, output_tokens=10))
         response = self.responses.pop(0)
         assert isinstance(response, schema)
@@ -93,6 +95,7 @@ def test_extract_case_verifies_and_normalizes():
     result = extract_post(POST, llm)
 
     assert [c[0] for c in llm.calls] == [Classification, CaseExtraction, CaseExtraction]
+    assert llm.steps == ["분류", "구조화", "재시도"]
     assert "처리량이 10배" in llm.calls[2][1][-1]["content"]  # 재요청에 실패 발췌를 알려 줌
 
     assert result.record.kind == "사례"

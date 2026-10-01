@@ -10,11 +10,12 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Protocol, TypeVar
 
+from langsmith import traceable
 from pydantic import BaseModel
 
 from pipeline.collect import COMPANY_NAMES
 from pipeline.collect.raw import RawPost
-from pipeline.extract import prompt_version, prompts
+from pipeline.extract import prompt_version, prompts, tracing
 from pipeline.extract.evidence import SourceText
 from pipeline.extract.schema import (
     MAX_SECONDARY_PROBLEM_TYPES,
@@ -40,26 +41,33 @@ class LLM(Protocol):
     model: str
     reasoning_effort: str
 
-    def parse(self, instructions: str, messages: list[dict], schema: type[T], usage: Usage) -> T:
-        """구조화 출력을 받고 이번 호출의 사용량을 `usage`에 더한다."""
+    def parse(
+        self, instructions: str, messages: list[dict], schema: type[T], usage: Usage, step: str
+    ) -> T:
+        """구조화 출력을 받고 이번 호출의 사용량을 `usage`에 더한다. `step`은 트레이스 단계 이름."""
         ...
 
 
 class OpenAILLM:
     def __init__(self, model: str, reasoning_effort: str = "medium"):
+        from langsmith.wrappers import wrap_openai
         from openai import OpenAI
 
         self.model = model
         self.reasoning_effort = reasoning_effort
-        self._client = OpenAI()
+        # 트레이싱이 꺼져 있으면 감싸도 아무것도 보내지 않는다
+        self._client = wrap_openai(OpenAI())
 
-    def parse(self, instructions: str, messages: list[dict], schema: type[T], usage: Usage) -> T:
+    def parse(
+        self, instructions: str, messages: list[dict], schema: type[T], usage: Usage, step: str
+    ) -> T:
         response = self._client.responses.parse(
             model=self.model,
             instructions=instructions,
             input=messages,
             text_format=schema,
             reasoning={"effort": self.reasoning_effort},
+            langsmith_extra={"name": step},
         )
         usage.add(_usage_of(response))
         if response.output_parsed is None:
@@ -117,13 +125,19 @@ def extraction_reason(
     return None
 
 
+@traceable(
+    name="extract_post",
+    run_type="chain",
+    process_inputs=tracing.root_inputs,
+    process_outputs=tracing.root_outputs,
+)
 def extract_post(post: RawPost, llm: LLM) -> ExtractResult:
     text = html_to_text(post.content_html)
     source = SourceText(text)
     user_input = [{"role": "user", "content": prompts.post_input(post.title, text)}]
 
     usage = Usage()
-    classification = llm.parse(prompts.CLASSIFY, user_input, Classification, usage)
+    classification = llm.parse(prompts.CLASSIFY, user_input, Classification, usage, "분류")
     raw_outputs: dict = {"classification": classification.model_dump(), "attempts": []}
 
     chosen = _Attempt(drafts=[], dropped=[], total=0)
@@ -133,7 +147,7 @@ def extract_post(post: RawPost, llm: LLM) -> ExtractResult:
         else:
             instructions, schema = prompts.structure_insight(), InsightExtraction
 
-        result = llm.parse(instructions, user_input, schema, usage)
+        result = llm.parse(instructions, user_input, schema, usage, "구조화")
         raw_outputs["attempts"].append(result.model_dump())
         chosen = _verify_all(result, source)
         if chosen.dropped:
@@ -142,7 +156,7 @@ def extract_post(post: RawPost, llm: LLM) -> ExtractResult:
                 {"role": "assistant", "content": result.model_dump_json()},
                 {"role": "user", "content": prompts.evidence_retry(chosen.dropped)},
             ]
-            retry_result = llm.parse(instructions, retry_input, schema, usage)
+            retry_result = llm.parse(instructions, retry_input, schema, usage, "재시도")
             raw_outputs["attempts"].append(retry_result.model_dump())
             retry = _verify_all(retry_result, source)
             # 재시도가 항상 낫지는 않으므로 검증을 통과한 내용이 더 많은 쪽을 쓴다

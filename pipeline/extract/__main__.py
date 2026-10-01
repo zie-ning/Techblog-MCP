@@ -8,12 +8,13 @@
 
     # 평가용: 여러 블로그의 글을 run 디렉터리에 따로 저장 (data/는 건드리지 않음)
     uv run python -m pipeline.extract all --post-ids-file eval/pilot_posts.txt \\
-        --out-dir eval/runs/baseline-gpt-5-mini-medium --workers 4 --save-drafts
+        --out-dir eval/runs/baseline-gpt-5-mini-medium --workers 4 --save-drafts --trace
 
 OPENAI_API_KEY는 환경 변수나 저장소 루트의 `.env`로 설정한다.
 이미 추출했고 원문이 바뀌지 않은 글은 건너뛴다(`--outdated`, `--force`로 다시 추출).
 실행할 때마다 현재 프롬프트의 스냅샷을 data/prompt_versions/에 남긴다.
 글 ID 목록 파일의 줄은 `post_id` 또는 `source/post_id` 형식이다. source가 `all`이면 뒤쪽만 쓴다.
+`--trace`를 주면 LangSmith에 글별 트레이스를 남긴다(LANGSMITH_API_KEY 필요, 원문 포함).
 """
 
 import argparse
@@ -26,7 +27,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from pipeline.collect import COMPANY_NAMES, raw
-from pipeline.extract import prompt_version
+from pipeline.extract import prompt_version, tracing
 from pipeline.extract.extractor import OpenAILLM, extract_post, extraction_reason
 from pipeline.extract.schema import Usage
 from pipeline.extract.store import DATA_DIR, Store
@@ -98,6 +99,9 @@ def main() -> None:
         "--save-drafts", action="store_true", help="검증 전 LLM 출력을 drafts.jsonl에 저장"
     )
     parser.add_argument("--workers", type=int, default=1, help="동시에 추출할 글 수")
+    parser.add_argument(
+        "--trace", action="store_true", help="LangSmith에 글별 트레이스를 남긴다 (원문 포함)"
+    )
     args = parser.parse_args()
 
     load_dotenv()
@@ -112,6 +116,12 @@ def main() -> None:
 
     if not os.environ.get("OPENAI_API_KEY"):
         sys.exit("OPENAI_API_KEY가 없습니다. 환경 변수나 저장소 루트의 .env에 설정하세요.")
+    if args.trace:
+        try:
+            project = tracing.enable()
+        except RuntimeError as e:
+            sys.exit(str(e))
+        print(f"LangSmith 트레이싱: 프로젝트 {project}")
     store = Store.in_dir(args.out_dir, save_drafts=args.save_drafts)
     llm = OpenAILLM(args.model, args.reasoning_effort)
     # 기록되는 모든 버전에 스냅샷이 있도록 추출 전에 저장한다
@@ -132,7 +142,17 @@ def main() -> None:
     done = 0
     total_usage = Usage()
     with ThreadPoolExecutor(max_workers=max(1, args.workers)) as pool:
-        futures = {pool.submit(extract_post, post, llm): (post, reason) for post, reason in todo}
+        futures = {
+            pool.submit(
+                extract_post,
+                post,
+                llm,
+                langsmith_extra=tracing.post_extra(
+                    post, args.out_dir.name, llm.model, llm.reasoning_effort, current_version
+                ),
+            ): (post, reason)
+            for post, reason in todo
+        }
         # 저장은 메인 스레드에서만 한다
         for n, future in enumerate(as_completed(futures), 1):
             post, reason = futures[future]
