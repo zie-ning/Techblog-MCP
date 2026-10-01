@@ -56,7 +56,8 @@ class OpenAILLM:
         self.model = model
         self.reasoning_effort = reasoning_effort
         # 트레이싱이 꺼져 있으면 감싸도 아무것도 보내지 않는다
-        self._client = wrap_openai(OpenAI())
+        # 일시적인 연결 오류로 글이 통째로 실패하지 않게 기본(2회)보다 넉넉히 재시도한다
+        self._client = wrap_openai(OpenAI(max_retries=6))
 
     def parse(
         self, instructions: str, messages: list[dict], schema: type[T], usage: Usage, step: str
