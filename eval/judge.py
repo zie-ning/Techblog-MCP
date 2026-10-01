@@ -37,7 +37,7 @@ from pipeline.extract.schema import Entry, PostRecord, Usage  # noqa: E402
 from pipeline.extract.text import html_to_text  # noqa: E402
 
 # 채점 모델은 추출 후보보다 상위 모델로 고정한다. 바꾸면 이전 채점 결과와 직접 비교하지 않는다.
-JUDGE_MODEL = "gpt-5.4"
+JUDGE_MODEL = "gpt-5.5"  # M3 사용자 결정
 JUDGE_EFFORT = "medium"
 JUDGE_FILE = "judge.jsonl"
 
