@@ -38,7 +38,9 @@ class SourceText:
         self._normalized = normalize(text)
 
     def contains(self, evidence: str, by_sentence: bool = False) -> bool:
-        """`by_sentence`면 한 줄 안의 문장도 따로 찾는다 (떨어진 문장을 한 줄로 이어 붙인 발췌 허용).
+        """발췌가 원문에 있는지 검사한다.
+
+        `by_sentence`면 한 줄 안의 문장도 따로 찾는다 (떨어진 문장을 한 줄로 이어 붙인 발췌 허용).
 
         기본은 지금 규칙(줄 단위). 문장 단위는 M3 완화 실험에서 비교하려고 둔 선택지다.
         """

@@ -56,6 +56,9 @@ def root_inputs(inputs: dict) -> dict:
 
 def root_outputs(result: Any) -> dict:
     """루트 단계 출력: 글별 기록의 핵심 값과 검증을 통과한 항목들."""
+    # 추출이 예외로 끝나면 결과가 없다 (오류는 트레이스에 따로 남음)
+    if not hasattr(result, "record"):
+        return {}
     r = result.record
     return {
         "kind": r.kind,

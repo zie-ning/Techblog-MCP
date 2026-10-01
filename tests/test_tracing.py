@@ -40,3 +40,8 @@ def test_extract_post_accepts_langsmith_extra_when_tracing_off(monkeypatch):
     result = extract_post(POST, llm, langsmith_extra=extra)
     assert result.record.kind == "제외"
     assert tracing.root_outputs(result)["entries"] == []
+
+
+def test_root_outputs_without_result():
+    # 추출이 예외로 끝나 결과가 없으면 빈 출력 (트레이스 기록 경고 방지)
+    assert tracing.root_outputs(None) == {}
