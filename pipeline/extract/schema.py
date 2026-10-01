@@ -49,7 +49,8 @@ class RejectedAlternativeDraft(BaseModel):
     )
     kind: RejectedKind = Field(
         description="기술: 제품·라이브러리·서비스 (예: Kafka, Redis). "
-        "설계 방식: 아키텍처·패턴·구현 방식 (예: Outbox 패턴, DB 비관적 락)"
+        "설계 방식: 아키텍처·패턴·구현 방식·설정 변경·버전 업그레이드 "
+        "(예: Outbox 패턴, DB 비관적 락, nginx 설정으로 차단)"
     )
     reason: str = Field(description="채택하지 않은 이유")
     evidence: str = Field(description="버린 이유가 드러나는 원문 문장을 글자 그대로 복사")

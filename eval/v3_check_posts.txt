@@ -1,0 +1,17 @@
+# M3 프롬프트 v3 확인용: v2에서 남은 문제 글과 회귀 확인 글 (13편)
+# 바뀌어야 할 글 (기대 결과)
+kakao/761  # 실패를 장려하는 실험적 문화 → 제외 (문화 글에 AI 도구 등장)
+ly/pd1-ai-hackathon-recap  # AI 해커톤 후기 → 제외
+kakao/785  # AI Talk Lounge 행사 → 제외
+kakaopay/katfun-joy-kotlin  # 코틀린 팁 모음 → 인사이트 1개
+d2/1155434  # C++ bit_cast 개념 설명 → 제외
+d2/8992409  # 발표 소개 글 (1,342자) → 제외
+# 그대로여야 할 글 (회귀 확인)
+kakao/762  # AI 마일리지 프로그램: AI 도구 도입 결과 → 사례 또는 인사이트
+kurly/claude-code-redesign-my-day  # 클로드 코드 업무 적용 → 사례 또는 인사이트
+toss/toss-frontend-ai-docs  # 문서 봇 도입 → 사례
+kakao/784  # 바이브코딩전: 행사지만 도구 선정 근거·수치 있음 (경계 사례, 관찰)
+# 버린 대안 유형 확인 (nginx 설정, WriteConcern, ES 업그레이드가 설계 방식으로)
+kurly/access-block-1
+oliveyoung/2024-12-17_catalog-mongo-transaction-2
+ly/japanese-search-kuromoji-to-sudachi
