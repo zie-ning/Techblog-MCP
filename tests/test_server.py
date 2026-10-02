@@ -33,22 +33,25 @@ def test_tools_and_prompt_registered():
 def test_search_card_format():
     text = call("search", query="선착순 쿠폰 동시성", limit=1)
     assert (
-        "[사례 case_0001] 올리브영 · 2025-03-12 · 동시성·락 / 커머스·주문·재고\n"
+        "[case_0001] 올리브영 · 2025-03-12 · 동시성·락, 트래픽 급증 대응 / 커머스·주문·재고\n"
         "제목: 선착순 쿠폰 발급 개선기\n"
         "문제 상황:"
     ) in text
     assert "문제 상황: 선착순 쿠폰 발급 시 한도 초과 발급 발생 (초당 최대 3만 요청)" in text
+    assert "성능·운영: 초과 발급이 사라짐" in text
     assert "기술: Redis, Spring Boot" in text
     assert "버린 대안: DB 비관적 락" in text
     assert "원문: https://example.com/coupon" in text
     assert "근거:" not in text  # 카드에는 발췌를 넣지 않는다
 
 
-def test_search_insight_card():
-    text = call("search", query="AI 에이전트", kind="인사이트")
-    assert "[인사이트 case_0004]" in text
+def test_search_tip_card_omits_empty_fields():
+    text = call("search", query="AI 에이전트 완료 조건", limit=1)
+    assert "[case_0004]" in text
     assert "제목: AI 코딩 에이전트 활용 팁" in text
-    assert "핵심 내용: AI 코딩 에이전트의 완료 조건을 측정 가능하게 설계" in text
+    assert "해결 방법: AI 코딩 에이전트의 완료 조건을 측정 가능하게 설계" in text
+    # 문제 상황·성능·운영 포인트가 없는 항목은 그 줄을 빼서 근거가 약하다는 것이 보인다
+    assert "문제 상황:" not in text and "성능·운영:" not in text
 
 
 def test_search_reports_few_and_empty_results():
@@ -72,10 +75,10 @@ def test_search_rejects_invalid_enum():
 
 def test_get_details_format():
     text = call("get_details", ids=["case_0001", "case_0404"])
-    assert "[사례 case_0001] 선착순 쿠폰 발급 개선기" in text
+    assert "[case_0001] 선착순 쿠폰 발급 개선기" in text
     assert "## 해결 방법" in text
     assert '근거: "Redis 원자 연산으로 발급 수량 관리"' in text
-    assert "## 버린 대안\n- DB 비관적 락: 처리량 부족" in text
+    assert "## 버린 대안\n- DB 비관적 락 (설계 방식): 처리량 부족" in text
     assert "같은 글의 다른 항목: case_0002" in text
     assert "없는 ID: case_0404" in text
 
@@ -83,20 +86,20 @@ def test_get_details_format():
 def test_get_details_limits_to_five():
     ids = ["case_0001", "case_0002", "case_0003", "case_0004", "case_0404", "case_0405"]
     text = call("get_details", ids=ids)
-    assert "[사례 case_0003]" in text and "[인사이트 case_0004]" in text
+    assert "[case_0003]" in text and "[case_0004]" in text
     assert "없는 ID: case_0404" in text
     assert "한 번에 5건까지만 조회합니다. 제외된 ID: case_0405" in text
 
 
 def test_aggregate_format():
-    text = call("aggregate", group_by="technology", kind="사례")
-    assert "조건: 유형 = 사례 → 사례 3건 · 인사이트 0건 / 2개사" in text
-    assert "Kafka  사례 1건 · 인사이트 0건 · 1개사 (토스)  예시: case_0003" in text
+    text = call("aggregate", group_by="technology")
+    assert "조건: 조건 없음 → 4건 (성능·운영 포인트 있음 1) / 2개사" in text
+    assert "Kafka  1건 (성능·운영 포인트 있음 0) · 1개사 (토스)  예시: case_0003" in text
 
 
 def test_aggregate_by_company_omits_redundant_company_list():
     text = call("aggregate", group_by="company")
-    assert "1. 올리브영  사례 2건 · 인사이트 1건  예시:" in text
+    assert "1. 올리브영  3건 (성능·운영 포인트 있음 1)  예시:" in text
     assert "개사 (올리브영)" not in text
 
 

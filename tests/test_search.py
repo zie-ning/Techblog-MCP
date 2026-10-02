@@ -34,8 +34,7 @@ def test_search_by_korean_alias_finds_english_name(conn):
 
 
 def test_search_filters(conn):
-    assert ids(q.search(conn, "쿠폰", q.Filters(kind="인사이트"), 5)) == []
-    assert ids(q.search(conn, "에이전트", q.Filters(kind="인사이트"), 5)) == ["case_0004"]
+    assert ids(q.search(conn, "에이전트 완료 조건", q.Filters(), 5))[0] == "case_0004"
     # 보조 문제 유형으로도 매칭
     assert ids(q.search(conn, "쿠폰", q.Filters(problem_type="트래픽 급증 대응"), 5)) == [
         "case_0001"
@@ -55,6 +54,8 @@ def test_search_limit_and_total(conn):
 def test_search_without_tokens_falls_back_to_filters(conn):
     result = q.search(conn, "!!!", q.Filters(domain="LLM·AI"), 5)
     assert ids(result) == ["case_0004"]
+    # 두 번째 도메인으로도 찾는다
+    assert ids(q.search(conn, "!!!", q.Filters(domain="사내 플랫폼·개발 도구"), 5)) == ["case_0004"]
 
 
 def test_resolve_technologies():
@@ -73,23 +74,29 @@ def test_get_details_with_siblings(conn):
 
 def test_aggregate_by_technology(conn):
     result = q.aggregate(conn, "technology", q.Filters(), 10)
-    assert (result.cases, result.insights, result.companies) == (3, 1, 2)
+    assert (result.total, result.with_results, result.companies) == (4, 1, 2)
     groups = {g.key: g for g in result.groups}
     assert groups["Kafka"].companies == ["토스"]
-    assert groups["Claude Code"].insights == 1
+    assert (groups["Redis"].total, groups["Redis"].with_results) == (1, 1)
+    assert (groups["Claude Code"].total, groups["Claude Code"].with_results) == (1, 0)
 
 
-def test_aggregate_problem_type_counts_primary_only(conn):
+def test_aggregate_counts_every_problem_type_and_domain(conn):
+    # 다중 선택: 한 항목이 여러 그룹에 들어가므로 건수의 합이 전체보다 클 수 있다
     result = q.aggregate(conn, "problem_type", q.Filters(), 10)
     groups = {g.key: g.total for g in result.groups}
-    assert "트래픽 급증 대응" not in groups  # 보조 유형은 세지 않는다
-    assert groups["동시성·락"] == 1
+    assert groups["동시성·락"] == 1 and groups["트래픽 급증 대응"] == 1
+    assert result.total == 4 and sum(groups.values()) == 5
+
+    domains = {g.key: g.total for g in q.aggregate(conn, "domain", q.Filters(), 10).groups}
+    assert domains["LLM·AI"] == 1 and domains["사내 플랫폼·개발 도구"] == 1
 
 
 def test_aggregate_rejected_alternatives_only_cases_with_them(conn):
     result = q.aggregate(conn, "rejected_alternative", q.Filters(), 10)
-    assert result.cases == 2 and result.insights == 0
-    assert {g.key for g in result.groups} == {"DB 비관적 락", "Kafka"}
+    # 설계 방식 대안(DB 비관적 락)은 세지 않고 기술 대안이 있는 항목만 모수로 센다
+    assert result.total == 1
+    assert {g.key for g in result.groups} == {"Kafka"}
 
 
 def test_aggregate_top_n_and_examples(conn):

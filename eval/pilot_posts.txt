@@ -1,0 +1,98 @@
+# M3 파일럿 표본: 블로그당 10편, 시드 20260930 (eval/sample_pilot.py로 생성)
+# 형식: source/post_id  # 발행일 | 평문 길이 | 제목 (짧은 글은 [짧음] 표시)
+
+# toss
+toss/27752  # 2024-05-30 | 5,980자 | 드래그 앤 드롭은 사실 편한 UX가 아니다?
+toss/firesidechat_frontend_4  # 2024-09-04 | 641자 [짧음] | 오픈소스에 기여하고 토스에 합격한.ssul | EP.4 모닥불
+toss/firesidechat_frontend_7  # 2024-11-06 | 625자 [짧음] | 개발자 리더로서 성장당한 썰 | EP.7 모닥불
+toss/toss-frontend-ai-docs  # 2024-11-15 | 2,869자 | 토스 프론트엔드 개발자들이 더 이상 문서를 찾지 않는 이유
+toss/toss-people-3  # 2025-01-10 | 7,801자 | 토스 피플: 문과생에서 토스 개발 리더까지
+toss/frontend-esbuild-hmr  # 2025-03-18 | 10,415자 | ESBuild를 위한 HMR, 직접 만들기
+toss/frontend-apply-without-resume  # 2025-04-08 | 2,783자 | 토스 프론트엔드에 이력서 없이 리포지토리 링크로 지원하세요 (~5/31)
+toss/toss-securities-gpu-mig  # 2025-07-10 | 13,794자 | GPU를 밀도 있게 쓰는 방법 - 토스증권의 GPU 가상화(MIG) 도입기
+toss/tds-color-system-update  # 2025-12-15 | 13,423자 | 달리는 기차 바퀴 칠하기: 7년만의 컬러 시스템 업데이트
+toss/ads_dashboard_fe  # 2026-08-20 | 12,467자 | 전체 데이터를 브라우저에 두는 광고 대시보드 만들기
+
+# woowahan
+woowahan/14484  # 2023-10-26 | 5,518자 | “일단 백로그에 넣어두고 여유 있을 때 보는 걸로 할까요?” : 백로그를 백로그로 두지 않는 법
+woowahan/14671  # 2023-11-07 | 6,108자 | 요즘 협업 잘하는 팀은 이렇게 일합니다.
+woowahan/15398  # 2023-12-12 | 10,772자 | Java의 미래, Virtual Thread
+woowahan/15541  # 2024-01-04 | 6,445자 | 웹 접근성 준수를 통한 모두에게 배달되는 일상의 행복
+woowahan/17386  # 2024-05-30 | 11,245자 | 우리 팀은 카프카를 어떻게 사용하고 있을까
+woowahan/17911  # 2024-06-25 | 4,799자 | B마트 주문 유실을 없애보자: 네트워크 편
+woowahan/20763  # 2025-01-07 | 8,615자 | 이젠 보내줄 때가 되었다. 대규모 트래픽의 C++ 시스템 Java로 전환하기
+woowahan/21027  # 2025-01-13 | 25,102자 | 실시간 반응형 추천 개발 일지 2부: 벡터 검색, 그리고 숨겨진 요구사항과 기술 도입 의사 결정을 다루는 방법
+woowahan/24434  # 2025-12-11 | 15,179자 | “함께 구매하면 좋은 상품” 추천 모델 고도화
+woowahan/24999  # 2025-12-23 | 12,341자 | WOOWACON 2025 미니게임 WOOWA POP!
+
+# kakao
+kakao/601  # 2023-09-21 | 3,137자 | 제3회 Kakao Tech Meet 후기 - 불확정성에서 감동까지
+kakao/624  # 2024-07-05 | 787자 [짧음] | 카카오의 스팸 메일 대응 전략: 문자열 변형 CASE STUDY / 제6회 Kakao Tech Meet
+kakao/761  # 2025-09-19 | 3,645자 | 실패를 장려하는 실험적 문화
+kakao/762  # 2025-09-19 | 13,811자 | 생산성 혁신의 실험: AI 마일리지 프로그램
+kakao/770  # 2025-09-22 | 16,500자 | 5년 된 프로젝트의 빌드 도구를 교체하며 얻은 것들
+kakao/784  # 2025-11-03 | 8,710자 | 단 1시간 만에 99개의 MVP가? AI와 함께한 1K: 바이브코딩전 생생 후기
+kakao/785  # 2025-11-04 | 4,597자 | if(kakao)25 Krew Day AI Talk Lounge: AI 시대의 기회와 고민을 논하며
+kakao/804  # 2025-12-19 | 3,760자 | 더 똑똑하고 효율적인 Kanana-2 오픈소스 공개
+kakao/822  # 2026-05-22 | 20,047자 | 메시징 서버의 스트레스 테스트 노하우와 AI가 덜어 준 부분
+kakao/835  # 2026-09-08 | 12,198자 | if(kakao)26 둘째 날, 기술 세션 소개
+
+# kakaopay
+kakaopay/slack-bot-improving-operational-efficiency-2  # 2024-07-17 | 5,044자 | 카카오페이 배포 효율화 1년 회고: 자동화 도입과 팀 생산성 향상
+kakaopay/tech-strategy-tpm  # 2024-07-31 | 9,673자 | 카카오페이 TPM은 어떤 일을 하나요?
+kakaopay/katfun-joy-kotlin  # 2024-09-12 | 14,709자 | 코틀린, 저는 이렇게 쓰고 있습니다
+kakaopay/ifkakao2024-devrel  # 2024-11-26 | 10,598자 | 카카오페이의 if(kakaoAI)2024 A to Z: 개발자 컨퍼런스 준비 맛보기
+kakaopay/perftest_zone  # 2024-12-12 | 4,708자 | 카카오페이 성능 테스트 존을 소개합니다.
+kakaopay/kakaopaysec-wecan  # 2025-04-09 | 8,650자 | We Can Do Better: 개발자 플랫폼 효율화 이야기
+kakaopay/kakaopayins-opensearch-analyzer  # 2025-04-11 | 10,157자 | OpenSearch Analyzer를 활용한 검색기능 알아보기
+kakaopay/kakaopayins-envelope-encryption  # 2025-07-08 | 18,389자 | 우리는 암호화하는데 왜 키를 사용할까?
+kakaopay/pallas-v2-log-platform  # 2026-02-23 | 25,659자 | 일 41TB, 200억 건의 로그를 ClickStack으로 실시간 처리하기 - 호그와트 도서관 프로젝트
+kakaopay/kakaopayins-fe-common-component  # 2026-03-24 | 7,059자 | 공통 컴포넌트를 건강하게 기르기 위한 고민
+
+# d2
+d2/3461887  # 2023-11-20 | 842자 [짧음] | App Crash? 0.1초 만에 분석해 드릴게요, 고품질 고성능 Crash 분석 시스템 NCrashlytics
+d2/4555524  # 2023-12-12 | 18,452자 | AI 플랫폼을 위한 스토리지 JuiceFS 도입기
+d2/8366976  # 2025-03-10 | 3,331자 | 호텔 검색, 어떻게 달라졌을까요? 1편 - 문제와 해결
+d2/3814947  # 2025-05-29 | 16,662자 | 생산성을 높이는 Android SDK 배포 전략 살펴보기
+d2/3078195  # 2025-06-30 | 1,326자 [짧음] | Thread-safety in C++
+d2/1450243  # 2025-07-24 | 15,218자 | 윈도잉(windowing) 기법을 적용한 고성능 표 컴포넌트 개발기
+d2/8992409  # 2025-11-24 | 1,342자 [짧음] | DBT, Airflow를 활용한 데이터 계보 중심 파이프라인 만들기
+d2/6512234  # 2026-01-21 | 22,022자 | 스마트스토어센터 Oracle에서 MySQL로의 무중단 전환기
+d2/1155434  # 2026-03-25 | 9,048자 | C++ std::bit_cast와 reinterpret_cast — 언제 어떤 것을 써야 하는가
+d2/9290861  # 2026-06-02 | 796자 [짧음] | Inside VictoriaMetrics
+
+# ly
+ly/managing-multi-cdn-logs-traffics-with-vector  # 2023-10-13 | 16,695자 | Vector를 활용해 멀티 CDN 로그 및 트래픽 관리하기
+ly/how-to-use-chatops-to-automate-devops-tasks-feat-slack-hubot  # 2023-10-25 | 18,813자 | ChatOps를 통한 업무 자동화(feat. Slack Hubot)
+ly/improving-kubernetes-relay-api-server-performance-with-informer  # 2024-07-29 | 12,361자 | Informer를 사용해 쿠버네티스 중계 API 서버의 성능 개선하기
+ly/introducing-fido2-client-sdk-open-source  # 2024-09-13 | 9,957자 | FIDO2 클라이언트 SDK 오픈소스 소개
+ly/how-to-evaluate-ai-generated-images-1  # 2025-03-27 | 16,708자 | AI로 생성한 이미지는 어떻게 평가할까요? (기본편)
+ly/extracting-trending-keywords-from-openchat-messages  # 2025-08-29 | 14,017자 | 오픈챗 메시지들로부터 트렌딩 키워드 추출하기
+ly/pd1-ai-hackathon-recap  # 2025-09-26 | 4,153자 | PD1 AI 해커톤, 그 뜨거웠던 열기 속으로!
+ly/using-sli-slo-for-improving-reliability-1-developing-framework-and-line-status  # 2026-03-19 | 6,232자 | 신뢰성 향상을 위한 SLI/SLO 활용 1편 - SLI/SLO 프레임워크 및 서비스 상태 확인 도구 LINE Status 개발기
+ly/from-hive-to-iceberg-12x-faster-data-updates  # 2026-04-03 | 19,601자 | Hive에서 Iceberg로: 데이터 반영 속도 12배 향상의 비밀
+ly/japanese-search-kuromoji-to-sudachi  # 2026-08-21 | 15,395자 | 일본어 상품 검색 정확도 높이기: Elasticsearch + Kuromoji에서 OpenSearch + Sudachi로
+
+# kurly
+kurly/cart-recommend-model-development  # 2024-05-20 | 9,206자 | 함께 구매하면 좋은 상품이에요! - 장바구니 추천 개발기 1부
+kurly/commit-mvcc-set-autocommit  # 2024-06-13 | 16,463자 | 데이터가 있었는데요, 아니 없어요
+kurly/deliveryproductteam-culture-1  # 2025-01-02 | 4,454자 | 딜리버리 프로덕트 개발팀의 개발문화 - 로그 & 알람편
+kurly/connection-leak  # 2025-01-05 | 6,791자 | 99%가 모른다는 DB Connection 누수 문제
+kurly/refine-address-internalization-2  # 2025-01-19 | 4,312자 | 주소정제 서비스 내재화 - 2화 ( 그럴싸한 계획 )
+kurly/access-block-1  # 2025-10-10 | 5,663자 | nginx 설정 없이 우아하게 서비스 점검하기 (上)
+kurly/access-block-2  # 2025-10-10 | 8,383자 | nginx 설정 없이 우아하게 서비스 점검하기 (下)
+kurly/cms-vite-%EC%A0%84%ED%99%98%EA%B8%B0  # 2025-12-01 | 13,290자 | 빌드가 터졌다: 5년 된 CMS 프로젝트의 Webpack4 → Vite 전환
+kurly/tech-spec-adoption-with-ai-automation  # 2025-12-03 | 8,164자 | 개발자의 시간을 벌어주는 두 가지 도구: 잘 쓴 테크 스펙, 그리고 AI
+kurly/claude-code-redesign-my-day  # 2026-04-19 | 7,389자 | 클로드 코드로 개발 팀장의 하루를 재설계한 이야기
+
+# oliveyoung
+oliveyoung/2023-09-27_oliveyoung-favorite-snack  # 2023-09-27 | 1,395자 [짧음] | 올리브영 개발자가 좋아하는 과자는?
+oliveyoung/2024-06-05_google-cloud-next-24-review  # 2024-06-05 | 3,796자 | Google Cloud Next '24 방문기
+oliveyoung/2024-08-11_type-and-type-system-with-typescript  # 2024-08-11 | 11,673자 | 올리브영 타입스크립트로 알아보는 타입과 타입 시스템
+oliveyoung/2024-09-30_oy-feconf-2024  # 2024-09-27 | 8,894자 | 올리브영에서는 프론트엔드 개발자들이 이런 고민을 하는군요?
+oliveyoung/2024-10-17_oy-delivery-mq  # 2024-10-17 | 4,642자 | 올리브영 물류시스템에서는 데이터를 어떻게 주고 받을까?
+oliveyoung/2024-12-16_Design-System-Token-Automation  # 2024-12-16 | 17,955자 | 디자인 시스템 중 디자인 토큰을 여러 도구를 이용하여 자동화 하는 방법
+oliveyoung/2024-12-17_catalog-mongo-transaction-2  # 2024-12-17 | 11,450자 | Spring Boot MongoDB 트랜잭션 도입 실전 가이드
+oliveyoung/2025-02-14_oy-global-mall-address  # 2025-02-14 | 4,978자 | 올리브영 글로벌몰 주소 자동완성 및 검증 솔루션 도입기
+oliveyoung/2025-04-25_web-worker-for-image-processing  # 2025-04-25 | 7,158자 | Web Worker로 이미지 처리 최적화하기
+oliveyoung/2025-06-10_chaos  # 2025-06-10 | 7,289자 | 버그가 아니라 장애를 잡아라!! QA와 카오스 엔지니어링의 만남

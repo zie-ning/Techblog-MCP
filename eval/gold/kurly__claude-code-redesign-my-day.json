@@ -1,0 +1,70 @@
+{
+  "source": "kurly",
+  "post_id": "claude-code-redesign-my-day",
+  "url": "https://helloworld.kurly.com/blog/claude-code-redesign-my-day/",
+  "title": "클로드 코드로 개발 팀장의 하루를 재설계한 이야기",
+  "post_type": "실험·활용기",
+  "kind": "추출",
+  "kind_alternatives": [],
+  "entries": [
+    {
+      "summary": "여러 시스템을 돌며 정리하던 데일리 브리핑을 클로드 코드로 자동화하면서, MCP 직접 조회의 토큰 비용 문제를 수집 스크립트 분리로 해결",
+      "problem_types": [
+        "개발 생산성"
+      ],
+      "acceptable_problem_types": [
+        "업무·운영 자동화",
+        "비용 절감"
+      ],
+      "domains": [
+        "사내 플랫폼·개발 도구"
+      ],
+      "acceptable_domains": [
+        "LLM·AI"
+      ],
+      "technologies": [
+        "Claude Code",
+        "Slack",
+        "Jira",
+        "Confluence"
+      ],
+      "rejected_alternatives": [
+        {
+          "name": "AI가 MCP로 외부 시스템 직접 조회",
+          "kind": "설계 방식"
+        }
+      ],
+      "key_facts": [
+        "첫 버전은 MCP로 슬랙·Jira·Confluence를 매번 직접 조회해 2~3일치만 수집해도 토큰 비용과 속도가 급격히 나빠짐",
+        "수집은 스크립트로 파일에 저장하고 AI는 요약·판단·페이지 생성만 맡겨 수집 단계 토큰을 거의 안 쓰고 속도와 결과 일관성이 올라감",
+        "브리핑 생성을 수집 → 사람·과제별 요약 → 페이지 생성 → 업로드 4단계로 나눠 세션마다 결과가 달라지는 문제를 해결",
+        "브리핑은 15분이면 읽는 분량이고 하루 1시간 가까이를 확보"
+      ]
+    },
+    {
+      "summary": "10개 넘는 클로드 코드 워크플로에 같은 교정을 반복하던 문제를 공통 규칙 프로젝트와 세션 마무리 자기개선 루프로 해결",
+      "problem_types": [
+        "개발 생산성"
+      ],
+      "acceptable_problem_types": [],
+      "domains": [
+        "사내 플랫폼·개발 도구"
+      ],
+      "acceptable_domains": [
+        "LLM·AI"
+      ],
+      "technologies": [
+        "Claude Code"
+      ],
+      "rejected_alternatives": [],
+      "key_facts": [
+        "워크플로가 10개 넘게 늘면서 같은 교정을 워크플로마다 반복해야 했음",
+        "각 프로젝트 CLAUDE.md 맨 위에 공통 규칙·보조 규칙을 import로 걸어 공통 규칙을 고치면 다음 세션부터 모든 워크플로에 반영",
+        "세션 마무리마다 규칙 위반·재발·사용자 교정·환경 이슈를 점검해 규칙을 제안하고 승인된 것만 반영",
+        "개별 워크플로는 공통 규칙을 직접 고치지 않고 제안함에 올리며, 둘 이상에서 반복되는 것 등을 공통 규칙으로 승격"
+      ]
+    }
+  ],
+  "notes": "AI 도구 활용 경험 글이지만 문제-결정-결과(MCP 직접 조회의 비용 문제 → 수집 스크립트 분리)가 독립된 두 문제로 나뉘어 항목 2개. 라운드테이블(페르소나 토론)은 기술적 결정이 약해 항목으로 만들지 않음. 항목 1~3개 모두 무방",
+  "reviewed": true
+}

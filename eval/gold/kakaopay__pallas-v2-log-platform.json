@@ -1,0 +1,76 @@
+{
+  "source": "kakaopay",
+  "post_id": "pallas-v2-log-platform",
+  "url": "https://tech.kakaopay.com/post/pallas-v2-log-platform/",
+  "title": "일 41TB, 200억 건의 로그를 ClickStack으로 실시간 처리하기 - 호그와트 도서관 프로젝트",
+  "post_type": "기술 선택·도입형",
+  "kind": "추출",
+  "kind_alternatives": [],
+  "entries": [
+    {
+      "summary": "하루 41TB로 늘어난 로그의 유입 지연·조회 지연·비용 문제를 수집부터 조회까지 ClickStack(OpenTelemetry + ClickHouse + HyperDX)으로 다시 설계해 해결",
+      "problem_types": [
+        "모니터링·관측성"
+      ],
+      "acceptable_problem_types": [
+        "비용 절감",
+        "데이터 파이프라인"
+      ],
+      "domains": [
+        "사내 플랫폼·개발 도구"
+      ],
+      "acceptable_domains": [
+        "결제·금융"
+      ],
+      "technologies": [
+        "ClickHouse",
+        "OpenTelemetry",
+        "HyperDX",
+        "Kafka",
+        "Amazon S3",
+        "Grafana"
+      ],
+      "rejected_alternatives": [
+        {
+          "name": "OpenSearch",
+          "kind": "기술"
+        },
+        {
+          "name": "Grafana Loki",
+          "kind": "기술"
+        },
+        {
+          "name": "Signoz",
+          "kind": "기술"
+        },
+        {
+          "name": "Amazon Athena",
+          "kind": "기술"
+        },
+        {
+          "name": "Fluentd",
+          "kind": "기술"
+        },
+        {
+          "name": "Filebeat",
+          "kind": "기술"
+        },
+        {
+          "name": "파티션 수와 컨슈머 수 일치",
+          "kind": "설계 방식"
+        }
+      ],
+      "key_facts": [
+        "3년 사이 로그가 하루 약 100GB에서 41TB·200억 건으로 늘고(410배) 조회 5분 이상·유입 지연, OpenSearch 비용은 8배 이상 증가",
+        "Filebeat → OpenTelemetry(OTLP Proto, 배치 전송)로 처리량 16.5MB/s → 300MB/s, Kafka CPU 2배 이상 감소",
+        "Kafka 토픽 약 300개 → 18개, 파티션 150개에 컨슈머 15·30·50개(평시 20% 자원 손실을 감수하고 09:00·23:30 증권 트래픽 스파이크 때 컨슈머만 늘려 대응)",
+        "Fluentd 1,000여 개 Pod → OpenTelemetry 150개, 코어당 150건/초 → 4,000건/초, Fast/Common/Debug 레벨별 Pool로 우선순위 처리",
+        "조회의 90% 이상이 시간 범위+필드 조건 검색이라 전문 검색이 약해도 컬럼형 ClickHouse 선택 (OpenSearch는 비용·집계, Loki는 라벨 제약·집계 부족으로 제외)",
+        "IDC ClickHouse는 9일 보관, 이후 자체 도구로 S3 Parquet+ZSTD 아카이빙, 장기 조회는 필요할 때만 띄우는 AWS ClickHouse가 S3를 직접 조회",
+        "결과: 로그 지연 20초 이내, 초당 83만 건 처리, 전체 비용 85.6% 절감(저장소 78%, 처리기 96%)"
+      ]
+    }
+  ],
+  "notes": "수집·큐·처리·저장·아카이빙·장기 조회·UI 7단계지만 하나의 문제(로그 플랫폼 확장)를 단계적으로 푼 것이라 항목 1개. 단계별로 2~4개로 나눠도 무방. 기존에 쓰다 교체한 기술(Filebeat, Fluentd, OpenSearch, Athena)도 글에 버린 이유가 명시돼 버린 대안으로 봄. 사내 도구(ssak3)는 technologies에서 뺌",
+  "reviewed": true
+}

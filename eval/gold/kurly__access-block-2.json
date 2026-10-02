@@ -1,0 +1,57 @@
+{
+  "source": "kurly",
+  "post_id": "access-block-2",
+  "url": "https://helloworld.kurly.com/blog/access-block-2/",
+  "title": "nginx 설정 없이 우아하게 서비스 점검하기 (下)",
+  "post_type": "기술 선택·도입형",
+  "kind": "추출",
+  "kind_alternatives": [],
+  "entries": [
+    {
+      "summary": "서비스 점검 때 nginx 설정 없이 경로·클러스터·권한 단위로 화면과 API 접근을 막는 기능을 구글 시트·BigQuery 메타데이터와 Redis 캐시, Spring AOP로 구현",
+      "problem_types": [
+        "업무·운영 자동화"
+      ],
+      "acceptable_problem_types": [
+        "장애 대응·복구",
+        "API 설계·외부 연동"
+      ],
+      "domains": [
+        "배달·물류"
+      ],
+      "acceptable_domains": [
+        "사내 플랫폼·개발 도구"
+      ],
+      "technologies": [
+        "Redis",
+        "BigQuery",
+        "Google Sheets",
+        "Spring AOP",
+        "Vue.js"
+      ],
+      "rejected_alternatives": [
+        {
+          "name": "nginx 설정으로 접근 차단",
+          "kind": "설계 방식"
+        },
+        {
+          "name": "BigQuery 직접 조회",
+          "kind": "설계 방식"
+        },
+        {
+          "name": "호출 횟수 기반 동기화",
+          "kind": "설계 방식"
+        }
+      ],
+      "key_facts": [
+        "nginx가 앞단 리버스 프록시가 아니고 게이트웨이도 없으며 nginx 설정은 인프라팀이 도커 베이스 이미지로 관리해 nginx 차단이 맞지 않음",
+        "개발자가 아닌 기획자·QA·운영 담당자도 차단을 설정할 수 있어야 하고 업무 RDBMS에 종속되면 안 됨",
+        "메타데이터는 구글 시트 → BigQuery에 두고 3분마다 배치로 Redis에 동기화 (BigQuery는 작은 쿼리도 수백 ms라 직접 조회하지 않음)",
+        "실행데이터는 API로 Redis에 바로 등록·삭제하고 클러스터·창고·제외 권한 단위로 차단",
+        "화면은 VueRouter beforeEach, API는 Spring AOP로 모든 요청을 가로채 차단"
+      ]
+    }
+  ],
+  "notes": "물류센터 업무 시스템(클러스터·창고·PDA)이라 도메인은 배달·물류, 사내 운영 도구로도 볼 수 있음. 주 문제 유형은 정확히 맞는 분류가 없어 운영 자동화로 둠",
+  "reviewed": true
+}

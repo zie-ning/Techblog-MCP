@@ -77,3 +77,13 @@ def test_evidence_found(evidence):
 )
 def test_evidence_not_found(evidence):
     assert not SOURCE.contains(evidence)
+
+
+def test_sentence_mode_accepts_separate_sentences_on_one_line():
+    # 떨어진 두 문장을 한 줄로 이어 붙인 발췌: 기본 규칙은 탈락, 문장 단위는 통과
+    joined = "발급 수량을 원자적으로 관리했습니다. 초당 최대 3만 건의 요청이 들어왔습니다."
+    assert not SOURCE.contains(joined)
+    assert SOURCE.contains(joined, by_sentence=True)
+    # 문장 단위여도 지어낸 문장이 있으면 탈락
+    fake = "초당 최대 3만 건의 요청이 들어왔습니다. 지어낸 두 번째 문장입니다."
+    assert not SOURCE.contains(fake, by_sentence=True)

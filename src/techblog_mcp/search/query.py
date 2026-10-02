@@ -10,7 +10,6 @@ from techblog_mcp import taxonomy
 from techblog_mcp.search.analyzer import tokenize
 from techblog_mcp.search.schema import FTS_COLUMNS
 
-Kind = Literal["사례", "인사이트", "전체"]
 GroupBy = Literal["technology", "problem_type", "domain", "company", "rejected_alternative"]
 
 DEFAULT_LIMIT = 5
@@ -23,7 +22,6 @@ class Filters:
     problem_type: str | None = None
     domain: str | None = None
     technologies: list[str] = field(default_factory=list)  # 정규화된 표준 이름
-    kind: Kind = "전체"
 
     def describe(self) -> list[str]:
         parts = []
@@ -33,21 +31,18 @@ class Filters:
             parts.append(f"도메인 = {self.domain}")
         if self.technologies:
             parts.append(f"기술 ∋ {' 또는 '.join(self.technologies)}")
-        if self.kind != "전체":
-            parts.append(f"유형 = {self.kind}")
         return parts
 
     def sql(self) -> tuple[str, list]:
         """entries 테이블(별칭 e)에 거는 WHERE 조건."""
         clauses, params = ["1=1"], []
-        if self.kind != "전체":
-            clauses.append("e.kind = ?")
-            params.append(self.kind)
         if self.domain:
-            clauses.append("e.domain = ?")
+            # 문제 유형·도메인 필터는 항목의 값 중 하나라도 맞으면 찾는다
+            clauses.append(
+                "EXISTS (SELECT 1 FROM entry_domains d WHERE d.entry_id = e.id AND d.domain = ?)"
+            )
             params.append(self.domain)
         if self.problem_type:
-            # 검색 필터는 주·보조 유형 모두 매칭 (docs/기획.md "분류 개수")
             clauses.append(
                 "EXISTS (SELECT 1 FROM entry_problem_types p"
                 " WHERE p.entry_id = e.id AND p.problem_type = ?)"
@@ -161,20 +156,16 @@ def get_details(conn: sqlite3.Connection, ids: list[str]) -> tuple[list[Detail],
 @dataclass
 class Group:
     key: str
-    cases: int = 0
-    insights: int = 0
+    total: int = 0
+    with_results: int = 0  # 그중 성능·운영 포인트(적용 결과 등)가 있는 항목
     companies: list[str] = field(default_factory=list)
     examples: list[str] = field(default_factory=list)
-
-    @property
-    def total(self) -> int:
-        return self.cases + self.insights
 
 
 @dataclass
 class AggregateResult:
-    cases: int  # 모수: 조건에 맞는 사례 수
-    insights: int  # 모수: 조건에 맞는 인사이트 수
+    total: int  # 모수: 조건에 맞는 항목 수
+    with_results: int  # 모수 중 성능·운영 포인트가 있는 항목 수
     companies: int  # 모수: 조건에 맞는 항목을 낸 회사 수
     groups: list[Group]  # 상위 top_n개
     group_count: int  # 전체 그룹 수
@@ -182,7 +173,11 @@ class AggregateResult:
 
 _GROUP_KEY_SQL: dict[str, str] = {
     "technology": "SELECT technology FROM entry_technologies WHERE entry_id = ?",
-    "rejected_alternative": "SELECT name FROM entry_rejected_alternatives WHERE entry_id = ?",
+    "problem_type": "SELECT problem_type FROM entry_problem_types WHERE entry_id = ?",
+    "domain": "SELECT domain FROM entry_domains WHERE entry_id = ?",
+    "rejected_alternative": (
+        "SELECT name FROM entry_rejected_alternatives WHERE entry_id = ? AND kind = '기술'"
+    ),
 }
 
 
@@ -191,10 +186,13 @@ def aggregate(
 ) -> AggregateResult:
     where, params = filters.sql()
     if group_by == "rejected_alternative":
-        # 버린 대안 집계는 버린 대안이 있는 사례만 대상
-        where += " AND EXISTS (SELECT 1 FROM entry_rejected_alternatives r WHERE r.entry_id = e.id)"
+        # 버린 대안 집계는 기술 대안이 있는 항목만 대상 (설계 방식은 get_details에서만 보여 준다)
+        where += (
+            " AND EXISTS (SELECT 1 FROM entry_rejected_alternatives r"
+            " WHERE r.entry_id = e.id AND r.kind = '기술')"
+        )
     rows = conn.execute(
-        "SELECT e.id, e.kind, e.company, e.primary_problem_type, e.domain"
+        "SELECT e.id, e.has_results, e.company"
         f" FROM entries e WHERE {where} ORDER BY e.published_at DESC, e.id DESC",
         params,
     ).fetchall()
@@ -204,10 +202,8 @@ def aggregate(
     for row in rows:
         for key in _group_keys(conn, group_by, row):
             group = groups.setdefault(key, Group(key))
-            if row["kind"] == "사례":
-                group.cases += 1
-            else:
-                group.insights += 1
+            group.total += 1
+            group.with_results += row["has_results"]
             if row["company"] not in companies_by_group[key]:
                 companies_by_group[key].add(row["company"])
                 group.companies.append(row["company"])
@@ -216,8 +212,8 @@ def aggregate(
 
     ranked = sorted(groups.values(), key=lambda g: (-g.total, -len(g.companies), g.key))
     return AggregateResult(
-        cases=sum(1 for r in rows if r["kind"] == "사례"),
-        insights=sum(1 for r in rows if r["kind"] == "인사이트"),
+        total=len(rows),
+        with_results=sum(r["has_results"] for r in rows),
         companies=len({r["company"] for r in rows}),
         groups=ranked[: max(1, top_n)],
         group_count=len(ranked),
@@ -225,11 +221,7 @@ def aggregate(
 
 
 def _group_keys(conn: sqlite3.Connection, group_by: GroupBy, row: sqlite3.Row) -> list[str]:
-    if group_by == "problem_type":
-        return [row["primary_problem_type"]]  # 주 유형 기준으로 중복 없이 센다
-    if group_by == "domain":
-        return [row["domain"]]
     if group_by == "company":
         return [row["company"]]
-    # 한 항목이 같은 키를 두 번 세지 않도록 중복 제거
+    # 한 항목은 여러 그룹에 들어갈 수 있다(기술·문제 유형·도메인). 같은 그룹에는 한 번만 센다
     return list(dict.fromkeys(r[0] for r in conn.execute(_GROUP_KEY_SQL[group_by], [row["id"]])))

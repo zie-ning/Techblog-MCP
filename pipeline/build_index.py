@@ -34,16 +34,14 @@ def fts_fields(entry: Entry) -> dict[str, str]:
         "problem": points(entry.problem_situation),
         "solution": points(entry.solution),
         "ops": points(entry.performance_ops),
-        "insight": _join(points(entry.key_points), points(entry.takeaways)),
         "rejected": _join(*(f"{r.name} {r.reason}" for r in entry.rejected_alternatives)),
         "keywords": _join(
             " ".join(entry.technologies),
             " ".join(entry.technologies_raw),
             " ".join(entry.tags),
             entry.company,
-            entry.primary_problem_type,
-            " ".join(entry.secondary_problem_types),
-            entry.domain,
+            " ".join(entry.problem_types),
+            " ".join(entry.domains),
         ),
     }
     assert fields.keys() == schema.FTS_COLUMNS.keys()
@@ -73,29 +71,27 @@ def build(entries: list[Entry], out: Path) -> None:
 
 def _insert(conn: sqlite3.Connection, rowid: int, e: Entry) -> None:
     conn.execute(
-        "INSERT INTO entries VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO entries VALUES (?, ?, ?, ?, ?, ?, ?)",
         (
             rowid,
             e.id,
-            e.kind,
+            int(bool(e.performance_ops)),
             e.company,
             e.post_url,
             e.published_at,
-            e.primary_problem_type,
-            e.domain,
             json.dumps(e.model_dump(), ensure_ascii=False),
         ),
     )
     conn.executemany(
-        "INSERT INTO entry_problem_types VALUES (?, ?, ?)",
-        [(e.id, e.primary_problem_type, 1)] + [(e.id, t, 0) for t in e.secondary_problem_types],
+        "INSERT INTO entry_problem_types VALUES (?, ?)", [(e.id, t) for t in e.problem_types]
     )
+    conn.executemany("INSERT INTO entry_domains VALUES (?, ?)", [(e.id, d) for d in e.domains])
     conn.executemany(
         "INSERT INTO entry_technologies VALUES (?, ?)", [(e.id, t) for t in e.technologies]
     )
     conn.executemany(
-        "INSERT INTO entry_rejected_alternatives VALUES (?, ?)",
-        [(e.id, r.name) for r in e.rejected_alternatives],
+        "INSERT INTO entry_rejected_alternatives VALUES (?, ?, ?)",
+        [(e.id, r.name, r.kind) for r in e.rejected_alternatives],
     )
     fields = fts_fields(e)
     columns = ", ".join(fields)

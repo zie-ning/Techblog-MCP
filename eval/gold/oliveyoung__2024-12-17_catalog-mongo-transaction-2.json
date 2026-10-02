@@ -1,0 +1,79 @@
+{
+  "source": "oliveyoung",
+  "post_id": "2024-12-17_catalog-mongo-transaction-2",
+  "url": "https://oliveyoung.tech/2024-12-17/catalog-mongo-transaction-2/",
+  "title": "Spring Boot MongoDB 트랜잭션 도입 실전 가이드",
+  "post_type": "문제 해결형",
+  "kind": "추출",
+  "kind_alternatives": [],
+  "entries": [
+    {
+      "summary": "복제 지연 때문에 트랜잭션 안에서 방금 쓴 데이터를 Secondary에서 못 읽는 문제를 트랜잭션에서만 Primary에서 읽도록 해 해결",
+      "problem_types": [
+        "데이터 정합성·트랜잭션"
+      ],
+      "acceptable_problem_types": [
+        "DB 성능·쿼리 최적화"
+      ],
+      "domains": [
+        "커머스·주문·재고"
+      ],
+      "acceptable_domains": [],
+      "technologies": [
+        "MongoDB",
+        "Spring Boot",
+        "Spring Data MongoDB"
+      ],
+      "rejected_alternatives": [
+        {
+          "name": "WriteConcern MAJORITY",
+          "kind": "설계 방식"
+        },
+        {
+          "name": "전역 ReadPreference PRIMARY",
+          "kind": "설계 방식"
+        }
+      ],
+      "key_facts": [
+        "WriteConcern ACKNOWLEDGED와 ReadPreference secondaryPreferred 조합에서 복제 지연으로 트랜잭션 중 재조회가 Not Found",
+        "WriteConcern MAJORITY는 모든 요청에서 과반수 응답을 기다려 성능 부담",
+        "전역 PRIMARY 읽기는 Secondary 자원을 놀림",
+        "MongoTransactionManager의 TransactionOptions에만 readPreference primary를 설정"
+      ]
+    },
+    {
+      "summary": "트랜잭션 커밋 전에 SQS 메시지가 나가 컨슈머가 데이터를 못 찾는 문제를 커밋 후 이벤트 발행(@TransactionalEventListener)으로 해결",
+      "problem_types": [
+        "데이터 정합성·트랜잭션"
+      ],
+      "acceptable_problem_types": [
+        "메시징·비동기 처리"
+      ],
+      "domains": [
+        "커머스·주문·재고"
+      ],
+      "acceptable_domains": [],
+      "technologies": [
+        "Amazon SQS",
+        "Spring Framework"
+      ],
+      "rejected_alternatives": [
+        {
+          "name": "SQS 메시지 지연 전송",
+          "kind": "설계 방식"
+        },
+        {
+          "name": "Outbox 패턴",
+          "kind": "설계 방식"
+        }
+      ],
+      "key_facts": [
+        "@Transactional 안에서 SQS로 발행해 커밋 전에 메시지가 나가 컨슈머 조회가 Not Found",
+        "지연 전송은 지연이 짧으면 문제가 남는 임시방편, Outbox·로그 테일링은 당장은 설계·구현 비용이 큼",
+        "ApplicationEventPublisher와 @TransactionalEventListener(AFTER_COMMIT) + @Async로 커밋 후 비동기 발행"
+      ]
+    }
+  ],
+  "notes": "글 앞부분의 MongoDB 트랜잭션 개념 설명(격리 수준, Write Concern 옵션 표)은 항목으로 만들지 않음",
+  "reviewed": true
+}

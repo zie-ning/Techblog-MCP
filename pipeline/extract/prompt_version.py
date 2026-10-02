@@ -16,7 +16,7 @@ from pathlib import Path
 from pydantic import BaseModel
 
 from pipeline.extract import prompts
-from pipeline.extract.schema import CaseExtraction, Classification, InsightExtraction
+from pipeline.extract.schema import Classification, Extraction
 
 SNAPSHOT_DIR = Path(__file__).resolve().parents[2] / "data" / "prompt_versions"
 
@@ -36,13 +36,11 @@ def bundle() -> str:
     """LLM에 전달되는 지시 전체를 사람이 읽을 수 있는 한 문서로 만든다. 해시의 입력이기도 하다."""
     sections = [
         ("1. 글 유형 분류 (instructions)", prompts.CLASSIFY),
-        ("2-a. 사례 구조화 (instructions)", prompts.structure_case()),
-        ("2-b. 인사이트 구조화 (instructions)", prompts.structure_insight()),
+        ("2. 구조화 (instructions)", prompts.structure()),
         ("입력 형식 (user)", prompts.post_input(_TITLE, _TEXT)),
         ("발췌 재시도 요청 (user)", prompts.evidence_retry([_FAILED])),
         ("출력 스키마: Classification", _schema(Classification)),
-        ("출력 스키마: CaseExtraction", _schema(CaseExtraction)),
-        ("출력 스키마: InsightExtraction", _schema(InsightExtraction)),
+        ("출력 스키마: Extraction", _schema(Extraction)),
     ]
     return "\n\n".join(f"## {title}\n\n````\n{body}\n````" for title, body in sections) + "\n"
 

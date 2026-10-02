@@ -1,0 +1,12 @@
+{
+  "source": "d2",
+  "post_id": "8992409",
+  "url": "https://d2.naver.com/helloworld/8992409",
+  "title": "DBT, Airflow를 활용한 데이터 계보 중심 파이프라인 만들기",
+  "post_type": "회고·문화·행사",
+  "kind": "제외",
+  "kind_alternatives": [],
+  "entries": [],
+  "notes": "NAVER ENGINEERING DAY 발표 영상 소개 글. 본문은 발표 내용 3줄·발표 대상·목차뿐이고 해결 근거(수치, 비교, 설계 결정 이유)가 없음. 글 유형은 발표 주제로는 기술 선택·도입형이지만 본문이 행사 발표 소개라 회고·문화·행사로 봄. gpt-5-mini가 v2·v3에서 계속 항목을 만든 글",
+  "reviewed": true
+}

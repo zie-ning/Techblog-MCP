@@ -1,0 +1,57 @@
+{
+  "source": "toss",
+  "post_id": "toss-securities-gpu-mig",
+  "url": "https://toss.tech/article/toss-securities-gpu-mig",
+  "title": "GPU를 밀도 있게 쓰는 방법 - 토스증권의 GPU 가상화(MIG) 도입기",
+  "post_type": "기술 선택·도입형",
+  "kind": "추출",
+  "kind_alternatives": [],
+  "entries": [
+    {
+      "summary": "작은 ML 워크로드가 고성능 GPU를 낭비하는 문제를 클라우드·혼합 GPU 대신 MIG GPU 가상화로 해결하고 Kubernetes 스케줄링·모니터링을 맞춤",
+      "problem_types": [
+        "비용 절감"
+      ],
+      "acceptable_problem_types": [
+        "인프라·컨테이너"
+      ],
+      "domains": [
+        "LLM·AI"
+      ],
+      "acceptable_domains": [
+        "사내 플랫폼·개발 도구"
+      ],
+      "technologies": [
+        "NVIDIA MIG",
+        "Kubernetes",
+        "nvidia-device-plugin",
+        "dcgm-exporter",
+        "Prometheus",
+        "Grafana"
+      ],
+      "rejected_alternatives": [
+        {
+          "name": "클라우드 GPU 활용",
+          "kind": "설계 방식"
+        },
+        {
+          "name": "혼합 GPU 운영",
+          "kind": "설계 방식"
+        },
+        {
+          "name": "MPS",
+          "kind": "기술"
+        }
+      ],
+      "key_facts": [
+        "전체 워크로드의 약 1/3이 GPU 자원의 1/4도 쓰지 않음",
+        "H100 하루 대여 약 38만 원, 1/4만 쓰면 월 약 855만 원 낭비(8장 서버 기준 월 6,840만 원)",
+        "단일 아키텍처 운용, 추론 속도 일관성, 유연한 자원 전환이 선택 기준이고 클러스터가 대부분 H100/H200이라 MIG 사용 가능",
+        "MPS는 자원 격리가 어렵고 관리 부담이 커서 하드웨어 격리되는 MIG 선택",
+        "Kubernetes는 nvidia-device-plugin을 MIG 전략 mixed로 재배포하고 dcgm-exporter로 인스턴스별 SM 사용률을 수집"
+      ]
+    }
+  ],
+  "notes": "도입 후 성능·비용 결과는 후속 글로 미뤄져 없음. 클라우드·혼합 GPU는 장단점을 비교한 뒤 자기 조건에 맞지 않아 택하지 않은 대안이라 버린 대안으로 봄",
+  "reviewed": true
+}

@@ -1,0 +1,42 @@
+# M3 추출 정답셋 24편 (블로그당 3편, 파일럿 80편 중에서 선정)
+# 선정 기준: 제외·인사이트·사례(1개/여러 개)·짧은 글·지금까지 나온 경계 사례가 골고루 들어가게 함
+
+# toss
+toss/firesidechat_frontend_4  # 짧은 인터뷰 글 → 제외 예상
+toss/toss-frontend-ai-docs  # AI 문서 봇 도입
+toss/toss-securities-gpu-mig  # GPU 가상화 도입, 버린 대안(MPS)
+
+# woowahan
+woowahan/14671  # 협업 방식 글 → 제외 예상
+woowahan/17386  # 카프카 사용 방식 (사례 여러 개 후보)
+woowahan/20763  # C++ → Java 전환, 규모 수치·버린 대안
+
+# kakao
+kakao/785  # AI 패널 토크 행사 → 제외 예상 (경계)
+kakao/762  # AI 마일리지 프로그램 (AI 도구 도입)
+kakao/822  # 메시징 서버 스트레스 테스트 (사례 여러 개)
+
+# kakaopay
+kakaopay/katfun-joy-kotlin  # 코틀린 팁 모음 → 인사이트 예상 (경계, 실행마다 흔들림)
+kakaopay/pallas-v2-log-platform  # 일 41TB 로그 플랫폼, 버린 대안 여러 개
+kakaopay/tech-strategy-tpm  # 직무 소개 → 제외 예상
+
+# d2
+d2/8992409  # 발표 소개 글(목차만) → 제외 예상 (gpt-5-mini가 계속 사례로 만듦)
+d2/1155434  # C++ bit_cast (사례·인사이트·제외 경계)
+d2/6512234  # Oracle → MySQL 무중단 전환
+
+# ly
+ly/japanese-search-kuromoji-to-sudachi  # 일본어 검색, 버린 대안 유형
+ly/how-to-evaluate-ai-generated-images-1  # AI 이미지 평가 (개념 글 → 제외 예상)
+ly/improving-kubernetes-relay-api-server-performance-with-informer  # 쿠버네티스 중계 API 서버 성능
+
+# kurly
+kurly/commit-mvcc-set-autocommit  # DB 정합성 문제 해결
+kurly/access-block-2  # 서비스 점검 차단, 설계 방식 대안
+kurly/claude-code-redesign-my-day  # 클로드 코드 업무 적용 (사례·인사이트 경계)
+
+# oliveyoung
+oliveyoung/2023-09-27_oliveyoung-favorite-snack  # 간식 설문 → 제외 예상
+oliveyoung/2024-12-17_catalog-mongo-transaction-2  # MongoDB 트랜잭션 (사례 여러 개)
+oliveyoung/2025-04-25_web-worker-for-image-processing  # 클라이언트 이미지 처리 성능

@@ -24,7 +24,7 @@ _MAX_COMPANY_NAMES = 5
 
 GROUP_BY_LABELS: dict[str, str] = {
     "technology": "기술",
-    "problem_type": "문제 유형(주 유형 기준)",
+    "problem_type": "문제 유형",
     "domain": "도메인",
     "company": "회사",
     "rejected_alternative": "버린 대안",
@@ -33,8 +33,8 @@ GROUP_BY_LABELS: dict[str, str] = {
 
 def _header(entry: dict) -> str:
     return (
-        f"[{entry['kind']} {entry['id']}] {entry['company']} · {entry['published_at']}"
-        f" · {entry['primary_problem_type']} / {entry['domain']}"
+        f"[{entry['id']}] {entry['company']} · {entry['published_at']}"
+        f" · {', '.join(entry['problem_types'])} / {', '.join(entry['domains'])}"
     )
 
 
@@ -45,11 +45,13 @@ def _first(points: list[dict]) -> str:
 def card(entry: dict) -> str:
     # 제목은 에이전트가 get_details로 열 글을 고르는 단서 (요약 한 줄로는 주제가 안 보일 때가 있음)
     lines = [_header(entry), f"제목: {entry['post_title']}"]
-    if entry["kind"] == "사례":
+    # 문제 상황은 팁·활용 경험 글에서 비어 있을 수 있다. 성능·운영 줄은 근거의 세기를 보여 주는
+    # 표시이기도 하다 (사례·인사이트 구분을 없앤 대신, docs/기획.md)
+    if entry["problem_situation"]:
         lines.append(f"문제 상황: {_first(entry['problem_situation'])}")
-        lines.append(f"해결 방법: {_first(entry['solution'])}")
-    else:
-        lines.append(f"핵심 내용: {_first(entry['key_points'])}")
+    lines.append(f"해결 방법: {_first(entry['solution'])}")
+    if entry["performance_ops"]:
+        lines.append(f"성능·운영: {_first(entry['performance_ops'])}")
     if entry["technologies"]:
         lines.append(f"기술: {', '.join(entry['technologies'])}")
     rejected = list(dict.fromkeys(r["name"] for r in entry.get("rejected_alternatives", [])))
@@ -79,7 +81,7 @@ def search_result(
     lines = [f"조건: {_condition(query, filters)}", *notes]
     if not result.entries:
         lines.append(
-            "\n결과 없음: 이 조건에 맞는 국내 기업 사례·인사이트가 DB에 없습니다. "
+            "\n결과 없음: 이 조건에 맞는 국내 기업 사례가 DB에 없습니다. "
             "사례를 지어내지 말고, 참고할 국내 사례를 찾지 못했다고 답하세요. "
             "검색어를 바꾸거나 필터를 빼서 다시 검색해 볼 수 있습니다."
         )
@@ -114,32 +116,26 @@ def _points(title: str, points: list[dict]) -> list[str]:
 
 def detail(d: Detail) -> str:
     e = d.entry
-    secondary = e["secondary_problem_types"]
     lines = [
-        f"[{e['kind']} {e['id']}] {e['post_title']}",
+        f"[{e['id']}] {e['post_title']}",
         f"회사: {e['company']} · 발행일: {e['published_at']}",
         f"원문: {e['post_url']}",
-        f"문제 유형: {e['primary_problem_type']}"
-        + (f" (보조: {', '.join(secondary)})" if secondary else "")
-        + f" · 도메인: {e['domain']}",
+        f"문제 유형: {', '.join(e['problem_types'])} · 도메인: {', '.join(e['domains'])}",
     ]
     if e["technologies"]:
         lines.append(f"기술: {', '.join(e['technologies'])}")
     if e["tags"]:
         lines.append(f"태그: {', '.join(e['tags'])}")
 
-    if e["kind"] == "사례":
-        lines += _points("문제 상황", e["problem_situation"])
-        lines += _points("해결 방법", e["solution"])
-        lines += _points("성능·운영 포인트", e["performance_ops"])
-        if e["rejected_alternatives"]:
-            lines += ["", "## 버린 대안"]
-            for r in e["rejected_alternatives"]:
-                lines.append(f"- {r['name']}: {r['reason']}")
-                lines.append(f'  근거: "{r["evidence"]}"')
-    else:
-        lines += _points("핵심 내용", e["key_points"])
-        lines += _points("적용해볼 점", e["takeaways"])
+    lines += _points("문제 상황", e["problem_situation"])
+    lines += _points("해결 방법", e["solution"])
+    lines += _points("성능·운영 포인트", e["performance_ops"])
+    if e["rejected_alternatives"]:
+        lines += ["", "## 버린 대안"]
+        for r in e["rejected_alternatives"]:
+            kind = " (설계 방식)" if r.get("kind") == "설계 방식" else ""
+            lines.append(f"- {r['name']}{kind}: {r['reason']}")
+            lines.append(f'  근거: "{r["evidence"]}"')
 
     if d.siblings:
         lines += ["", f"같은 글의 다른 항목: {', '.join(d.siblings)}"]
@@ -164,8 +160,8 @@ def details_result(
     return "\n\n---\n\n".join(parts + ["\n".join(notes)] if notes else parts)
 
 
-def _count(cases: int, insights: int) -> str:
-    return f"사례 {cases}건 · 인사이트 {insights}건"
+def _count(total: int, with_results: int) -> str:
+    return f"{total}건 (성능·운영 포인트 있음 {with_results})"
 
 
 def aggregate_result(
@@ -173,14 +169,22 @@ def aggregate_result(
 ) -> str:
     label = GROUP_BY_LABELS[group_by]
     lines = [
-        f"조건: {_condition(None, filters)} → {_count(result.cases, result.insights)}"
+        f"조건: {_condition(None, filters)} → {_count(result.total, result.with_results)}"
         f" / {result.companies}개사",
         f"기준: {label} (상위 {len(result.groups)}개 / 전체 {result.group_count}개)",
         *notes,
     ]
     if group_by == "rejected_alternative":
-        lines.append("※ 버린 대안이 글에 명시된 사례만 셉니다.")
-    if result.cases + result.insights == 0:
+        lines.append(
+            "※ 버린 대안이 글에 명시된 항목 중 기술·제품 대안만 셉니다."
+            " 설계 방식 대안(패턴, 구현 방식)은 get_details에서 확인하세요."
+        )
+    if group_by in ("technology", "problem_type", "domain"):
+        lines.append(
+            f"※ 한 항목이 여러 {label}에 걸리면 각각 셉니다."
+            " 건수의 합은 전체 건수보다 클 수 있습니다."
+        )
+    if result.total == 0:
         lines.append("\n결과 없음: 이 조건에 맞는 항목이 DB에 없습니다. 수치를 지어내지 마세요.")
         return "\n".join(lines)
 
@@ -195,12 +199,12 @@ def aggregate_result(
                 names += ", …"
             companies = f" · {len(g.companies)}개사 ({names})"
         lines.append(
-            f"{rank}. {g.key}  {_count(g.cases, g.insights)}{companies}"
+            f"{rank}. {g.key}  {_count(g.total, g.with_results)}{companies}"
             f"  예시: {', '.join(g.examples)}"
         )
     lines.append("")
     lines.append(
-        "인사이트는 실제 운영 사례가 아닐 수 있으니 사례 건수를 우선 보세요. "
-        "예시 ID는 get_details로 확인할 수 있습니다."
+        "성능·운영 포인트 있음은 적용 결과나 운영 경험이 원문에 서술된 항목 수입니다"
+        " (없는 항목은 팁·도입 경험 위주). 예시 ID는 get_details로 확인할 수 있습니다."
     )
     return "\n".join(lines)

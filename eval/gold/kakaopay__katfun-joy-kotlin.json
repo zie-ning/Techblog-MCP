@@ -1,0 +1,45 @@
+{
+  "source": "kakaopay",
+  "post_id": "katfun-joy-kotlin",
+  "url": "https://tech.kakaopay.com/post/katfun-joy-kotlin/",
+  "title": "코틀린, 저는 이렇게 쓰고 있습니다",
+  "post_type": "실험·활용기",
+  "kind": "추출",
+  "kind_alternatives": [],
+  "entries": [
+    {
+      "summary": "보험 서비스 백엔드에서 value class·invoke 팩토리, 불변성·스마트 캐스트, 확장 함수 라이브러리, data class copy()로 안정성과 테스트 가독성을 높이는 코틀린 활용법",
+      "problem_types": [
+        "개발 생산성"
+      ],
+      "acceptable_problem_types": [
+        "테스트 자동화"
+      ],
+      "domains": [
+        "결제·금융"
+      ],
+      "acceptable_domains": [
+        "범용"
+      ],
+      "technologies": [
+        "Kotlin",
+        "Jackson"
+      ],
+      "rejected_alternatives": [
+        {
+          "name": "검증 로직 별도 클래스 분리",
+          "kind": "설계 방식"
+        }
+      ],
+      "key_facts": [
+        "value class에 private 생성자와 invoke 연산자 오버로딩을 써서 생성 시 검증을 강제 (검증 로직을 별도 클래스로 두면 호출 누락 위험)",
+        "@JsonCreator로 역직렬화 때도 검증하는 팩토리 메서드를 거치게 함",
+        "val 불변성과 requireNotNull 뒤 스마트 캐스트로 null이 아님을 보장",
+        "확장 함수와 object declaration으로 공통 유틸 라이브러리를 만들어 프로젝트 간 중복 코드 감소",
+        "data class copy()로 테스트 대상 필드만 바꿔 테스트 의도를 드러냄"
+      ]
+    }
+  ],
+  "notes": "서로 독립된 코틀린 활용 팁 4개를 소개하는 글이라 팁 모음 규칙에 따라 항목 1개. gpt-5-mini가 같은 프롬프트에서도 4개/1개를 오가던 글",
+  "reviewed": true
+}
