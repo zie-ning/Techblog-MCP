@@ -113,12 +113,11 @@ def build_report(
         std = cost(usage, price)
         batch = cost(usage, price["batch"]) if "batch" in price else None
         per_post = std / len(posts)
-        line = (
-            f"- 비용: ${std:.3f} (편당 ${per_post:.4f}),"
-            f" 전체 {TOTAL_POSTS:,}편 추정 ${per_post * TOTAL_POSTS:.1f}"
-        )
-        if batch is not None:
-            line += f" / Batch ${batch / len(posts) * TOTAL_POSTS:.1f}"
+        line = f"- 비용: ${std:.3f} (편당 ${per_post:.4f})"
+        if len(posts) < TOTAL_POSTS:  # 전체를 추출한 run에는 추정이 필요 없다
+            line += f", 전체 {TOTAL_POSTS:,}편 추정 ${per_post * TOTAL_POSTS:.1f}"
+            if batch is not None:
+                line += f" / Batch ${batch / len(posts) * TOTAL_POSTS:.1f}"
         lines.append(line)
     else:
         lines.append(f"- 비용: `eval/pricing.toml`에 {model} 단가가 없음")
