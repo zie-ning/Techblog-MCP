@@ -32,7 +32,8 @@ from pipeline.extract.extractor import OpenAILLM, extract_post, extraction_reaso
 from pipeline.extract.schema import Usage
 from pipeline.extract.store import DATA_DIR, Store
 
-DEFAULT_MODEL = "gpt-5-mini"  # M1 임시 모델. M3 평가 후 확정한다
+# M3 모델 비교로 확정 (docs/기획.md "추출 LLM"). effort 기본값 medium
+DEFAULT_MODEL = "gpt-5.6-luna"
 ALL = "all"
 
 
