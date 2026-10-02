@@ -24,7 +24,7 @@
       "technologies": [
         "NVIDIA MIG",
         "Kubernetes",
-        "nvidia-device-plugin",
+        "NVIDIA Device Plugin",
         "dcgm-exporter",
         "Prometheus",
         "Grafana"

@@ -87,6 +87,15 @@ name = "Lua"
 aliases = ["Lua Script", "Lua 스크립트"]
 category = "언어·런타임"
 
+[[technology]]
+name = "C++"
+category = "언어·런타임"
+
+[[technology]]
+name = "JDK"
+category = "언어·런타임"
+parent = "Java"
+
 # 백엔드 프레임워크·라이브러리
 
 [[technology]]
@@ -188,6 +197,91 @@ name = "GraphQL"
 aliases = []
 category = "백엔드 프레임워크·라이브러리"
 
+[[technology]]
+name = "Spring Cloud"
+category = "백엔드 프레임워크·라이브러리"
+parent = "Spring Framework"
+
+[[technology]]
+name = "Spring MVC"
+category = "백엔드 프레임워크·라이브러리"
+parent = "Spring Framework"
+
+[[technology]]
+name = "Spring Data Redis"
+category = "백엔드 프레임워크·라이브러리"
+parent = "Spring Framework"
+
+[[technology]]
+name = "Spring Data MongoDB"
+category = "백엔드 프레임워크·라이브러리"
+parent = "Spring Framework"
+
+[[technology]]
+name = "Project Reactor"
+aliases = ["Reactor"]
+category = "백엔드 프레임워크·라이브러리"
+
+[[technology]]
+name = "Netty"
+category = "백엔드 프레임워크·라이브러리"
+
+[[technology]]
+name = "Apache Tomcat"
+aliases = ["Tomcat"]
+category = "백엔드 프레임워크·라이브러리"
+
+[[technology]]
+name = "JDBC"
+category = "백엔드 프레임워크·라이브러리"
+
+[[technology]]
+name = "Lettuce"
+category = "백엔드 프레임워크·라이브러리"
+
+[[technology]]
+name = "Lombok"
+category = "백엔드 프레임워크·라이브러리"
+
+[[technology]]
+name = "Logback"
+category = "백엔드 프레임워크·라이브러리"
+
+[[technology]]
+name = "FastAPI"
+category = "백엔드 프레임워크·라이브러리"
+
+[[technology]]
+name = "NestJS"
+category = "백엔드 프레임워크·라이브러리"
+
+[[technology]]
+name = "Celery"
+category = "백엔드 프레임워크·라이브러리"
+
+[[technology]]
+name = "Protocol Buffers"
+aliases = ["Protobuf"]
+category = "백엔드 프레임워크·라이브러리"
+
+[[technology]]
+name = "OpenAPI"
+category = "백엔드 프레임워크·라이브러리"
+
+[[technology]]
+name = "Swagger"
+category = "백엔드 프레임워크·라이브러리"
+
+[[technology]]
+name = "SSE"
+aliases = ["Server-Sent Events"]
+category = "백엔드 프레임워크·라이브러리"
+
+[[technology]]
+name = "WebSocket"
+aliases = ["웹소켓"]
+category = "백엔드 프레임워크·라이브러리"
+
 # 프론트엔드·모바일
 
 [[technology]]
@@ -229,6 +323,68 @@ category = "프론트엔드·모바일"
 [[technology]]
 name = "Flutter"
 aliases = ["플러터"]
+category = "프론트엔드·모바일"
+
+[[technology]]
+name = "Android"
+aliases = ["안드로이드"]
+category = "프론트엔드·모바일"
+
+[[technology]]
+name = "iOS"
+category = "프론트엔드·모바일"
+
+[[technology]]
+name = "Angular"
+category = "프론트엔드·모바일"
+
+[[technology]]
+name = "React Router"
+aliases = ["react-router-dom"]
+category = "프론트엔드·모바일"
+parent = "React"
+
+[[technology]]
+name = "React Hook Form"
+aliases = ["react-hook-form"]
+category = "프론트엔드·모바일"
+parent = "React"
+
+[[technology]]
+name = "Zustand"
+category = "프론트엔드·모바일"
+
+[[technology]]
+name = "Zod"
+category = "프론트엔드·모바일"
+
+[[technology]]
+name = "Axios"
+category = "프론트엔드·모바일"
+
+[[technology]]
+name = "Lodash"
+aliases = ["lodash-es"]
+category = "프론트엔드·모바일"
+
+[[technology]]
+name = "Tailwind CSS"
+category = "프론트엔드·모바일"
+
+[[technology]]
+name = "Storybook"
+category = "프론트엔드·모바일"
+
+[[technology]]
+name = "Safari"
+category = "프론트엔드·모바일"
+
+[[technology]]
+name = "MapKit"
+category = "프론트엔드·모바일"
+
+[[technology]]
+name = "Streamlit"
 category = "프론트엔드·모바일"
 
 # 데이터베이스
@@ -283,6 +439,36 @@ name = "ClickHouse"
 aliases = []
 category = "데이터베이스"
 
+[[technology]]
+name = "BigQuery"
+category = "데이터베이스"
+
+[[technology]]
+name = "RocksDB"
+category = "데이터베이스"
+
+[[technology]]
+name = "Apache Kudu"
+aliases = ["Kudu"]
+category = "데이터베이스"
+
+[[technology]]
+name = "StarRocks"
+category = "데이터베이스"
+
+[[technology]]
+name = "Apache Pinot"
+aliases = ["Pinot"]
+category = "데이터베이스"
+
+[[technology]]
+name = "Vitess"
+category = "데이터베이스"
+
+[[technology]]
+name = "Milvus"
+category = "데이터베이스"
+
 # 캐시
 
 [[technology]]
@@ -307,11 +493,25 @@ name = "OpenSearch"
 aliases = ["Amazon OpenSearch", "Amazon OpenSearch Service", "AWS OpenSearch"]
 category = "검색 엔진"
 
+[[technology]]
+name = "Apache Lucene"
+aliases = ["Lucene"]
+category = "검색 엔진"
+
 # 스토리지
 
 [[technology]]
 name = "Amazon S3"
-aliases = ["S3"]
+aliases = ["S3", "AWS S3"]
+category = "스토리지"
+
+[[technology]]
+name = "HDFS"
+category = "스토리지"
+parent = "Hadoop"
+
+[[technology]]
+name = "MinIO"
 category = "스토리지"
 
 # 메시지 브로커
@@ -412,6 +612,58 @@ name = "Oracle GoldenGate"
 aliases = ["OGG", "GoldenGate"]
 category = "데이터 처리·파이프라인"
 
+[[technology]]
+name = "Hadoop"
+aliases = ["Apache Hadoop"]
+category = "데이터 처리·파이프라인"
+
+[[technology]]
+name = "Apache Hive"
+aliases = ["Hive"]
+category = "데이터 처리·파이프라인"
+
+[[technology]]
+name = "Apache Iceberg"
+aliases = ["Iceberg"]
+category = "데이터 처리·파이프라인"
+
+[[technology]]
+name = "Apache Parquet"
+aliases = ["Parquet"]
+category = "데이터 처리·파이프라인"
+
+[[technology]]
+name = "Trino"
+category = "데이터 처리·파이프라인"
+
+[[technology]]
+name = "Apache Impala"
+aliases = ["Impala"]
+category = "데이터 처리·파이프라인"
+
+[[technology]]
+name = "Apache Heron"
+category = "데이터 처리·파이프라인"
+
+[[technology]]
+name = "ksqlDB"
+category = "데이터 처리·파이프라인"
+parent = "Kafka"
+
+[[technology]]
+name = "Flink CDC"
+aliases = ["flink-connector-mysql-cdc"]
+category = "데이터 처리·파이프라인"
+parent = "Apache Flink"
+
+[[technology]]
+name = "DataHub"
+category = "데이터 처리·파이프라인"
+
+[[technology]]
+name = "Tableau"
+category = "데이터 처리·파이프라인"
+
 # 클라우드·인프라
 
 [[technology]]
@@ -475,6 +727,75 @@ name = "Amazon Route 53"
 aliases = ["Route 53", "Route53"]
 category = "클라우드·인프라"
 
+[[technology]]
+name = "Amazon EC2"
+aliases = ["EC2", "AWS EC2"]
+category = "클라우드·인프라"
+
+[[technology]]
+name = "Amazon ECR"
+aliases = ["ECR"]
+category = "클라우드·인프라"
+
+[[technology]]
+name = "AWS ALB"
+aliases = ["ALB", "Application Load Balancer"]
+category = "클라우드·인프라"
+
+[[technology]]
+name = "Lambda@Edge"
+category = "클라우드·인프라"
+parent = "AWS Lambda"
+
+[[technology]]
+name = "AWS CLI"
+category = "클라우드·인프라"
+
+[[technology]]
+name = "Ansible"
+category = "클라우드·인프라"
+
+[[technology]]
+name = "Terragrunt"
+category = "클라우드·인프라"
+parent = "Terraform"
+
+[[technology]]
+name = "OpenStack"
+category = "클라우드·인프라"
+
+[[technology]]
+name = "Envoy"
+category = "클라우드·인프라"
+
+[[technology]]
+name = "etcd"
+category = "클라우드·인프라"
+
+[[technology]]
+name = "ZooKeeper"
+aliases = ["Apache ZooKeeper"]
+category = "클라우드·인프라"
+
+[[technology]]
+name = "CUDA"
+category = "클라우드·인프라"
+
+[[technology]]
+name = "NVIDIA MIG"
+aliases = ["MIG", "Multi-Instance GPU"]
+category = "클라우드·인프라"
+
+[[technology]]
+name = "NVIDIA Device Plugin"
+aliases = ["nvidia-device-plugin", "NVIDIA k8s-device-plugin"]
+category = "클라우드·인프라"
+
+[[technology]]
+name = "Linux kernel"
+aliases = ["리눅스 커널"]
+category = "클라우드·인프라"
+
 # CI/CD·빌드
 
 [[technology]]
@@ -500,6 +821,59 @@ category = "CI/CD·빌드"
 [[technology]]
 name = "Gradle"
 aliases = []
+category = "CI/CD·빌드"
+
+[[technology]]
+name = "Vite"
+category = "CI/CD·빌드"
+
+[[technology]]
+name = "Webpack"
+category = "CI/CD·빌드"
+
+[[technology]]
+name = "Rollup"
+category = "CI/CD·빌드"
+
+[[technology]]
+name = "esbuild"
+category = "CI/CD·빌드"
+
+[[technology]]
+name = "SWC"
+category = "CI/CD·빌드"
+
+[[technology]]
+name = "npm"
+category = "CI/CD·빌드"
+
+[[technology]]
+name = "pnpm"
+category = "CI/CD·빌드"
+
+[[technology]]
+name = "Poetry"
+category = "CI/CD·빌드"
+
+[[technology]]
+name = "uv"
+category = "CI/CD·빌드"
+
+[[technology]]
+name = "Swift Package Manager"
+aliases = ["SPM"]
+category = "CI/CD·빌드"
+
+[[technology]]
+name = "TeamCity"
+category = "CI/CD·빌드"
+
+[[technology]]
+name = "Rundeck"
+category = "CI/CD·빌드"
+
+[[technology]]
+name = "Dokka"
 category = "CI/CD·빌드"
 
 # 관측성
@@ -547,6 +921,51 @@ category = "관측성"
 [[technology]]
 name = "AKHQ"
 aliases = []
+category = "관측성"
+
+[[technology]]
+name = "VictoriaMetrics"
+category = "관측성"
+
+[[technology]]
+name = "Grafana Loki"
+aliases = ["Loki"]
+category = "관측성"
+
+[[technology]]
+name = "Grafana Mimir"
+aliases = ["Mimir"]
+category = "관측성"
+
+[[technology]]
+name = "Grafana Tempo"
+aliases = ["Tempo"]
+category = "관측성"
+
+[[technology]]
+name = "Pyroscope"
+category = "관측성"
+
+[[technology]]
+name = "Filebeat"
+category = "관측성"
+
+[[technology]]
+name = "Vector"
+category = "관측성"
+
+[[technology]]
+name = "ELK"
+aliases = ["ELK Stack"]
+category = "관측성"
+
+[[technology]]
+name = "pprof"
+category = "관측성"
+
+[[technology]]
+name = "Google Analytics"
+aliases = ["GA4"]
 category = "관측성"
 
 # 테스트·품질
@@ -601,6 +1020,50 @@ name = "reviewdog"
 aliases = []
 category = "테스트·품질"
 
+[[technology]]
+name = "Locust"
+category = "테스트·품질"
+
+[[technology]]
+name = "Appium"
+category = "테스트·품질"
+
+[[technology]]
+name = "MockK"
+category = "테스트·품질"
+
+[[technology]]
+name = "Mockito"
+category = "테스트·품질"
+
+[[technology]]
+name = "ArchUnit"
+category = "테스트·품질"
+
+[[technology]]
+name = "pytest"
+category = "테스트·품질"
+
+[[technology]]
+name = "ESLint"
+category = "테스트·품질"
+
+[[technology]]
+name = "Prettier"
+category = "테스트·품질"
+
+[[technology]]
+name = "SonarQube"
+category = "테스트·품질"
+
+[[technology]]
+name = "CoreMark"
+category = "테스트·품질"
+
+[[technology]]
+name = "stress-ng"
+category = "테스트·품질"
+
 # 인증·보안
 
 [[technology]]
@@ -611,6 +1074,24 @@ category = "인증·보안"
 [[technology]]
 name = "JWT"
 aliases = ["JSON Web Token"]
+category = "인증·보안"
+
+[[technology]]
+name = "TLS"
+aliases = ["SSL/TLS"]
+category = "인증·보안"
+
+[[technology]]
+name = "Kerberos"
+category = "인증·보안"
+
+[[technology]]
+name = "Amazon GuardDuty"
+aliases = ["GuardDuty"]
+category = "인증·보안"
+
+[[technology]]
+name = "Semgrep"
 category = "인증·보안"
 
 # AI 모델·학습
@@ -672,6 +1153,75 @@ aliases = []
 category = "AI 모델·학습"
 parent = "LoRA"
 
+[[technology]]
+name = "PyTorch"
+category = "AI 모델·학습"
+
+[[technology]]
+name = "Transformers"
+aliases = ["Hugging Face Transformers"]
+category = "AI 모델·학습"
+parent = "Hugging Face"
+
+[[technology]]
+name = "NumPy"
+category = "AI 모델·학습"
+
+[[technology]]
+name = "Megatron-LM"
+category = "AI 모델·학습"
+
+[[technology]]
+name = "vLLM"
+category = "AI 모델·학습"
+
+[[technology]]
+name = "TensorRT"
+aliases = ["TensorRT-LLM"]
+category = "AI 모델·학습"
+
+[[technology]]
+name = "Triton Inference Server"
+aliases = ["NVIDIA Triton"]
+category = "AI 모델·학습"
+
+[[technology]]
+name = "ONNX"
+aliases = ["ONNX Runtime"]
+category = "AI 모델·학습"
+
+[[technology]]
+name = "KServe"
+category = "AI 모델·학습"
+
+[[technology]]
+name = "Kubeflow"
+category = "AI 모델·학습"
+
+[[technology]]
+name = "BentoML"
+category = "AI 모델·학습"
+
+[[technology]]
+name = "MLflow"
+category = "AI 모델·학습"
+
+[[technology]]
+name = "Llama"
+category = "AI 모델·학습"
+
+[[technology]]
+name = "Whisper"
+category = "AI 모델·학습"
+
+[[technology]]
+name = "CLIP"
+category = "AI 모델·학습"
+
+[[technology]]
+name = "FastText"
+category = "AI 모델·학습"
+
 # LLM 애플리케이션
 
 [[technology]]
@@ -695,6 +1245,19 @@ name = "RAG"
 aliases = ["Retrieval-Augmented Generation"]
 category = "LLM 애플리케이션"
 
+[[technology]]
+name = "Langfuse"
+category = "LLM 애플리케이션"
+
+[[technology]]
+name = "Langflow"
+category = "LLM 애플리케이션"
+
+[[technology]]
+name = "Spring AI"
+category = "LLM 애플리케이션"
+parent = "Spring Framework"
+
 # AI 코딩 도구
 
 [[technology]]
@@ -717,6 +1280,11 @@ name = "Amazon Q"
 aliases = ["Amazon Q Developer"]
 category = "AI 코딩 도구"
 
+[[technology]]
+name = "Codex"
+aliases = ["OpenAI Codex", "Codex CLI"]
+category = "AI 코딩 도구"
+
 # 협업·개발 도구
 
 [[technology]]
@@ -727,6 +1295,73 @@ category = "협업·개발 도구"
 [[technology]]
 name = "Visual Studio Code"
 aliases = ["VS Code", "VSCode"]
+category = "협업·개발 도구"
+
+[[technology]]
+name = "Git"
+category = "협업·개발 도구"
+
+[[technology]]
+name = "GitHub"
+category = "협업·개발 도구"
+
+[[technology]]
+name = "GitHub Pages"
+category = "협업·개발 도구"
+parent = "GitHub"
+
+[[technology]]
+name = "GitLab"
+category = "협업·개발 도구"
+
+[[technology]]
+name = "Jira"
+aliases = ["지라"]
+category = "협업·개발 도구"
+
+[[technology]]
+name = "Confluence"
+aliases = ["컨플루언스"]
+category = "협업·개발 도구"
+
+[[technology]]
+name = "Figma"
+aliases = ["피그마"]
+category = "협업·개발 도구"
+
+[[technology]]
+name = "Postman"
+category = "협업·개발 도구"
+
+[[technology]]
+name = "IntelliJ IDEA"
+aliases = ["IntelliJ"]
+category = "협업·개발 도구"
+
+[[technology]]
+name = "Android Studio"
+category = "협업·개발 도구"
+
+[[technology]]
+name = "Android CLI"
+category = "협업·개발 도구"
+
+[[technology]]
+name = "Xcode"
+category = "협업·개발 도구"
+
+[[technology]]
+name = "Mermaid"
+category = "협업·개발 도구"
+
+[[technology]]
+name = "Google Sheets"
+aliases = ["구글 시트"]
+category = "협업·개발 도구"
+
+[[technology]]
+name = "Microsoft Excel"
+aliases = ["Excel", "엑셀"]
 category = "협업·개발 도구"
 
 # 기타 클라우드 서비스
@@ -744,4 +1379,12 @@ category = "기타 클라우드 서비스"
 [[technology]]
 name = "Amazon Polly"
 aliases = []
+category = "기타 클라우드 서비스"
+
+[[technology]]
+name = "Firebase"
+category = "기타 클라우드 서비스"
+
+[[technology]]
+name = "Braze"
 category = "기타 클라우드 서비스"
