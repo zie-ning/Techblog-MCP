@@ -4,10 +4,10 @@ from techblog_mcp import taxonomy
 
 
 def test_category_counts():
-    # docs/기획.md: 문제 유형 20개, 도메인 10개
-    assert len(taxonomy.problem_type_names()) == 20
+    # docs/기획.md: 문제 유형 21개, 도메인 10개
+    assert len(taxonomy.problem_type_names()) == 21
     assert len(taxonomy.domain_names()) == 10
-    assert len(set(taxonomy.problem_type_names())) == 20
+    assert len(set(taxonomy.problem_type_names())) == 21
     assert "범용" in taxonomy.domain_names()
 
 

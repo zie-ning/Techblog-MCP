@@ -387,7 +387,7 @@
 
 - 문제 유형: 비용 절감 (허용: 인프라·컨테이너)
 - 도메인: LLM·AI (허용: 사내 플랫폼·개발 도구)
-- 기술: NVIDIA MIG, Kubernetes, nvidia-device-plugin, dcgm-exporter, Prometheus, Grafana
+- 기술: NVIDIA MIG, Kubernetes, NVIDIA Device Plugin, dcgm-exporter, Prometheus, Grafana
 - 버린 대안: 클라우드 GPU 활용(설계 방식), 혼합 GPU 운영(설계 방식), MPS(기술)
 - 핵심 사실:
   - 전체 워크로드의 약 1/3이 GPU 자원의 1/4도 쓰지 않음

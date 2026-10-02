@@ -28,7 +28,7 @@
 
 항목 나누기: 독립된 문제-해법 쌍마다 항목 하나, 같은 문제의 단계적 해결은 한 항목, 팁 모음·도구 활용 경험 글은 항목 하나.
 
-## 문제 유형 (`problem_types`, 20개 중 1~3개)
+## 문제 유형 (`problem_types`, 21개 중 1~3개)
 
 무엇을 풀었는지(해결의 목적) 기준으로 고른다. 쓴 기술 기준이 아니다. 하나의 해결이 여러 문제를 함께 풀었으면 모두 고르고, 곁가지로 언급만 된 문제는 넣지 않는다.
 
@@ -51,6 +51,7 @@
 | 인증·보안 | 인증·인가, 개인정보 보호, 보안 취약점 대응 |
 | 데이터 파이프라인 | 데이터 수집·적재·변환, CDC, 배치·스트리밍 처리, 데이터 플랫폼 |
 | 클라이언트 성능(웹·앱) | 웹 프론트엔드·모바일 앱의 렌더링·로딩·번들·메모리 성능 개선 |
+| 검색·추천·모델 품질 | 검색 랭킹·관련도, 추천 정확도, ML·LLM 모델의 품질 개선과 평가 (속도·비용이 아니라 결과의 정확도·품질이 목표일 때) |
 | 테스트 자동화 | 단위·통합·E2E 테스트, 테스트 데이터·환경, QA 자동화 |
 | 업무·운영 자동화 | AI와 무관한 사내 봇, 운영 스크립트, 반복 업무 자동화 |
 | 개발 생산성 | 코드 작성 방식·언어 기능 활용, 리팩터링, 빌드·개발 환경 개선, 개발 도구 도입(AI 코딩 도구 포함) |
@@ -79,28 +80,28 @@
 | 기술 | 제품·라이브러리·서비스 자체 (예: OpenSearch, Hazelcast, MPS). 기술별 집계에 들어감 |
 | 설계 방식 | 패턴, 구현·설정·운영 방법 (예: Outbox 패턴, READ COMMITTED 격리 수준). 상세 보기에서만 보임 |
 
-## 기술 사전 (132개)
+## 기술 사전 (278개)
 
 `technologies`는 정해진 목록이 아니라 자유 입력이다. 사전에 있는 기술은 아래 표준 이름으로 쓰고, 사전에 없는 기술도 넣을 수 있다. 괄호는 같은 계열로 묶어 세는 상위 기술.
 
 | 종류 | 기술 |
 | --- | --- |
-| 언어·런타임 | Java, Kotlin, Kotlin Coroutines (→ Kotlin), Python, Go, TypeScript, JavaScript, Node.js, Swift, JVM, Lua |
-| 백엔드 프레임워크·라이브러리 | Spring Framework, Spring Boot (→ Spring Framework), Spring Batch (→ Spring Framework), Spring WebFlux (→ Spring Framework), Spring Cloud Gateway (→ Spring Framework), Spring Kafka (→ Spring Framework), Spring Session (→ Spring Framework), Spring AOP (→ Spring Framework), Spring Cloud AWS (→ Spring Framework), Spring Cloud Config (→ Spring Framework), JPA, QueryDSL, MyBatis, Resilience4j, Jackson, HikariCP, gRPC, GraphQL |
-| 프론트엔드·모바일 | React, Next.js (→ React), Vue.js, React Native, TanStack Query, SwiftUI, Jetpack Compose, Flutter |
-| 데이터베이스 | MySQL, PostgreSQL, Oracle, Amazon Aurora, Amazon RDS, MongoDB, Amazon DocumentDB, Amazon DynamoDB, Apache HBase, ClickHouse |
+| 언어·런타임 | Java, Kotlin, Kotlin Coroutines (→ Kotlin), Python, Go, TypeScript, JavaScript, Node.js, Swift, JVM, Lua, C++, JDK (→ Java) |
+| 백엔드 프레임워크·라이브러리 | Spring Framework, Spring Boot (→ Spring Framework), Spring Batch (→ Spring Framework), Spring WebFlux (→ Spring Framework), Spring Cloud Gateway (→ Spring Framework), Spring Kafka (→ Spring Framework), Spring Session (→ Spring Framework), Spring AOP (→ Spring Framework), Spring Cloud AWS (→ Spring Framework), Spring Cloud Config (→ Spring Framework), JPA, QueryDSL, MyBatis, Resilience4j, Jackson, HikariCP, gRPC, GraphQL, Spring Cloud (→ Spring Framework), Spring MVC (→ Spring Framework), Spring Data Redis (→ Spring Framework), Spring Data MongoDB (→ Spring Framework), Project Reactor, Netty, Apache Tomcat, JDBC, Lettuce, Lombok, Logback, FastAPI, NestJS, Celery, Protocol Buffers, OpenAPI, Swagger, SSE, WebSocket |
+| 프론트엔드·모바일 | React, Next.js (→ React), Vue.js, React Native, TanStack Query, SwiftUI, Jetpack Compose, Flutter, Android, iOS, Angular, React Router (→ React), React Hook Form (→ React), Zustand, Zod, Axios, Lodash, Tailwind CSS, Storybook, Safari, MapKit, Streamlit |
+| 데이터베이스 | MySQL, PostgreSQL, Oracle, Amazon Aurora, Amazon RDS, MongoDB, Amazon DocumentDB, Amazon DynamoDB, Apache HBase, ClickHouse, BigQuery, RocksDB, Apache Kudu, StarRocks, Apache Pinot, Vitess, Milvus |
 | 캐시 | Redis, Caffeine |
-| 검색 엔진 | Elasticsearch, OpenSearch |
-| 스토리지 | Amazon S3 |
+| 검색 엔진 | Elasticsearch, OpenSearch, Apache Lucene |
+| 스토리지 | Amazon S3, HDFS (→ Hadoop), MinIO |
 | 메시지 브로커 | Kafka, Amazon MSK (→ Kafka), RabbitMQ, Amazon MQ, Amazon SQS, Amazon SNS, Amazon EventBridge, Amazon Kinesis |
-| 데이터 처리·파이프라인 | Kafka Connect (→ Kafka), Kafka Streams (→ Kafka), Debezium, Apache Spark, Apache Flink, Apache Airflow, Logstash, Fluentd, Amazon Kinesis Data Firehose (→ Amazon Kinesis), Oracle GoldenGate |
-| 클라우드·인프라 | AWS, AWS Lambda, Amazon ECS, Kubernetes, Amazon EKS (→ Kubernetes), Docker, Helm, Terraform, Istio, Nginx, Amazon CloudFront, Amazon Route 53 |
-| CI/CD·빌드 | Argo CD, Jenkins, GitHub Actions, GitLab CI, Gradle |
-| 관측성 | Datadog, Prometheus, Grafana, OpenTelemetry, Kibana, Sentry, Pinpoint, Amazon CloudWatch, AKHQ |
-| 테스트·품질 | JUnit, Kotest, Fixture Monkey, MSW, Playwright, Cypress, k6, nGrinder, Detekt, reviewdog |
-| 인증·보안 | OAuth 2.0, JWT |
-| AI 모델·학습 | OpenAI API, Azure OpenAI (→ OpenAI API), Claude, Gemini, Gemma, Qwen, HyperCLOVA X, Amazon Bedrock, Hugging Face, LoRA, QLoRA (→ LoRA) |
-| LLM 애플리케이션 | LangChain, LangGraph (→ LangChain), MCP, RAG |
-| AI 코딩 도구 | Claude Code, Cursor, GitHub Copilot, Amazon Q |
-| 협업·개발 도구 | Slack, Visual Studio Code |
-| 기타 클라우드 서비스 | Amazon SES, Amazon Connect, Amazon Polly |
+| 데이터 처리·파이프라인 | Kafka Connect (→ Kafka), Kafka Streams (→ Kafka), Debezium, Apache Spark, Apache Flink, Apache Airflow, Logstash, Fluentd, Amazon Kinesis Data Firehose (→ Amazon Kinesis), Oracle GoldenGate, Hadoop, Apache Hive, Apache Iceberg, Apache Parquet, Trino, Apache Impala, Apache Heron, ksqlDB (→ Kafka), Flink CDC (→ Apache Flink), DataHub, Tableau |
+| 클라우드·인프라 | AWS, AWS Lambda, Amazon ECS, Kubernetes, Amazon EKS (→ Kubernetes), Docker, Helm, Terraform, Istio, Nginx, Amazon CloudFront, Amazon Route 53, Amazon EC2, Amazon ECR, AWS ALB, Lambda@Edge (→ AWS Lambda), AWS CLI, Ansible, Terragrunt (→ Terraform), OpenStack, Envoy, etcd, ZooKeeper, CUDA, NVIDIA MIG, NVIDIA Device Plugin, Linux kernel |
+| CI/CD·빌드 | Argo CD, Jenkins, GitHub Actions, GitLab CI, Gradle, Vite, Webpack, Rollup, esbuild, SWC, npm, pnpm, Poetry, uv, Swift Package Manager, TeamCity, Rundeck, Dokka |
+| 관측성 | Datadog, Prometheus, Grafana, OpenTelemetry, Kibana, Sentry, Pinpoint, Amazon CloudWatch, AKHQ, VictoriaMetrics, Grafana Loki, Grafana Mimir, Grafana Tempo, Pyroscope, Filebeat, Vector, ELK, pprof, Google Analytics |
+| 테스트·품질 | JUnit, Kotest, Fixture Monkey, MSW, Playwright, Cypress, k6, nGrinder, Detekt, reviewdog, Locust, Appium, MockK, Mockito, ArchUnit, pytest, ESLint, Prettier, SonarQube, CoreMark, stress-ng |
+| 인증·보안 | OAuth 2.0, JWT, TLS, Kerberos, Amazon GuardDuty, Semgrep |
+| AI 모델·학습 | OpenAI API, Azure OpenAI (→ OpenAI API), Claude, Gemini, Gemma, Qwen, HyperCLOVA X, Amazon Bedrock, Hugging Face, LoRA, QLoRA (→ LoRA), PyTorch, Transformers (→ Hugging Face), NumPy, Megatron-LM, vLLM, TensorRT, Triton Inference Server, ONNX, KServe, Kubeflow, BentoML, MLflow, Llama, Whisper, CLIP, FastText |
+| LLM 애플리케이션 | LangChain, LangGraph (→ LangChain), MCP, RAG, Langfuse, Langflow, Spring AI (→ Spring Framework) |
+| AI 코딩 도구 | Claude Code, Cursor, GitHub Copilot, Amazon Q, Codex |
+| 협업·개발 도구 | Slack, Visual Studio Code, Git, GitHub, GitHub Pages (→ GitHub), GitLab, Jira, Confluence, Figma, Postman, IntelliJ IDEA, Android Studio, Android CLI, Xcode, Mermaid, Google Sheets, Microsoft Excel |
+| 기타 클라우드 서비스 | Amazon SES, Amazon Connect, Amazon Polly, Firebase, Braze |

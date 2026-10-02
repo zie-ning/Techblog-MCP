@@ -1,0 +1,218 @@
+# M4 표본: 블로그당 25편, M3 파일럿 + 시드 20261002 무작위 (eval/sample_m4.py)
+# 형식: source/post_id  # 발행일 | 평문 길이 | 제목 ([짧음] 짧은 글, [파일럿] M3 파일럿)
+
+# toss
+toss/frontend-diving-club-agora  # 2023-10-11 | 2,605자 | 프론트엔드 다이빙클럽에서 만나는 아고라: 다른 회사에선 테스트 코드 어떻게 짜요?
+toss/slash23-data  # 2023-10-12 | 7,570자 | 대규모 로그 처리도 OK! Elasticsearch 클러스터 개선기
+toss/engineering-note-5  # 2023-12-20 | 14,437자 | 프론트엔드 로깅 신경 안 쓰기
+toss/restructuring  # 2024-02-23 | 8,187자 | 달리는 기차의 바퀴 교체하기 2. Restructuring
+toss/docs-engineering  # 2024-03-20 | 5,875자 | 더 자유롭고, 빠르고, 정확하게: 토스페이먼츠 API 문서 엔지니어링
+toss/27752  # 2024-05-30 | 5,980자 [파일럿] | 드래그 앤 드롭은 사실 편한 UX가 아니다?
+toss/ssr-server  # 2024-06-26 | 7,737자 | SSR 서버 최적화로 비용 아끼기
+toss/firesidechat_frontend_4  # 2024-09-04 | 641자 [짧음] [파일럿] | 오픈소스에 기여하고 토스에 합격한.ssul | EP.4 모닥불
+toss/firesidechat_frontend_7  # 2024-11-06 | 625자 [짧음] [파일럿] | 개발자 리더로서 성장당한 썰 | EP.7 모닥불
+toss/toss-frontend-ai-docs  # 2024-11-15 | 2,869자 [파일럿] | 토스 프론트엔드 개발자들이 더 이상 문서를 찾지 않는 이유
+toss/toss-people-3  # 2025-01-10 | 7,801자 [파일럿] | 토스 피플: 문과생에서 토스 개발 리더까지
+toss/frontend-tree-structure  # 2025-03-18 | 7,435자 | 자료구조를 활용한 복잡한 프론트엔드 컴포넌트 제작하기
+toss/frontend-esbuild-hmr  # 2025-03-18 | 10,415자 [파일럿] | ESBuild를 위한 HMR, 직접 만들기
+toss/frontend-apply-without-resume  # 2025-04-08 | 2,783자 [파일럿] | 토스 프론트엔드에 이력서 없이 리포지토리 링크로 지원하세요 (~5/31)
+toss/credit-loan-partner-mock-server  # 2025-06-13 | 10,361자 | 신용대출 찾기 서비스 제휴사 mock 서버 개발기 #1
+toss/toss-securities-gpu-mig  # 2025-07-10 | 13,794자 [파일럿] | GPU를 밀도 있게 쓰는 방법 - 토스증권의 GPU 가상화(MIG) 도입기
+toss/undercover-silo-2  # 2025-07-17 | 5,209자 | “AI가 문제 냈어요?” 출제자 PO가 직접 답해드립니다 | 언더커버 사일로 비하인드 1화: 인플로우 사일로
+toss/payments-legacy-3  # 2025-11-14 | 19,675자 | 100년 가는 프론트엔드 코드, SDK
+toss/tds-color-system-update  # 2025-12-15 | 13,423자 [파일럿] | 달리는 기차 바퀴 칠하기: 7년만의 컬러 시스템 업데이트
+toss/payments-legacy-10  # 2026-02-10 | 10,691자 | 경계 보안부터 제로트러스트 보안까지, 고도화 여정
+toss/harness-for-team-productivity-eng  # 2026-03-17 | 15,730자 | Stepping into the Software 3.0 Era
+toss/tam-connect-2025  # 2026-06-09 | 4,446자 | 빠르게 움직이는 조직에서, TAM은 어떻게 문제를 해결할까?
+toss/spark-connect-on-kubernetes-1  # 2026-06-19 | 14,096자 | Spark Connect on Kubernetes #1: 견고한 Spark Connect 만들기
+toss/ads_dashboard_fe  # 2026-08-20 | 12,467자 [파일럿] | 전체 데이터를 브라우저에 두는 광고 대시보드 만들기
+toss/qa_hotfix  # 2026-08-28 | 6,406자 | 1%가 겪은 버그 고쳐야할까요?
+
+# woowahan
+woowahan/13929  # 2023-09-13 | 6,609자 | 밤샘의 추억, 생성 AI 해커톤 “우아톤 2023”
+woowahan/12947  # 2023-09-19 | 12,972자 | [모여서 각자 글쓰기] 온라인 출판기념회
+woowahan/14301  # 2023-10-17 | 6,451자 | 굴러가는 자동차에 안전하게 타이어 교체하기(w. CMS 기능 개발)
+woowahan/14484  # 2023-10-26 | 5,518자 [파일럿] | “일단 백로그에 넣어두고 여유 있을 때 보는 걸로 할까요?” : 백로그를 백로그로 두지 않는 법
+woowahan/14671  # 2023-11-07 | 6,108자 [파일럿] | 요즘 협업 잘하는 팀은 이렇게 일합니다.
+woowahan/14874  # 2023-11-21 | 33,747자 | 서버사이드 테스트 파랑새를 찾아서
+woowahan/15398  # 2023-12-12 | 10,772자 [파일럿] | Java의 미래, Virtual Thread
+woowahan/15541  # 2024-01-04 | 6,445자 [파일럿] | 웹 접근성 준수를 통한 모두에게 배달되는 일상의 행복
+woowahan/15764  # 2024-01-23 | 9,265자 | 고르곤졸라는 되지만 고르곤 졸라는 안 돼! 배달의민족에서 금칙어를 관리하는 방법
+woowahan/17081  # 2024-04-16 | 8,547자 | 우아한형제들 디자인 시스템에 시각적 회귀 테스트 적용하기
+woowahan/17221  # 2024-04-30 | 16,046자 | JPA에서 아이디를 자동증가 값으로 사용 시 하이버네이트의 @NaturalId 사용해 보기
+woowahan/17386  # 2024-05-30 | 11,245자 [파일럿] | 우리 팀은 카프카를 어떻게 사용하고 있을까
+woowahan/17911  # 2024-06-25 | 4,799자 [파일럿] | B마트 주문 유실을 없애보자: 네트워크 편
+woowahan/19317  # 2024-08-22 | 1,157자 [짧음] | [다시 보기] 8월 우아한테크세미나: 생성AI로 똑똑하게 일하는 법
+woowahan/20789  # 2024-12-16 | 333자 [짧음] | WOOWACON 2024 발표 영상, 지금 바로 만나 보세요!
+woowahan/20763  # 2025-01-07 | 8,615자 [파일럿] | 이젠 보내줄 때가 되었다. 대규모 트래픽의 C++ 시스템 Java로 전환하기
+woowahan/21027  # 2025-01-13 | 25,102자 [파일럿] | 실시간 반응형 추천 개발 일지 2부: 벡터 검색, 그리고 숨겨진 요구사항과 기술 도입 의사 결정을 다루는 방법
+woowahan/24434  # 2025-12-11 | 15,179자 [파일럿] | “함께 구매하면 좋은 상품” 추천 모델 고도화
+woowahan/24999  # 2025-12-23 | 12,341자 [파일럿] | WOOWACON 2025 미니게임 WOOWA POP!
+woowahan/25888  # 2026-03-20 | 6,211자 | 별점 뒤에 숨겨진 리뷰의 온도, LLM으로 한 끗 차이가 다른 추천 만들기
+woowahan/26388  # 2026-06-23 | 11,938자 | 사람도 AI도 놓친 번역 누락, ESLint 플러그인을 만들어 해결하기
+woowahan/26459  # 2026-07-07 | 11,918자 | AI가 내 프롬프트를 흘려듣는 이유: 원리부터 다시 본 컨텍스트 엔지니어링
+woowahan/26624  # 2026-07-21 | 10,287자 | 기술이 없던 곳에 기술 더하기: 사내 해커톤 플랫폼 만들기
+woowahan/26835  # 2026-09-07 | 6,778자 | 문서로만 지키던 아키텍처 규칙, 테스트 코드로 강제하기
+woowahan/27330  # 2026-09-15 | 7,910자 | 집 나간 네트워크는 돌아왔는데 React.lazy는 왜 안 돌아올까
+
+# kakao
+kakao/601  # 2023-09-21 | 3,137자 [파일럿] | 제3회 Kakao Tech Meet 후기 - 불확정성에서 감동까지
+kakao/605  # 2023-10-19 | 22,040자 | CommonJS에서 ESM으로 전환하기
+kakao/617  # 2024-04-29 | 1,640자 | Chrome Devtools를 활용하여 나만의 웹뷰 디버깅 환경 만들기 / 제5회 Kakao Tech Meet
+kakao/624  # 2024-07-05 | 787자 [짧음] [파일럿] | 카카오의 스팸 메일 대응 전략: 문자열 변형 CASE STUDY / 제6회 Kakao Tech Meet
+kakao/633  # 2024-09-09 | 6,684자 | LLM, 더 저렴하게, 더 빠르게, 더 똑똑하게
+kakao/665  # 2024-11-19 | 10,722자 | 추가배포 없이 API의 case 통일시키기
+kakao/690  # 2025-03-07 | 14,392자 | LLM as a Judge를 활용한 CodeBuddy 성능 평가
+kakao/692  # 2025-04-03 | 4,073자 | AI Agent와 개발자 - 카카오테크가 만난 Thomas Dohmke
+kakao/716  # 2025-07-24 | 21,657자 | 국내 최초 MoE 모델 ‘Kanana-MoE’ 개발기
+kakao/718  # 2025-07-28 | 12,162자 | CDC 파이프라인 정합성 검사 Spark 잡 개발 - Part 2. Spark 최적화편
+kakao/756  # 2025-09-19 | 2,566자 | 에이전틱 코딩 가이드북, 그리고 AI 협업 치트 시트와 표준 룰셋 공유 시스템
+kakao/761  # 2025-09-19 | 3,645자 [파일럿] | 실패를 장려하는 실험적 문화
+kakao/762  # 2025-09-19 | 13,811자 [파일럿] | 생산성 혁신의 실험: AI 마일리지 프로그램
+kakao/770  # 2025-09-22 | 16,500자 [파일럿] | 5년 된 프로젝트의 빌드 도구를 교체하며 얻은 것들
+kakao/776  # 2025-10-10 | 13,270자 | PostgreSQL to ES: (1) Kafka Connect CDC 파이프라인 구성
+kakao/777  # 2025-10-10 | 12,030자 | PostgreSQL to ES: (2) Kafka Connect 트러블슈팅
+kakao/784  # 2025-11-03 | 8,710자 [파일럿] | 단 1시간 만에 99개의 MVP가? AI와 함께한 1K: 바이브코딩전 생생 후기
+kakao/785  # 2025-11-04 | 4,597자 [파일럿] | if(kakao)25 Krew Day AI Talk Lounge: AI 시대의 기회와 고민을 논하며
+kakao/799  # 2025-12-04 | 23,731자 | AI TOP 100이 우리에게 남긴 것들
+kakao/804  # 2025-12-19 | 3,760자 [파일럿] | 더 똑똑하고 효율적인 Kanana-2 오픈소스 공개
+kakao/809  # 2026-01-30 | 1,548자 | 카카오 AI 앰배서더 ‘KANANA 429 앰배서더’를 신규 모집합니다.
+kakao/822  # 2026-05-22 | 20,047자 [파일럿] | 메시징 서버의 스트레스 테스트 노하우와 AI가 덜어 준 부분
+kakao/823  # 2026-06-16 | 5,040자 | Vibe Coding하는 비개발자는 개발자인가(3)
+kakao/828  # 2026-08-04 | 48,105자 | Beyond AI That Speaks Well: Making Kanana-o Speak the Way Users Want
+kakao/835  # 2026-09-08 | 12,198자 [파일럿] | if(kakao)26 둘째 날, 기술 세션 소개
+
+# kakaopay
+kakaopay/spring-batch-performance  # 2023-09-05 | 12,920자 | Spring Batch 애플리케이션 성능 향상을 위한 주요 팁
+kakaopay/paytalks-with-krew-fe  # 2023-12-11 | 14,160자 | FE 리더가 되어버린 나, 이대로 괜찮은가?: 시니어 개발자인 내가 주니어 매니저가 되어 버린 건에 대하여
+kakaopay/implementing-tdd-in-practical-applications  # 2024-01-23 | 16,086자 | 실전에서 TDD하기
+kakaopay/kakaopaysec-mongodb-cdc  # 2024-02-02 | 17,302자 | Oracle에서 MongoDB로의 CDC Pipeline 구축
+kakaopay/slack-bot-improving-operational-efficiency-2  # 2024-07-17 | 5,044자 [파일럿] | 카카오페이 배포 효율화 1년 회고: 자동화 도입과 팀 생산성 향상
+kakaopay/tech-strategy-tpm  # 2024-07-31 | 9,673자 [파일럿] | 카카오페이 TPM은 어떤 일을 하나요?
+kakaopay/given-test-code  # 2024-08-14 | 11,384자 | 실무에서 적용하는 테스트 코드 작성 방법과 노하우 Part 3: Given 지옥에서 벗어나기 - 객체 기반 데이터 셋업의 한계
+kakaopay/jack-k8s-internals-part-1  # 2024-08-20 | 9,222자 | 쓰기만 했던 개발자가 궁금해서 찾아본 쿠버네티스 내부 1편
+kakaopay/cilium-egress-gateway  # 2024-09-05 | 13,218자 | 카카오페이증권의 Egress Gateway
+kakaopay/katfun-joy-kotlin  # 2024-09-12 | 14,709자 [파일럿] | 코틀린, 저는 이렇게 쓰고 있습니다
+kakaopay/devsecops_sonarqube  # 2024-09-19 | 10,850자 | DevSecOps를 위한 한걸음: Sonarqube를 활용한 지속적인 코드 품질 및 보안 관리
+kakaopay/url-is-strange  # 2024-09-26 | 15,372자 | URL이 이상해요! Java와 Spring 중 범인은 누구?
+kakaopay/way-to-functional-programming  # 2024-11-21 | 28,956자 | 코틀린 함수형 프로그래밍의 길을 찾아서
+kakaopay/ifkakao2024-devrel  # 2024-11-26 | 10,598자 [파일럿] | 카카오페이의 if(kakaoAI)2024 A to Z: 개발자 컨퍼런스 준비 맛보기
+kakaopay/ifkakao2024-dr-pym-project  # 2024-12-05 | 12,897자 | [if(kakaoAI)2024] 카카오페이증권의 Kubernetes 지능형 리소스 최적화 (feat. Dr.Pym Project 공유)
+kakaopay/perftest_zone  # 2024-12-12 | 4,708자 [파일럿] | 카카오페이 성능 테스트 존을 소개합니다.
+kakaopay/home-hexagonal-architecture  # 2025-01-21 | 11,913자 | Hexagonal Architecture, 진짜 하실 건가요?
+kakaopay/kakaopaysec-wecan  # 2025-04-09 | 8,650자 [파일럿] | We Can Do Better: 개발자 플랫폼 효율화 이야기
+kakaopay/kakaopayins-opensearch-analyzer  # 2025-04-11 | 10,157자 [파일럿] | OpenSearch Analyzer를 활용한 검색기능 알아보기
+kakaopay/backend-domain-driven-design  # 2025-05-23 | 17,394자 | 카카오페이 여신코어 DDD(Domain Driven Design, 도메인 주도 설계)로 구축하기
+kakaopay/nextjs-troubleshooting-cors-version-skew  # 2025-06-04 | 13,603자 | Next.js 트러블슈팅: CORS와 Version Skew 에러 원인부터 해결까지
+kakaopay/kakaopayins-envelope-encryption  # 2025-07-08 | 18,389자 [파일럿] | 우리는 암호화하는데 왜 키를 사용할까?
+kakaopay/pallas-v2-log-platform  # 2026-02-23 | 25,659자 [파일럿] | 일 41TB, 200억 건의 로그를 ClickStack으로 실시간 처리하기 - 호그와트 도서관 프로젝트
+kakaopay/kakaopayins-fe-common-component  # 2026-03-24 | 7,059자 [파일럿] | 공통 컴포넌트를 건강하게 기르기 위한 고민
+kakaopay/ai-agent-1  # 2026-09-01 | 9,989자 | AI Agent, 넌 누구냐 1 - Tool, MCP, Skill, Harness는 무엇인가
+
+# d2
+d2/5053838  # 2023-11-07 | 607자 [짧음] | Local key-value 스토리지가 고민일땐 RocksDB 어때?
+d2/3461887  # 2023-11-20 | 842자 [짧음] [파일럿] | App Crash? 0.1초 만에 분석해 드릴게요, 고품질 고성능 Crash 분석 시스템 NCrashlytics
+d2/4555524  # 2023-12-12 | 18,452자 [파일럿] | AI 플랫폼을 위한 스토리지 JuiceFS 도입기
+d2/5564264  # 2024-06-04 | 522자 [짧음] | 쿠버네티스 네이티브 사이드카 컨테이너 (Sidecar Containers)
+d2/7030870  # 2024-06-18 | 571자 [짧음] | 디자인시스템을 개발에서 적용 하는법
+d2/2905424  # 2024-06-25 | 868자 [짧음] | Kubernetes에서 DNS 다루는 방법 - 도메인을 찾아서
+d2/7282210  # 2024-06-27 | 534자 [짧음] | 보낼 로그가 1000개가 되는동안 겪었던 고민들
+d2/1536585  # 2024-11-07 | 654자 [짧음] | 신규 프로젝트 Hazelcast 도입기
+d2/7269246  # 2025-01-02 | 6,386자 | [DAN 24] 검색과 피드의 만남: LLM으로 완성하는 초개인화 서비스 ③ 사용자 관심 주제 추출
+d2/8366976  # 2025-03-10 | 3,331자 [파일럿] | 호텔 검색, 어떻게 달라졌을까요? 1편 - 문제와 해결
+d2/3814947  # 2025-05-29 | 16,662자 [파일럿] | 생산성을 높이는 Android SDK 배포 전략 살펴보기
+d2/3078195  # 2025-06-30 | 1,326자 [짧음] [파일럿] | Thread-safety in C++
+d2/4706492  # 2025-07-04 | 1,246자 [짧음] | Windowing 기법을 적용한 대용량 고성능 표 컴포넌트 개발기
+d2/1450243  # 2025-07-24 | 15,218자 [파일럿] | 윈도잉(windowing) 기법을 적용한 고성능 표 컴포넌트 개발기
+d2/6388660  # 2025-11-18 | 21,269자 | 6개월 만에 연간 수십조를 처리하는 DB CDC 복제 도구 무중단/무장애 교체하기
+d2/8992409  # 2025-11-24 | 1,342자 [짧음] [파일럿] | DBT, Airflow를 활용한 데이터 계보 중심 파이프라인 만들기
+d2/9290684  # 2025-12-01 | 978자 [짧음] | Iceberg Low-Latency Queries with Materialized Views  (feat. 실시간 거래 리포트)
+d2/4241703  # 2026-01-19 | 5,509자 | 네이버 통합검색 AIB 도입과 웹 성능 변화 분석
+d2/6512234  # 2026-01-21 | 22,022자 [파일럿] | 스마트스토어센터 Oracle에서 MySQL로의 무중단 전환기
+d2/1155434  # 2026-03-25 | 9,048자 [파일럿] | C++ std::bit_cast와 reinterpret_cast — 언제 어떤 것을 써야 하는가
+d2/9290861  # 2026-06-02 | 796자 [짧음] [파일럿] | Inside VictoriaMetrics
+d2/4394359  # 2026-06-23 | 837자 [짧음] | SNOW의 Automatic Sharding 도입기
+d2/2541696  # 2026-07-06 | 7,090자 | [AI 해커톤 후기] 코드와 문서만 읽은 LLM은 어떻게 사람과 같은 팀을 1위로 골랐을까
+d2/5788040  # 2026-07-21 | 11,490자 | VictoriaMetrics 운영기 2편 — 장비 증설 없이 리소스 위기를 해결한 3단계 최적화 전략
+d2/4821538  # 2026-07-24 | 11,038자 | [AI 해커톤 후기] AI 해커톤 1위 팀이 AI에게 맡기지 않은 것
+
+# ly
+ly/managing-multi-cdn-logs-traffics-with-vector  # 2023-10-13 | 16,695자 [파일럿] | Vector를 활용해 멀티 CDN 로그 및 트래픽 관리하기
+ly/how-to-use-chatops-to-automate-devops-tasks-feat-slack-hubot  # 2023-10-25 | 18,813자 [파일럿] | ChatOps를 통한 업무 자동화(feat. Slack Hubot)
+ly/check-mp4-file-has-audio-using-filereader-in-front-end  # 2023-11-03 | 8,381자 | 프런트엔드 영역에서 FileReader를 이용해 MP4 파일 내 오디오 존재 여부 확인하기
+ly/about-atlassian-jira-ranking-algorithm-lexorank  # 2024-01-26 | 9,203자 | Jira의 이슈 정렬 방식이 Integer 방식이 아니라고?!
+ly/migrate-mysql-with-read-only-mode  # 2024-05-02 | 6,059자 | 읽기 전용 설정으로 MySQL 이전하기
+ly/improving-kubernetes-relay-api-server-performance-with-informer  # 2024-07-29 | 12,361자 [파일럿] | Informer를 사용해 쿠버네티스 중계 API 서버의 성능 개선하기
+ly/improve-development-experience-with-flutter-web  # 2024-09-06 | 10,853자 | Flutter Web을 활용해 제품 개발 환경 개선하기
+ly/introducing-fido2-client-sdk-open-source  # 2024-09-13 | 9,957자 [파일럿] | FIDO2 클라이언트 SDK 오픈소스 소개
+ly/a-flexible-design-system-using-3-tier-tokens  # 2025-01-20 | 8,708자 | 3단계로 완성하는 유연한 디자인 시스템
+ly/4-patterns-of-global-collaboration  # 2025-03-07 | 8,902자 | 한국어 몰라요 - 글로벌 협업의 4가지 패턴
+ly/how-to-evaluate-ai-generated-images-1  # 2025-03-27 | 16,708자 [파일럿] | AI로 생성한 이미지는 어떻게 평가할까요? (기본편)
+ly/techniques-for-improving-code-quality-16  # 2025-07-09 | 4,455자 | 코드 품질 개선 기법 16편: 불이 'null'인 굴뚝에 연기가 'null'이 아닐 수 없다
+ly/applying-ddd-to-merchant-system-development  # 2025-07-28 | 5,212자 | DDD를 Merchant 시스템 구축에 활용한 사례를 소개합니다
+ly/hack-day-2025-recap  # 2025-08-07 | 7,268자 | 자네, 해커가 되지 않겠나? Hack Day 2025에 다녀왔습니다!
+ly/extracting-trending-keywords-from-openchat-messages  # 2025-08-29 | 14,017자 [파일럿] | 오픈챗 메시지들로부터 트렌딩 키워드 추출하기
+ly/pd1-ai-hackathon-recap  # 2025-09-26 | 4,153자 [파일럿] | PD1 AI 해커톤, 그 뜨거웠던 열기 속으로!
+ly/risks-and-mitigations-in-ai-products-development  # 2025-11-04 | 11,404자 | AI 제품 개발 중 마주칠 수 있는 보안 위협 사례와 대책 방안
+ly/connecting-thousands-of-services-with-central-dogma-control-plane  # 2025-11-21 | 8,894자 | Central Dogma 컨트롤 플레인으로 LY Corporation의 수천 개 서비스를 연결하기
+ly/solving-slow-queries-optimizing-bitwise-operation-queries-with-functional-indexes  # 2026-02-13 | 7,615자 | 슬로우 쿼리 해결기: 함수형 인덱스로 비트 연산 쿼리 최적화하기
+ly/on-device-image-model-trainer-for-messenger-1  # 2026-03-06 | 18,040자 | 메신저용 온디바이스 이미지 모델 학습기 1편: 지식 증류로 확장한 다국어 이미지 검색
+ly/journey-to-perfect-ai-guardrails-neurips-2025-recap  # 2026-03-10 | 22,682자 | 완벽한 AI 가드레일을 향한 여정: NeurIPS 2025 최신 안전성 기술 분석
+ly/using-sli-slo-for-improving-reliability-1-developing-framework-and-line-status  # 2026-03-19 | 6,232자 [파일럿] | 신뢰성 향상을 위한 SLI/SLO 활용 1편 - SLI/SLO 프레임워크 및 서비스 상태 확인 도구 LINE Status 개발기
+ly/from-hive-to-iceberg-12x-faster-data-updates  # 2026-04-03 | 19,601자 [파일럿] | Hive에서 Iceberg로: 데이터 반영 속도 12배 향상의 비밀
+ly/techverse2026-62  # 2026-06-26 | 6,551자 | 임베딩 안정화로 검색 리랭킹의 콜드 스타트 문제를 해결하다: LINE Part Time Jobs 적용 사례
+ly/japanese-search-kuromoji-to-sudachi  # 2026-08-21 | 15,395자 [파일럿] | 일본어 상품 검색 정확도 높이기: Elasticsearch + Kuromoji에서 OpenSearch + Sudachi로
+
+# kurly
+kurly/2023-review-opensearch  # 2023-11-22 | 8,418자 | 후기 서비스 AWS Opensearch 도입기
+kurly/prod-design-quick-menu  # 2023-12-20 | 2,512자 | 퀵메뉴로 비즈니스 널리 알리기 (feat. 전지적 디자이너 시점)
+kurly/cart-recommend-model-development  # 2024-05-20 | 9,206자 [파일럿] | 함께 구매하면 좋은 상품이에요! - 장바구니 추천 개발기 1부
+kurly/commit-mvcc-set-autocommit  # 2024-06-13 | 16,463자 [파일럿] | 데이터가 있었는데요, 아니 없어요
+kurly/fix-hibernate-localtime-bug  # 2024-10-16 | 7,136자 | 하이버네이트의 시간은 거꾸로 간다
+kurly/74-excel-upload-zip-bomb  # 2024-10-23 | 5,783자 | 엑셀 업로드 중 발생한 Zip Bomb 에러 파헤치기! 🥊
+kurly/2024-spring-kafka-consumer-offset-seeking  # 2024-12-02 | 15,390자 | 분산 시스템 환경에서 Kafka Consumer 오프셋 이동하기
+kurly/75-java-module-with-gson-serialization  # 2024-12-06 | 9,116자 | Spring Boot 버전업 중 알게된 Java 버전별 캡슐화 정책 강화
+kurly/deliveryproductteam-culture-1  # 2025-01-02 | 4,454자 [파일럿] | 딜리버리 프로덕트 개발팀의 개발문화 - 로그 & 알람편
+kurly/connection-leak  # 2025-01-05 | 6,791자 [파일럿] | 99%가 모른다는 DB Connection 누수 문제
+kurly/refine-address-internalization-2  # 2025-01-19 | 4,312자 [파일럿] | 주소정제 서비스 내재화 - 2화 ( 그럴싸한 계획 )
+kurly/refine-address-internalization-1  # 2025-01-19 | 5,382자 | 주소정제 서비스 내재화 - 1화 ( 줄줄 새는 돈 )
+kurly/refine-address-internalization-5  # 2025-01-19 | 9,433자 | 주소정제 서비스 내재화 - 5화 ( 어질어질한 변화구들 )
+kurly/refine-address-internalization-4  # 2025-01-19 | 13,407자 | 주소정제 서비스 내재화 - 4화 ( 슬픈예감 )
+kurly/kafka-connect-pipeline  # 2025-03-03 | 9,612자 | Kafka Connect로 DB 데이터 쉽게 연동하기
+kurly/2025-delivery-debug-study  # 2025-04-14 | 10,654자 | 딜리버리 프로덕트 개발팀의 개발 문화 - 주니어 디버깅 스터디
+kurly/access-block-1  # 2025-10-10 | 5,663자 [파일럿] | nginx 설정 없이 우아하게 서비스 점검하기 (上)
+kurly/access-block-2  # 2025-10-10 | 8,383자 [파일럿] | nginx 설정 없이 우아하게 서비스 점검하기 (下)
+kurly/fintech-bff-introduction  # 2025-10-16 | 10,052자 | 핀테크그룹의 GraphQL 기반 BFF와 프론트엔드 활용기
+kurly/2025-delivery-photo-object-detection  # 2025-10-27 | 3,969자 | 배송 완료 사진 속 객체 탐지를 통한 수기 검수 비용 줄이기
+kurly/cms-vite-%EC%A0%84%ED%99%98%EA%B8%B0  # 2025-12-01 | 13,290자 [파일럿] | 빌드가 터졌다: 5년 된 CMS 프로젝트의 Webpack4 → Vite 전환
+kurly/tech-spec-adoption-with-ai-automation  # 2025-12-03 | 8,164자 [파일럿] | 개발자의 시간을 벌어주는 두 가지 도구: 잘 쓴 테크 스펙, 그리고 AI
+kurly/nx-bun-migration  # 2026-01-30 | 5,492자 | Nx에서 Bun 더 잘 사용하기: Nx 18 -> 21 마이그레이션
+kurly/ai-orchestration-2  # 2026-04-02 | 17,572자 | AI 에이전트 15개를 동시에 굴리는 법 — AI 병렬 오케스트레이션 실전 운용기
+kurly/claude-code-redesign-my-day  # 2026-04-19 | 7,389자 [파일럿] | 클로드 코드로 개발 팀장의 하루를 재설계한 이야기
+
+# oliveyoung
+oliveyoung/2023-09-18_address-modal  # 2023-09-18 | 11,867자 | 새 배송지 추가 form 개발하기
+oliveyoung/2023-09-27_oliveyoung-favorite-snack  # 2023-09-27 | 1,395자 [짧음] [파일럿] | 올리브영 개발자가 좋아하는 과자는?
+oliveyoung/2023-10-11_developer-hobby  # 2023-10-11 | 1,871자 | 올리브영 개발자의 슬기로운 취미생활
+oliveyoung/2023-10-11_kotlin-detekt-reviewdog  # 2023-10-11 | 6,002자 | detekt와 reviewdog으로 코드 품질 향상
+oliveyoung/2023-10-17_oliveyoung-mall-home-new-architecture  # 2023-10-17 | 5,815자 | 올리브영 온라인몰의 전시, 그리고 백엔드 여정
+oliveyoung/2023-12-19_self-checkout  # 2023-12-19 | 2,877자 | 올리브영 셀프계산대 도입기
+oliveyoung/2024-06-05_google-cloud-next-24-review  # 2024-06-05 | 3,796자 [파일럿] | Google Cloud Next '24 방문기
+oliveyoung/2024-06-12_goods-detail-description-improvement-par2  # 2024-06-12 | 4,317자 | 상품 설명 영역 개선기 Part.2
+oliveyoung/2024-08-11_type-and-type-system-with-typescript  # 2024-08-11 | 11,673자 [파일럿] | 올리브영 타입스크립트로 알아보는 타입과 타입 시스템
+oliveyoung/2024-09-30_oy-feconf-2024  # 2024-09-27 | 8,894자 [파일럿] | 올리브영에서는 프론트엔드 개발자들이 이런 고민을 하는군요?
+oliveyoung/2024-10-17_oy-delivery-mq  # 2024-10-17 | 4,642자 [파일럿] | 올리브영 물류시스템에서는 데이터를 어떻게 주고 받을까?
+oliveyoung/2024-11-15_inventory-changed-stocks-function-with-redis-stream  # 2024-11-15 | 6,589자 | 재고의 변동을 시계열 데이터로?!
+oliveyoung/2024-12-16_Design-System-Token-Automation  # 2024-12-16 | 17,955자 [파일럿] | 디자인 시스템 중 디자인 토큰을 여러 도구를 이용하여 자동화 하는 방법
+oliveyoung/2024-12-17_catalog-mongo-transaction-2  # 2024-12-17 | 11,450자 [파일럿] | Spring Boot MongoDB 트랜잭션 도입 실전 가이드
+oliveyoung/2025-02-14_oy-global-mall-address  # 2025-02-14 | 4,978자 [파일럿] | 올리브영 글로벌몰 주소 자동완성 및 검증 솔루션 도입기
+oliveyoung/2025-04-25_web-worker-for-image-processing  # 2025-04-25 | 7,158자 [파일럿] | Web Worker로 이미지 처리 최적화하기
+oliveyoung/2025-06-10_chaos  # 2025-06-10 | 7,289자 [파일럿] | 버그가 아니라 장애를 잡아라!! QA와 카오스 엔지니어링의 만남
+oliveyoung/2025-07-22_what-is-MFE-part1  # 2025-07-22 | 10,493자 | 대규모 프론트엔드 아키텍처의 새로운 패러다임 - Part 1. 마이크로프론트엔드 너 뭐야?
+oliveyoung/2025-08-29_pos-pick-insights  # 2025-08-29 | 4,035자 | PM’s Pick : 우리가 스크랩한 인사이트
+oliveyoung/2025-10-17_review-of-orderpay-squad  # 2025-10-17 | 5,747자 | KPT 회고, 이렇게 했더니 스쿼드 문화가 바뀌었습니다: 올리브영 주문결제 스쿼드의 애자일 성장기
+oliveyoung/2025-11-06_what-is-MFE-part2  # 2025-11-06 | 15,441자 | 대규모 프론트엔드 아키텍처의 새로운 패러다임 - Part 2. 모듈 페더레이션 PoC
+oliveyoung/2025-12-08_creating-video-with-ai  # 2025-12-08 | 11,759자 | QA 엔지니어가 AI로 만든 교육 영상, 25분짜리 인시던트 가이드 탄생기
+oliveyoung/2026-03-06_delivery-optimization  # 2026-03-06 | 9,147자 | 배송최적화 시스템 구축기 Part 01. 올리브영이 멀티 센터 체제로 배송 시간을 14시간 단축한 과정
+oliveyoung/2026-09-14_global-store-new-way-of-working  # 2026-09-14 | 9,809자 | 리드타임 3일, 글로벌 매장 개발자가 출장지에서 일하는 법
+oliveyoung/2026-09-23_overengineering-message-system  # 2026-09-23 | 10,795자 | 때로는 오버엔지니어링이 필요합니다
