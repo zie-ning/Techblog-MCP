@@ -1,0 +1,15 @@
+# 검색 평가셋. 형식과 판정 기준은 README.md.
+#
+# [[queries]]
+# id = "q01"
+# query = "선착순 쿠폰 발급 동시성"
+# source = "M1"                      # M1 / 데이터 / 없는 주제
+# note = "M1 시나리오 1"
+# problem_type = "동시성·락"          # 필터 (선택)
+# domain = "커머스·주문·재고"         # 필터 (선택)
+# technologies = ["Redis"]           # 필터 (선택)
+# judged = ["case_0012", "case_0020"]  # 판정한 후보 전체
+#
+# [queries.labels]
+# case_0012 = { grade = "관련", reason = "선착순 쿠폰 초과 발급을 Redis 원자 연산으로 해결" }
+# case_0020 = { grade = "일부 관련", reason = "대량 발급이지만 선착순 동시성 문제는 아님" }
