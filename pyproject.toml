@@ -29,6 +29,10 @@ pipeline = [
     "openai",
     "python-dotenv",
 ]
+# M5 하이브리드 검색 실험용 (기본 동기화·CI에 넣지 않음: uv run --group search-exp)
+search-exp = [
+    "fastembed>=0.8.1",
+]
 
 [tool.uv]
 # 파이프라인 파서 테스트도 CI에서 돌도록 기본 동기화에 포함
