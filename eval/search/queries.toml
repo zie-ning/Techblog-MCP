@@ -31,7 +31,7 @@ judged = [
     "case_1505", "case_0680", "case_0965", "case_1474", "case_1513", "case_1454",
     "case_1455", "case_1458", "case_1532", "case_1447", "case_1570", "case_0479",
     "case_1445", "case_0365", "case_1315", "case_1349", "case_0367", "case_1432",
-    "case_0464", "case_0564", "case_1587",
+    "case_0464", "case_0564", "case_1587", "case_1582", "case_1584", "case_0595",
 ]
 
 [queries.labels]
@@ -60,7 +60,8 @@ judged = [
     "case_1495", "case_0479", "case_0494", "case_1455", "case_0630", "case_0643",
     "case_1015", "case_1456", "case_1503", "case_0658", "case_0858", "case_1221",
     "case_1573", "case_0698", "case_0940", "case_0334", "case_0496", "case_0780",
-    "case_1453", "case_1050", "case_1457", "case_1504",
+    "case_1453", "case_1050", "case_1457", "case_1504", "case_0478", "case_1454",
+    "case_0564", "case_1584",
 ]
 
 [queries.labels]
@@ -69,10 +70,13 @@ case_1100 = { grade = "관련", reason = "이벤트성 트래픽 급증 시 자�
 case_1466 = { grade = "관련", reason = "선착순 쿠폰 수량을 Redis 카운터로 선차감" }
 case_1590 = { grade = "관련", reason = "여러 클라이언트의 동시 재고 차감을 Redisson 락으로 처리" }
 case_0476 = { grade = "일부 관련", reason = "트래픽 급증을 로컬 캐시·Redis Pub/Sub으로 처리. 재고·선착순은 아님" }
+case_0478 = { grade = "일부 관련", reason = "대규모 트래픽에서 중복 요청 제거" }
+case_0564 = { grade = "일부 관련", reason = "피크 시간 출고 요청을 유휴 시간대로 분산" }
 case_0643 = { grade = "일부 관련", reason = "WMS 재고 이관의 동시성을 분산 락으로 차단 (이벤트 트래픽은 아님)" }
 case_0780 = { grade = "일부 관련", reason = "순간 트래픽 급증에 SSR을 ISR·Redis 캐시로 대응" }
 case_0965 = { grade = "일부 관련", reason = "Redis 분산 락으로 중복 지급 방지" }
 case_1015 = { grade = "일부 관련", reason = "이벤트를 앞두고 결제 서비스 성능을 캐시로 개선" }
+case_1454 = { grade = "일부 관련", reason = "대규모 동시 접속 시 토큰 갱신 요청 집중을 Jitter로 분산" }
 case_1532 = { grade = "일부 관련", reason = "증정 행사 동시 접속을 Redis·로컬 캐시로 처리. 재고 차감은 아님" }
 case_1595 = { grade = "일부 관련", reason = "세일 기간 쿠폰 발급 요청 처리" }
 
@@ -93,7 +97,7 @@ judged = [
     "case_0842", "case_1065", "case_0502", "case_0596", "case_0781", "case_0283",
     "case_0323", "case_0412", "case_0418", "case_0709", "case_0539", "case_0546",
     "case_0716", "case_1033", "case_0707", "case_0932", "case_1012", "case_0410",
-    "case_1315",
+    "case_1315", "case_0309", "case_0310", "case_1321",
 ]
 
 [queries.labels]
@@ -118,7 +122,7 @@ judged = [
     "case_0420", "case_0840", "case_1194", "case_0842", "case_1503", "case_1547",
     "case_0878", "case_1422", "case_1551", "case_0428", "case_1051", "case_1187",
     "case_1193", "case_1506", "case_1510", "case_1534", "case_1462", "case_1504",
-    "case_1581", "case_0418",
+    "case_1581", "case_0418", "case_1491", "case_1489", "case_0615",
 ]
 
 [queries.labels]
@@ -187,7 +191,8 @@ judged = [
     "case_0965", "case_1573", "case_1085", "case_1447", "case_0448", "case_0496",
     "case_0814", "case_1467", "case_0546", "case_0559", "case_0800", "case_1454",
     "case_0564", "case_0621", "case_1510", "case_0649", "case_1238", "case_1590",
-    "case_0622", "case_0646", "case_0696",
+    "case_0622", "case_0646", "case_0696", "case_1452", "case_1450", "case_1453",
+    "case_0502", "case_1504", "case_0449",
 ]
 
 [queries.labels]
@@ -255,7 +260,7 @@ judged = [
     "case_0607", "case_1446", "case_0961", "case_1194", "case_1443", "case_1504",
     "case_0385", "case_0750", "case_1439", "case_1457", "case_1422", "case_1506",
     "case_0598", "case_0378", "case_1406", "case_1137", "case_1314", "case_0751",
-    "case_0967", "case_0418", "case_0878",
+    "case_0967", "case_0418", "case_0878", "case_1186",
 ]
 
 [queries.labels]
@@ -337,7 +342,7 @@ judged = [
     "case_0714", "case_0815", "case_1183", "case_0289", "case_0306", "case_0355",
     "case_0371", "case_0882", "case_1034", "case_0766", "case_1033", "case_1198",
     "case_0290", "case_1107", "case_1213", "case_1398", "case_1403", "case_0317",
-    "case_1179", "case_1269", "case_1560",
+    "case_1179", "case_1269", "case_1560", "case_0359", "case_0612", "case_0613",
 ]
 
 [queries.labels]
@@ -349,6 +354,7 @@ case_1105 = { grade = "관련", reason = "TRT-LLM·Triton으로 LLM 직접 서�
 case_1463 = { grade = "관련", reason = "상용 LLM API 대신 Gemma 기반 자체 sLLM 구축" }
 case_1464 = { grade = "관련", reason = "T4 GPU 1장으로 sLLM 학습·운영" }
 case_0289 = { grade = "일부 관련", reason = "LLM 서빙 관측성" }
+case_0359 = { grade = "일부 관련", reason = "직접 호스팅한 오픈 모델의 응답 포맷 불안정 대응 (같은 글)" }
 case_0542 = { grade = "일부 관련", reason = "LiteLLM 기반 상용 LLM 호출 단일화 (상용 API 쪽 선택)" }
 case_0555 = { grade = "일부 관련", reason = "여러 상용 LLM Provider를 GenAI SDK·게이트웨이로 표준화 (상용 API 쪽 선택)" }
 case_0611 = { grade = "일부 관련", reason = "BentoML 기반 AI 모델 서빙 표준화" }
@@ -374,7 +380,9 @@ judged = [
     "case_1365", "case_0726", "case_1035", "case_1176", "case_0748", "case_0742",
     "case_0795", "case_1162", "case_1166", "case_1246", "case_0500", "case_1174",
     "case_1360", "case_1036", "case_1178", "case_1366", "case_0631", "case_0654",
-    "case_0926", "case_0511", "case_0919", "case_1149", "case_1135",
+    "case_0926", "case_0511", "case_0919", "case_1149", "case_1135", "case_1160",
+    "case_1161", "case_0767", "case_0766", "case_0769", "case_0768", "case_0927",
+    "case_0925",
 ]
 
 [queries.labels]
@@ -389,6 +397,7 @@ case_0892 = { grade = "관련", reason = "spec-kit 기반 스펙 우선 에이�
 case_1156 = { grade = "관련", reason = "프런트엔드 개발을 AI 워크플로로 재구성" }
 case_1157 = { grade = "관련", reason = "멀티 에이전트 토론으로 개발 프로세스 재설계" }
 case_1159 = { grade = "관련", reason = "OpenAPI 스펙 확정 후 에이전트 구현, 검증력 중심" }
+case_1160 = { grade = "관련", reason = "에이전트가 테스트·린터 실패를 고치며 반복하는 로컬 검증 루프" }
 case_1165 = { grade = "관련", reason = "레거시 프로젝트를 AI 드리븐 프로젝트로 전환" }
 case_1174 = { grade = "관련", reason = "AI 1차 PR 리뷰 + 사람 최종 판단 리뷰 프로세스" }
 case_1351 = { grade = "관련", reason = "AI 작업을 탐색·플래닝·분해·구현·검증 단계로 운영" }
@@ -404,6 +413,7 @@ case_0795 = { grade = "일부 관련", reason = "바이브 코딩으로 48시간
 case_0807 = { grade = "일부 관련", reason = "프롬프트만으로 개발해 본 개인 검증" }
 case_0811 = { grade = "일부 관련", reason = "AI 에이전트 팀과 앱을 만든 개인 실험" }
 case_1135 = { grade = "일부 관련", reason = "ChatGPT를 페어 프로그래밍 파트너로 활용" }
+case_1161 = { grade = "일부 관련", reason = "Nix Devenv로 에이전트·CI 개발 환경 통일" }
 case_1163 = { grade = "일부 관련", reason = "IaC 저장소를 MCP로 AI 에이전트에 연결" }
 case_1168 = { grade = "일부 관련", reason = "코딩 에이전트에 사내 문서를 RAG로 제공" }
 case_1176 = { grade = "일부 관련", reason = "Git 릴리스 절차를 에이전트 스킬로 자동화" }
@@ -423,7 +433,7 @@ judged = [
     "case_0552", "case_0864", "case_0405", "case_1375", "case_1419", "case_1501",
     "case_0545", "case_1341", "case_1425", "case_0327", "case_0926", "case_1078",
     "case_1135", "case_0300", "case_1293", "case_1348", "case_1555", "case_0321",
-    "case_1199",
+    "case_1199", "case_1149",
 ]
 
 [queries.labels]
@@ -446,6 +456,7 @@ case_0632 = { grade = "일부 관련", reason = "Text-to-SQL의 검색·평가 �
 case_0659 = { grade = "일부 관련", reason = "질문-대표질문 유사도 기반 챗봇 (RAG 이전 방식)" }
 case_1147 = { grade = "일부 관련", reason = "보안 상담 근거 수집 멀티 에이전트" }
 case_1148 = { grade = "일부 관련", reason = "검색 에이전트가 근거 패킷을 만들고 검증 에이전트가 확인" }
+case_1149 = { grade = "일부 관련", reason = "보안 분석 워크벤치 (같은 글의 다른 항목)" }
 case_1168 = { grade = "일부 관련", reason = "코딩 에이전트용 벡터 DB RAG" }
 case_1227 = { grade = "일부 관련", reason = "RAG의 임베딩 보안" }
 
@@ -467,7 +478,8 @@ judged = [
     "case_0588", "case_0995", "case_1000", "case_0438", "case_0542", "case_0961",
     "case_1023", "case_1393", "case_0447", "case_0977", "case_1025", "case_1466",
     "case_0477", "case_1044", "case_1380", "case_1473", "case_0354", "case_0959",
-    "case_1364", "case_0399", "case_0448", "case_0621", "case_1558",
+    "case_1364", "case_0399", "case_0448", "case_0621", "case_1558", "case_0393",
+    "case_0394",
 ]
 
 [queries.labels]
@@ -500,7 +512,7 @@ judged = [
     "case_1340", "case_1465", "case_0360", "case_0578", "case_0849", "case_0339",
     "case_0820", "case_0873", "case_1144", "case_1537", "case_0441", "case_0631",
     "case_1010", "case_1367", "case_0768", "case_1431", "case_1038", "case_1211",
-    "case_0536",
+    "case_0536", "case_1212", "case_0794",
 ]
 
 [queries.labels]
@@ -519,6 +531,7 @@ case_0497 = { grade = "일부 관련", reason = "대규모 로그의 Elasticsear
 case_0536 = { grade = "일부 관련", reason = "100만 TPS 로그 시스템 오토스케일링 (로그)" }
 case_0785 = { grade = "일부 관련", reason = "Next.js SSR 프로세스 지표 수집 파이프라인 (Grafana TSDB)" }
 case_0825 = { grade = "일부 관련", reason = "Ingress Nginx Prometheus 메트릭 병목" }
+case_1212 = { grade = "일부 관련", reason = "관측 플랫폼 저장소의 페이지 캐시 개선 (같은 글)" }
 
 [[queries]]
 id = "d05"
@@ -534,7 +547,8 @@ judged = [
     "case_0425", "case_0719", "case_0936", "case_1416", "case_0406", "case_0536",
     "case_1128", "case_0872", "case_1211", "case_0498", "case_0598", "case_1042",
     "case_0343", "case_0869", "case_1091", "case_0842", "case_0704", "case_1105",
-    "case_1291", "case_0456", "case_0559",
+    "case_1291", "case_0456", "case_0559", "case_0902", "case_1089", "case_1189",
+    "case_0900",
 ]
 
 [queries.labels]
@@ -548,6 +562,7 @@ case_0406 = { grade = "일부 관련", reason = "GPU를 MIG로 세분화해 밀�
 case_0536 = { grade = "일부 관련", reason = "KEDA로 로그 시스템 오토스케일링" }
 case_0559 = { grade = "일부 관련", reason = "서비스별 탄력성 지표로 Scale-in 최적화 (FinOps)" }
 case_0868 = { grade = "일부 관련", reason = "VM 밀도 테스트로 적정 VM 수 결정" }
+case_0902 = { grade = "일부 관련", reason = "Scale to Zero 대신 최소 복제본 유지 (비용과 콜드 스타트 절충)" }
 case_1076 = { grade = "일부 관련", reason = "Pod 리소스 설정과 cgroups 매핑 원리" }
 case_1190 = { grade = "일부 관련", reason = "Spark on Kubernetes 익스큐터 메모리 오버헤드 조정" }
 case_1415 = { grade = "일부 관련", reason = "Airflow 워커 자원 제한 정책" }
@@ -568,7 +583,7 @@ judged = [
     "case_1419", "case_1471", "case_1515", "case_1236", "case_1507", "case_1547",
     "case_0842", "case_1151", "case_1301", "case_1470", "case_1110", "case_1514",
     "case_0494", "case_1208", "case_1315", "case_1469", "case_0358", "case_0441",
-    "case_0670",
+    "case_0670", "case_0768", "case_0766", "case_0770", "case_0588", "case_0668",
 ]
 
 [queries.labels]
@@ -603,7 +618,8 @@ judged = [
     "case_1591", "case_1187", "case_1250", "case_1504", "case_0433", "case_0878",
     "case_1294", "case_1593", "case_0393", "case_0784", "case_0374", "case_0428",
     "case_0373", "case_1058", "case_1062", "case_0453", "case_1465", "case_0622",
-    "case_0874", "case_0385", "case_1188", "case_1428", "case_1193",
+    "case_0874", "case_0385", "case_1188", "case_1428", "case_1193", "case_0867",
+    "case_0875", "case_1195",
 ]
 
 [queries.labels]
@@ -620,6 +636,7 @@ case_0866 = { grade = "관련", reason = "Flink CDC로 MySQL 변경을 Iceberg�
 case_0870 = { grade = "관련", reason = "Flink CDC로 MySQL 변화분을 Iceberg에 실시간 반영" }
 case_0873 = { grade = "관련", reason = "Flink CDC 증분 스냅샷 병렬 처리" }
 case_0874 = { grade = "관련", reason = "Flink CDC 스냅샷·빈로그 단계 전환" }
+case_0875 = { grade = "관련", reason = "Flink CDC 청크 키 제약 수정" }
 case_0877 = { grade = "관련", reason = "Flink CDC 증분 스냅샷으로 별도 DB에 실시간 복제" }
 case_0878 = { grade = "관련", reason = "Flink CDC 단계별 토픽·병렬성 분리" }
 case_0879 = { grade = "관련", reason = "Flink CDC 청크 키 문제 해결" }
@@ -640,6 +657,7 @@ case_1581 = { grade = "관련", reason = "MSK Connect CDC로 데이터를 실시
 case_0373 = { grade = "일부 관련", reason = "신규 원장에 비동기 적재와 재적재 배치 (CDC 아님)" }
 case_0792 = { grade = "일부 관련", reason = "CDC 정합성 검사 조회 모드" }
 case_0794 = { grade = "일부 관련", reason = "CDC 정합성 검사 Spark 잡" }
+case_0867 = { grade = "일부 관련", reason = "CDC 대상 Iceberg 테이블 파티션 설계" }
 case_1188 = { grade = "일부 관련", reason = "CDC 업데이트로 Iceberg 파일 재작성 부하" }
 case_1193 = { grade = "일부 관련", reason = "CDC로 신구 API 응답 비교 검증" }
 case_1194 = { grade = "일부 관련", reason = "CDC 이벤트로 신규 통계 로직 검증" }
@@ -707,7 +725,8 @@ judged = [
     "case_1379", "case_0598", "case_0842", "case_1166", "case_0589", "case_0692",
     "case_1178", "case_1490", "case_1503", "case_0311", "case_0758", "case_0374",
     "case_0530", "case_0993", "case_1473", "case_1109", "case_1450", "case_0767",
-    "case_1442", "case_1221", "case_1012",
+    "case_1442", "case_1221", "case_1012", "case_1453", "case_1454", "case_1474",
+    "case_1475", "case_1451",
 ]
 
 [queries.labels]
@@ -742,7 +761,7 @@ judged = [
     "case_0973", "case_0990", "case_0712", "case_1532", "case_0547", "case_0829",
     "case_1407", "case_0633", "case_0897", "case_1049", "case_1495", "case_0933",
     "case_1175", "case_1307", "case_0635", "case_1206", "case_1039", "case_1101",
-    "case_1104", "case_0450",
+    "case_1104", "case_0450", "case_1042", "case_0498", "case_0499",
 ]
 
 [queries.labels]
@@ -782,7 +801,8 @@ judged = [
     "case_1386", "case_0529", "case_0627", "case_0702", "case_1460", "case_0622",
     "case_0733", "case_0398", "case_0488", "case_1131", "case_0691", "case_0695",
     "case_0732", "case_1219", "case_1474", "case_0621", "case_0892", "case_0942",
-    "case_1305",
+    "case_1305", "case_1147", "case_1148", "case_1044", "case_1233", "case_1362",
+    "case_1176", "case_1142",
 ]
 
 [queries.labels]
@@ -811,7 +831,7 @@ judged = [
     "case_0837", "case_1016", "case_0334", "case_0734", "case_1583", "case_1075",
     "case_0479", "case_1079", "case_0827", "case_0384", "case_1417", "case_1492",
     "case_1543", "case_0412", "case_1128", "case_0365", "case_1108", "case_1495",
-    "case_1548", "case_0488",
+    "case_1548", "case_0488", "case_0829", "case_1555", "case_0595", "case_1589",
 ]
 
 [queries.labels]
@@ -830,9 +850,11 @@ case_0412 = { grade = "일부 관련", reason = "애셋 WebP 교체와 사전 �
 case_0493 = { grade = "일부 관련", reason = "React.lazy 청크 로딩 실패 대응" }
 case_0817 = { grade = "일부 관련", reason = "Angular 웹 성능 개선 (글 모음 요약)" }
 case_0826 = { grade = "일부 관련", reason = "가상 스크롤로 DOM 감소 (초기 로딩 아님)" }
+case_0829 = { grade = "일부 관련", reason = "채팅 화면 렌더링 성능 (초기 로딩은 아님)" }
 case_1016 = { grade = "일부 관련", reason = "SSG 기술 블로그" }
 case_1075 = { grade = "일부 관련", reason = "애니메이션 끊김 개선" }
 case_1476 = { grade = "일부 관련", reason = "모듈 페더레이션 프론트엔드 아키텍처" }
+case_1555 = { grade = "일부 관련", reason = "상품 설명 이미지 Crop·Lazy Loading 내재화" }
 
 [[queries]]
 id = "d13"
@@ -891,7 +913,7 @@ judged = [
     "case_0716", "case_0862", "case_1489", "case_0317", "case_0555", "case_0626",
     "case_0892", "case_0772", "case_1001", "case_1071", "case_1107", "case_1264",
     "case_1490", "case_1160", "case_1323", "case_0500", "case_0578", "case_0602",
-    "case_0977", "case_1576",
+    "case_0977", "case_1576", "case_0711", "case_0439", "case_0556", "case_0554",
 ]
 
 [queries.labels]
@@ -928,7 +950,7 @@ judged = [
     "case_0691", "case_1064", "case_1392", "case_0374", "case_1431", "case_1465",
     "case_0746", "case_1404", "case_0820", "case_1461", "case_1468", "case_0441",
     "case_0747", "case_0784", "case_0830", "case_1243", "case_1458", "case_0787",
-    "case_1278", "case_1337",
+    "case_1278", "case_1337", "case_1330", "case_1060", "case_1059",
 ]
 
 [queries.labels]
@@ -946,6 +968,7 @@ case_1064 = { grade = "일부 관련", reason = "CDC 복제 후 Oracle 지연 �
 case_1243 = { grade = "일부 관련", reason = "결제 DB를 Vitess로 교체" }
 case_1294 = { grade = "일부 관련", reason = "MySQL에서 MongoDB로 대용량 이전" }
 case_1312 = { grade = "일부 관련", reason = "읽기 전용 방식으로 MySQL IDC 이전" }
+case_1330 = { grade = "일부 관련", reason = "MySQL 이관 후 비정규화 주문의 동시 업데이트 (같은 글)" }
 case_1468 = { grade = "일부 관련", reason = "PL/SQL 프로시저를 Java로 점진 이전" }
 case_1570 = { grade = "일부 관련", reason = "오라클 클라우드 전환 사전 점검" }
 
@@ -968,6 +991,7 @@ judged = [
     "case_1546", "case_0484", "case_1007", "case_1038", "case_1362", "case_0366",
     "case_0370", "case_0953", "case_1006", "case_1425", "case_0425", "case_0558",
     "case_0807", "case_0508", "case_0296", "case_0835", "case_1151", "case_1440",
+    "case_0878", "case_0877", "case_0879", "case_1105", "case_1505", "case_0365",
 ]
 
 [[queries]]
@@ -985,7 +1009,8 @@ judged = [
     "case_0305", "case_0844", "case_0840", "case_1485", "case_0373", "case_0561",
     "case_0841", "case_1222", "case_1491", "case_0700", "case_1290", "case_0842",
     "case_1279", "case_1393", "case_1478", "case_0478", "case_0486", "case_0836",
-    "case_1162", "case_1269", "case_0995", "case_1455",
+    "case_1162", "case_1269", "case_0995", "case_1455", "case_0715", "case_0716",
+    "case_0588", "case_0589", "case_0668",
 ]
 
 [queries.labels]
@@ -1010,7 +1035,8 @@ judged = [
     "case_1538", "case_0827", "case_1202", "case_1442", "case_1459", "case_0535",
     "case_1163", "case_1301", "case_1203", "case_1401", "case_0568", "case_1515",
     "case_1536", "case_1324", "case_1475", "case_1489", "case_0302", "case_0311",
-    "case_0678", "case_0891", "case_1036", "case_1531",
+    "case_0678", "case_0891", "case_1036", "case_1531", "case_1159", "case_1292",
+    "case_1453", "case_1182",
 ]
 
 [queries.labels]
@@ -1034,7 +1060,7 @@ judged = [
     "case_0592", "case_1165", "case_1422", "case_1439", "case_0473", "case_0779",
     "case_1048", "case_1337", "case_0728", "case_1288", "case_1289", "case_1454",
     "case_1461", "case_0786", "case_0962", "case_1081", "case_1398", "case_0917",
-    "case_1444",
+    "case_1444", "case_1455",
 ]
 
 [queries.labels]
@@ -1064,6 +1090,7 @@ judged = [
     "case_1242", "case_0767", "case_1260", "case_1532", "case_0332", "case_0478",
     "case_0700", "case_0538", "case_1037", "case_1297", "case_1419", "case_0514",
     "case_0535", "case_0840", "case_0493", "case_0769", "case_0782", "case_0828",
+    "case_0829", "case_1521",
 ]
 
 [queries.labels]
