@@ -13,3 +13,1062 @@
 # [queries.labels]
 # case_0012 = { grade = "관련", reason = "선착순 쿠폰 초과 발급을 Redis 원자 연산으로 해결" }
 # case_0020 = { grade = "일부 관련", reason = "대량 발급이지만 선착순 동시성 문제는 아님" }
+
+# ---------- M1 실사용 시나리오·관찰 기록 검색어 ----------
+
+[[queries]]
+id = "m01"
+query = "선착순 쿠폰 발급 동시성 대량 트래픽"
+source = "M1"
+note = "M1 시나리오 1, 관찰 기록 1"
+judged = [
+    "case_0525", "case_1466", "case_1530", "case_1484", "case_1586", "case_1595",
+    "case_0392", "case_1019", "case_1583", "case_0384", "case_0477", "case_0699",
+    "case_0476", "case_1386", "case_0682", "case_0851", "case_1461", "case_0383",
+    "case_1451", "case_1519", "case_0478", "case_0597", "case_1100", "case_0591",
+    "case_1423", "case_1449", "case_1456", "case_1087", "case_1247", "case_1422",
+    "case_1443", "case_1453", "case_1534", "case_1113", "case_1411", "case_1471",
+    "case_1505", "case_0680", "case_0965", "case_1474", "case_1513", "case_1454",
+    "case_1455", "case_1458", "case_1532", "case_1447", "case_1570", "case_0479",
+    "case_1445", "case_0365", "case_1315", "case_1349", "case_0367", "case_1432",
+    "case_0464", "case_0564", "case_1587",
+]
+
+[queries.labels]
+case_0477 = { grade = "관련", reason = "선착순 제한이 있는 포인트 지급에서 분산 락으로 중복 지급 방지 (대규모 트래픽)" }
+case_1466 = { grade = "관련", reason = "올영세일 선착순 쿠폰 발급의 미발급·초과 문제를 Redis 이중 카운터로 해결" }
+case_1595 = { grade = "관련", reason = "세일 기간 쿠폰 발급 과도한 요청을 RabbitMQ 도입으로 처리" }
+case_0476 = { grade = "일부 관련", reason = "포인트 지급 피크 트래픽을 로컬 캐시로 처리. 쿠폰·선착순은 아님" }
+case_0478 = { grade = "일부 관련", reason = "대규모 트래픽에서 중복 요청 제거" }
+case_0965 = { grade = "일부 관련", reason = "포인트 중복 지급을 Redis 분산 락으로 방지. 선착순·대량 트래픽은 아님" }
+case_1100 = { grade = "일부 관련", reason = "주문 급증 시 대기열. 쿠폰 발급과 다른 대응 방식의 비교 자료" }
+case_1484 = { grade = "일부 관련", reason = "대량 쿠폰 발급 중 RabbitMQ 메모리 장애. 선착순 동시성은 아님" }
+case_1530 = { grade = "일부 관련", reason = "멤버십 대량 쿠폰 발급 속도 개선. 선착순 동시성과 다른 문제" }
+
+[[queries]]
+id = "m02"
+query = "이벤트 트래픽 급증 대기열 선착순 재고 차감 Redis"
+source = "M1"
+note = "M1 시나리오 1 (긴 검색어), 관찰 기록 2"
+judged = [
+    "case_0476", "case_0842", "case_1466", "case_1590", "case_1010", "case_1100",
+    "case_1539", "case_1592", "case_0392", "case_0477", "case_1449", "case_1549",
+    "case_1596", "case_0415", "case_1111", "case_1532", "case_1595", "case_0859",
+    "case_1330", "case_1325", "case_0557", "case_0597", "case_1447", "case_1493",
+    "case_1572", "case_0565", "case_1326", "case_1377", "case_1467", "case_0548",
+    "case_1315", "case_0541", "case_0965", "case_1440", "case_1536", "case_1008",
+    "case_1495", "case_0479", "case_0494", "case_1455", "case_0630", "case_0643",
+    "case_1015", "case_1456", "case_1503", "case_0658", "case_0858", "case_1221",
+    "case_1573", "case_0698", "case_0940", "case_0334", "case_0496", "case_0780",
+    "case_1453", "case_1050", "case_1457", "case_1504",
+]
+
+[queries.labels]
+case_0477 = { grade = "관련", reason = "선착순 제한 포인트 지급을 분산 락으로 처리" }
+case_1100 = { grade = "관련", reason = "이벤트성 트래픽 급증 시 자동 발동하는 대기열" }
+case_1466 = { grade = "관련", reason = "선착순 쿠폰 수량을 Redis 카운터로 선차감" }
+case_1590 = { grade = "관련", reason = "여러 클라이언트의 동시 재고 차감을 Redisson 락으로 처리" }
+case_0476 = { grade = "일부 관련", reason = "트래픽 급증을 로컬 캐시·Redis Pub/Sub으로 처리. 재고·선착순은 아님" }
+case_0643 = { grade = "일부 관련", reason = "WMS 재고 이관의 동시성을 분산 락으로 차단 (이벤트 트래픽은 아님)" }
+case_0780 = { grade = "일부 관련", reason = "순간 트래픽 급증에 SSR을 ISR·Redis 캐시로 대응" }
+case_0965 = { grade = "일부 관련", reason = "Redis 분산 락으로 중복 지급 방지" }
+case_1015 = { grade = "일부 관련", reason = "이벤트를 앞두고 결제 서비스 성능을 캐시로 개선" }
+case_1532 = { grade = "일부 관련", reason = "증정 행사 동시 접속을 Redis·로컬 캐시로 처리. 재고 차감은 아님" }
+case_1595 = { grade = "일부 관련", reason = "세일 기간 쿠폰 발급 요청 처리" }
+
+[[queries]]
+id = "m03"
+query = "WebRTC 영상 통화 시그널링 TURN 서버 설계"
+source = "M1"
+note = "M1 시나리오 6. M1 당시 DB에 없던 주제였으나 M4 전체 추출로 LINE 영상 통화 항목이 생김"
+judged = [
+    "case_0507", "case_0521", "case_1150", "case_0678", "case_0843", "case_0858",
+    "case_1235", "case_1256", "case_0535", "case_1257", "case_1527", "case_0677",
+    "case_0827", "case_1263", "case_0693", "case_0714", "case_0996", "case_1353",
+    "case_0311", "case_0488", "case_0529", "case_1354", "case_0700", "case_1310",
+    "case_0494", "case_0544", "case_0785", "case_1352", "case_0486", "case_0859",
+    "case_0992", "case_0288", "case_0780", "case_0795", "case_0841", "case_1529",
+    "case_0818", "case_1108", "case_1122", "case_0463", "case_0840", "case_1275",
+    "case_0326", "case_0332", "case_0485", "case_1105", "case_1481", "case_0817",
+    "case_0842", "case_1065", "case_0502", "case_0596", "case_0781", "case_0283",
+    "case_0323", "case_0412", "case_0418", "case_0709", "case_0539", "case_0546",
+    "case_0716", "case_1033", "case_0707", "case_0932", "case_1012", "case_0410",
+    "case_1315",
+]
+
+[queries.labels]
+case_1150 = { grade = "관련", reason = "LINE 앱 안의 그룹 영상 통화 서비스 구축 (LINE Planet 활용, 시그널링·TURN 직접 설계는 아님)" }
+case_1235 = { grade = "일부 관련", reason = "LINE 영상 통화 혼잡 제어 개선. 서버 설계가 아닌 미디어 품질" }
+case_1256 = { grade = "일부 관련", reason = "LINE 영상 통화 비트레이트 조정" }
+case_1257 = { grade = "일부 관련", reason = "LINE 영상 통화 혼잡 검출 알고리즘" }
+case_1354 = { grade = "일부 관련", reason = "UDP 실시간 통화의 패킷 손실 대응(FEC)" }
+
+[[queries]]
+id = "m04"
+query = "메시지 큐 Kafka RabbitMQ 도입"
+source = "M1"
+note = "M1 시나리오 4 (넓은 주제), 관찰 기록 5"
+judged = [
+    "case_0741", "case_0961", "case_1595", "case_1130", "case_1429", "case_1490",
+    "case_0598", "case_1371", "case_1446", "case_0606", "case_1315", "case_1445",
+    "case_1372", "case_0608", "case_1428", "case_1554", "case_0546", "case_0750",
+    "case_1294", "case_1484", "case_0607", "case_1048", "case_1263", "case_0429",
+    "case_0430", "case_0539", "case_1530", "case_0827", "case_1367", "case_1368",
+    "case_1406", "case_0940", "case_0948", "case_0309", "case_1152", "case_1591",
+    "case_0420", "case_0840", "case_1194", "case_0842", "case_1503", "case_1547",
+    "case_0878", "case_1422", "case_1551", "case_0428", "case_1051", "case_1187",
+    "case_1193", "case_1506", "case_1510", "case_1534", "case_1462", "case_1504",
+    "case_1581", "case_0418",
+]
+
+[queries.labels]
+case_0539 = { grade = "관련", reason = "장시간 작업에 Kafka 대신 RDB 기반 Task Queue를 택함 (비교 자료)" }
+case_0606 = { grade = "관련", reason = "배달 주문 이벤트 브로커로 Kafka 사용, 순서 보장" }
+case_0961 = { grade = "관련", reason = "RabbitMQ 운영 중단으로 지연이체를 Kafka 기반으로 전환" }
+case_1130 = { grade = "관련", reason = "주문 메시지 전용 Kafka 클러스터로 재설계" }
+case_1315 = { grade = "관련", reason = "실시간 추천에 Redis Streams 메시지 큐 도입 (Kafka와 다른 선택)" }
+case_1510 = { grade = "관련", reason = "발주 응답을 Kafka 컨슈머로 받는 비동기 요청-응답 구조" }
+case_1534 = { grade = "관련", reason = "GoldenGate 대신 Kafka 도입" }
+case_1547 = { grade = "관련", reason = "배치 EAI를 Kafka 토픽 기반 연동으로 전환" }
+case_1591 = { grade = "관련", reason = "POS 재고 이벤트를 Kafka(MSK)로 연동" }
+case_1595 = { grade = "관련", reason = "쿠폰 발급에 RabbitMQ 도입" }
+case_0418 = { grade = "일부 관련", reason = "Kafka 데이터센터 이중화 구성" }
+case_0546 = { grade = "일부 관련", reason = "MQTT 알림을 SSE + Kafka로 전환" }
+case_0598 = { grade = "일부 관련", reason = "Kafka 컨슈머 동적 쓰로틀링" }
+case_0607 = { grade = "일부 관련", reason = "Kafka를 이벤트 버스로 사용해 설정 전파" }
+case_0608 = { grade = "일부 관련", reason = "Kafka Streams 실시간 집계" }
+case_0948 = { grade = "일부 관련", reason = "Spring Cloud Stream으로 메시지 기반 파이프라인 규격화" }
+case_1372 = { grade = "일부 관련", reason = "Kafka 재시도 토픽·DLT" }
+case_1428 = { grade = "일부 관련", reason = "CDC와 Kafka로 발송 워커 교체" }
+case_1484 = { grade = "일부 관련", reason = "RabbitMQ 운영 장애와 Quorum Queue 전환 (도입보다 운영)" }
+case_1530 = { grade = "일부 관련", reason = "RabbitMQ Fanout Exchange로 대량 발급 구조 개선" }
+case_1551 = { grade = "일부 관련", reason = "Kafka 메시지 중복·유실 대응" }
+case_1581 = { grade = "일부 관련", reason = "MSK Connect 운영" }
+
+[[queries]]
+id = "m05"
+query = "선착순 쿠폰"
+source = "M1"
+note = "M1 시나리오 9 (짧은 검색어), 관찰 기록 6. 당시 kind 필터는 M3에서 없어짐"
+judged = [
+    "case_1019", "case_1466", "case_0525", "case_1595", "case_0477", "case_1247",
+    "case_1519", "case_0392", "case_0971", "case_1530", "case_0384", "case_0357",
+    "case_0526", "case_0670", "case_0699", "case_1451", "case_1484", "case_0400",
+    "case_0597", "case_0853", "case_1411", "case_1456", "case_1587", "case_0508",
+    "case_1248", "case_1477", "case_0405", "case_0440", "case_1370", "case_1520",
+    "case_1461", "case_1179", "case_1402", "case_1583", "case_0641", "case_1432",
+    "case_1591", "case_0381", "case_0603", "case_1386", "case_1586", "case_0346",
+    "case_0669", "case_0668", "case_1445", "case_1592", "case_0496", "case_1550",
+    "case_0595", "case_1500", "case_1570", "case_0596", "case_1315", "case_1447",
+    "case_1457",
+]
+
+[queries.labels]
+case_0477 = { grade = "관련", reason = "선착순 제한 포인트 지급의 중복 방지" }
+case_1466 = { grade = "관련", reason = "올영세일 선착순 쿠폰 발급" }
+case_1595 = { grade = "관련", reason = "세일 기간 쿠폰 발급 요청 처리에 RabbitMQ 도입" }
+case_1484 = { grade = "일부 관련", reason = "대량 쿠폰 발급 중 RabbitMQ 장애" }
+case_1530 = { grade = "일부 관련", reason = "멤버십 대량 쿠폰 발급 (선착순 아님)" }
+
+[[queries]]
+id = "m06"
+query = "한정 수량 이벤트 트래픽 동시 요청 재고 차감"
+source = "M1"
+note = "M1 시나리오 9 (바꿔 쓴 검색어), 관찰 기록 7"
+judged = [
+    "case_0478", "case_0728", "case_1100", "case_1466", "case_1422", "case_1451",
+    "case_0658", "case_1539", "case_1586", "case_0476", "case_0565", "case_1330",
+    "case_1386", "case_1395", "case_1519", "case_0477", "case_0804", "case_1449",
+    "case_1465", "case_0525", "case_0960", "case_1444", "case_1471", "case_1572",
+    "case_0733", "case_1440", "case_0597", "case_0643", "case_0738", "case_1423",
+    "case_1438", "case_0501", "case_1503", "case_1591", "case_1595", "case_0854",
+    "case_1455", "case_0702", "case_0715", "case_1530", "case_1532", "case_0533",
+    "case_0799", "case_1112", "case_1081", "case_1266", "case_1592", "case_0695",
+    "case_0965", "case_1573", "case_1085", "case_1447", "case_0448", "case_0496",
+    "case_0814", "case_1467", "case_0546", "case_0559", "case_0800", "case_1454",
+    "case_0564", "case_0621", "case_1510", "case_0649", "case_1238", "case_1590",
+    "case_0622", "case_0646", "case_0696",
+]
+
+[queries.labels]
+case_0477 = { grade = "관련", reason = "선착순 제한 포인트 지급의 동시 요청 처리" }
+case_1100 = { grade = "관련", reason = "이벤트성 트래픽에 자동 발동하는 대기열" }
+case_1466 = { grade = "관련", reason = "한정 수량 쿠폰을 Redis 카운터로 선차감" }
+case_1590 = { grade = "관련", reason = "동시 재고 차감을 분산 락으로 처리" }
+case_0448 = { grade = "일부 관련", reason = "예약 주문 100만 건 동시 전송을 RateLimiter로 제어" }
+case_0476 = { grade = "일부 관련", reason = "피크 트래픽 캐시 처리" }
+case_0533 = { grade = "일부 관련", reason = "5천 명 동시 접속 미니게임의 랭킹 조회 부하" }
+case_0643 = { grade = "일부 관련", reason = "재고 이관 동시성 분산 락" }
+case_0965 = { grade = "일부 관련", reason = "중복 지급 분산 락" }
+case_1330 = { grade = "일부 관련", reason = "주문 동시 업데이트를 Redis 분산 락으로 제어" }
+case_1532 = { grade = "일부 관련", reason = "증정 행사 동시 접속 캐시 처리" }
+case_1572 = { grade = "일부 관련", reason = "스파이크성 외부 트래픽을 비동기 이벤트로 분리" }
+case_1595 = { grade = "일부 관련", reason = "세일 기간 쿠폰 발급 요청 처리" }
+
+[[queries]]
+id = "m07"
+query = "로컬 캐시와 Redis 함께 사용, 다중 서버 캐시 일관성, 로컬 캐시 무효화"
+source = "M1"
+note = "M1 시나리오 3, 관찰 기록 9"
+problem_type = "캐싱"
+judged = [
+    "case_0548", "case_0950", "case_1008", "case_1493", "case_1532", "case_0415",
+    "case_0476", "case_0842", "case_1467", "case_0541", "case_0780", "case_1596",
+    "case_0479", "case_0976", "case_0506", "case_1010", "case_1305", "case_0940",
+    "case_0972", "case_1325", "case_1442", "case_1495", "case_1015", "case_1110",
+    "case_0478", "case_0533", "case_1456", "case_1494", "case_0477", "case_1326",
+    "case_1595", "case_0781", "case_0859", "case_0501", "case_0858", "case_0915",
+    "case_1377", "case_1379", "case_1397", "case_1056", "case_0557", "case_1310",
+    "case_1539", "case_0549", "case_0674", "case_0965", "case_1108", "case_1298",
+    "case_1330", "case_1363", "case_1382", "case_1555", "case_1315", "case_1590",
+    "case_0464", "case_0615", "case_0660", "case_1009", "case_0624", "case_1457",
+]
+
+[queries.labels]
+case_0476 = { grade = "관련", reason = "로컬 캐시 + Redis Pub/Sub으로 캐시 초기화" }
+case_0940 = { grade = "관련", reason = "Redis Pub/Sub으로 변경을 전달해 서빙 서버 로컬 캐시에 반영" }
+case_0950 = { grade = "관련", reason = "로컬 캐시와 Redis로 서버 간 데이터 최신화" }
+case_1015 = { grade = "관련", reason = "Redis 캐시와 로컬 캐시 적용" }
+case_1467 = { grade = "관련", reason = "Caffeine 로컬 캐시 + Redis 원격 캐시 이중 캐시" }
+case_1532 = { grade = "관련", reason = "Redis 캐시와 로컬 캐시, 버전 기반 갱신" }
+case_0415 = { grade = "일부 관련", reason = "Redis Look-aside로 강한 일관성 유지 (로컬 캐시는 아님)" }
+case_0541 = { grade = "일부 관련", reason = "@CacheEvict 전체 삭제의 운영 위험" }
+case_0780 = { grade = "일부 관련", reason = "Redis 외부 공유 캐시로 인스턴스 간 캐시 동기화" }
+case_1305 = { grade = "일부 관련", reason = "Thundering Herd를 로컬·글로벌 락으로 방지" }
+case_1382 = { grade = "일부 관련", reason = "MSA 간 shared cache 쓰기 규칙" }
+case_1456 = { grade = "일부 관련", reason = "Cache-Aside 패턴" }
+case_1494 = { grade = "일부 관련", reason = "캐시 모듈과 장애 시 처리" }
+case_1495 = { grade = "일부 관련", reason = "캐시 스탬피드를 Redis 락으로 방지" }
+
+[[queries]]
+id = "m08"
+query = "Kafka 주문 이벤트 메시지 중복 유실 멱등성 처리"
+source = "M1"
+note = "M1 시나리오 2 (1글 = N항목의 순위 불이익), 관찰 기록 10"
+technologies = ["Kafka"]
+judged = [
+    "case_1130", "case_1551", "case_0546", "case_0608", "case_1447", "case_1553",
+    "case_0606", "case_1429", "case_1445", "case_1554", "case_1187", "case_1368",
+    "case_1552", "case_0539", "case_1372", "case_1503", "case_0720", "case_1152",
+    "case_1367", "case_1371", "case_1505", "case_0420", "case_0429", "case_1510",
+    "case_1490", "case_0430", "case_0494", "case_0649", "case_1315", "case_1462",
+    "case_0607", "case_1446", "case_0961", "case_1194", "case_1443", "case_1504",
+    "case_0385", "case_0750", "case_1439", "case_1457", "case_1422", "case_1506",
+    "case_0598", "case_0378", "case_1406", "case_1137", "case_1314", "case_0751",
+    "case_0967", "case_0418", "case_0878",
+]
+
+[queries.labels]
+case_0420 = { grade = "관련", reason = "Kafka 이중화 전환 시 유실 없이 중복 최소화하는 오프셋 처리" }
+case_0606 = { grade = "관련", reason = "주문 이벤트 순서 보장과 Debezium 기반 발행" }
+case_0649 = { grade = "관련", reason = "주문·배달 이벤트를 키 기준 파티션으로 순서 보장, 누락 방지" }
+case_0720 = { grade = "관련", reason = "Outbox와 Replayer로 메시징 리포트 유실 방지" }
+case_0967 = { grade = "관련", reason = "지급 이력으로 동일 요청 멱등성 보장" }
+case_1130 = { grade = "관련", reason = "주문 메시지를 CDC 트랜잭션 로그 테일링으로 유실 없이 발행" }
+case_1371 = { grade = "관련", reason = "DB 쓰기와 메시지 발행 원자성을 아웃박스 패턴으로 보장" }
+case_1372 = { grade = "관련", reason = "실패 메시지 재시도 토픽과 DLT" }
+case_1462 = { grade = "관련", reason = "Retry·DLT·복구 배치로 메시지 누락 방지" }
+case_1551 = { grade = "관련", reason = "Kafka 중복·유실을 acks·멱등 프로듀서·컨슈머 설정으로 방지" }
+case_1552 = { grade = "관련", reason = "브로커 재부팅 시 유실 방지 (RF, min.insync.replicas)" }
+case_1553 = { grade = "관련", reason = "리밸런싱으로 인한 중복 처리 감소 (같은 글)" }
+case_1554 = { grade = "관련", reason = "DLQ 데이터를 S3로 백업해 재처리" }
+case_0429 = { grade = "일부 관련", reason = "Kafka 양방향 미러링" }
+case_1137 = { grade = "일부 관련", reason = "Parallel Consumer로 처리량 증가" }
+case_1187 = { grade = "일부 관련", reason = "Flink 2PC로 Kafka Sink 정확히 한 번" }
+case_1406 = { grade = "일부 관련", reason = "컨슈머 오프셋 이동으로 재처리" }
+case_1445 = { grade = "일부 관련", reason = "커밋 후 콜백에서 Kafka 발행" }
+case_1503 = { grade = "일부 관련", reason = "Kafka Streams Delayed Queue로 순서 역전 처리" }
+
+[[queries]]
+id = "m09"
+query = "트랜잭셔널 아웃박스 이벤트 발행 유실 방지"
+source = "M1"
+note = "M1 시나리오 2, 관찰 기록 11 (아웃박스 형태소 분리 문제)"
+problem_type = "데이터 정합성·트랜잭션"
+judged = [
+    "case_1130", "case_1247", "case_1422", "case_1471", "case_0597", "case_0646",
+    "case_1371", "case_1444", "case_1466", "case_1503", "case_1586", "case_0304",
+    "case_0546", "case_0649", "case_0728", "case_1248", "case_1445", "case_0374",
+    "case_0525", "case_1446", "case_1504", "case_0350", "case_0454", "case_1325",
+    "case_1423", "case_1510", "case_0429", "case_0532", "case_0539", "case_1386",
+    "case_1507", "case_1587", "case_0347", "case_0526", "case_0720", "case_1368",
+    "case_1404", "case_1469", "case_0387", "case_0670", "case_0940", "case_1506",
+    "case_1525", "case_0441", "case_0447", "case_0565", "case_0733", "case_0950",
+    "case_1451", "case_0399", "case_0606", "case_1429", "case_1440", "case_1519",
+    "case_1530", "case_1447", "case_1550", "case_0372", "case_1490", "case_1505",
+    "case_0961", "case_0966", "case_1367", "case_1369", "case_1462", "case_1551",
+    "case_0477", "case_1019", "case_1193", "case_1297", "case_0652", "case_0963",
+    "case_1330", "case_1458", "case_0415", "case_0858", "case_0975", "case_1225",
+    "case_1439", "case_1058", "case_1238", "case_1453", "case_1454", "case_1583",
+    "case_0519", "case_0682", "case_1572", "case_0398", "case_0621", "case_0665",
+    "case_1388", "case_1500",
+]
+
+[queries.labels]
+case_0606 = { grade = "관련", reason = "Debezium 기반 이벤트 발행과 순서 보장" }
+case_0720 = { grade = "관련", reason = "쓰기를 Outbox 적재 하나로 제한하고 Replayer로 재발행" }
+case_1130 = { grade = "관련", reason = "CDC 트랜잭션 로그 테일링으로 주문 메시지 발행 (아웃박스 대안)" }
+case_1371 = { grade = "관련", reason = "DB 쓰기와 메시지 발행 원자성을 아웃박스 패턴으로 보장" }
+case_1445 = { grade = "관련", reason = "트랜잭션 커밋 후 콜백에서 Kafka 발행해 데이터와 메시지 불일치 방지" }
+case_1525 = { grade = "관련", reason = "트랜잭션 커밋 전 SQS 발행 문제를 AFTER_COMMIT 이벤트로 해결" }
+case_0372 = { grade = "일부 관련", reason = "INSERT-only 원장과 Kafka 발행" }
+case_0649 = { grade = "일부 관련", reason = "이벤트 누락 없이 순서 보장" }
+case_0966 = { grade = "일부 관련", reason = "내부 로직과 외부 호출 트랜잭션 분리" }
+case_1429 = { grade = "일부 관련", reason = "되돌릴 수 없는 발송과 이력 저장의 트랜잭션 순서" }
+case_1458 = { grade = "일부 관련", reason = "알림 발송을 트랜잭션에서 분리해 SQS 비동기로" }
+case_1462 = { grade = "일부 관련", reason = "Retry·DLT로 메시지 누락 방지 (발행 측 아님)" }
+case_1551 = { grade = "일부 관련", reason = "Kafka 프로듀서 설정으로 유실 방지" }
+
+[[queries]]
+id = "m10"
+query = "사내 LLM 직접 서빙 sLLM 자체 호스팅 vs 상용 API 비용"
+source = "M1"
+note = "M1 시나리오 5 (비교 대상이 되는 사례), 관찰 기록 12"
+domain = "LLM·AI"
+judged = [
+    "case_0358", "case_1069", "case_1318", "case_1348", "case_1463", "case_0354",
+    "case_0426", "case_1199", "case_1424", "case_0342", "case_0555", "case_1140",
+    "case_1142", "case_0542", "case_1246", "case_0307", "case_1470", "case_0352",
+    "case_0558", "case_1488", "case_1063", "case_1139", "case_1268", "case_0300",
+    "case_0676", "case_1464", "case_0313", "case_0386", "case_1105", "case_0353",
+    "case_0425", "case_1435", "case_0357", "case_0900", "case_1032", "case_1228",
+    "case_1320", "case_0554", "case_0563", "case_0614", "case_0806", "case_0920",
+    "case_1153", "case_0356", "case_0401", "case_0557", "case_0725", "case_0611",
+    "case_0714", "case_0815", "case_1183", "case_0289", "case_0306", "case_0355",
+    "case_0371", "case_0882", "case_1034", "case_0766", "case_1033", "case_1198",
+    "case_0290", "case_1107", "case_1213", "case_1398", "case_1403", "case_0317",
+    "case_1179", "case_1269", "case_1560",
+]
+
+[queries.labels]
+case_0358 = { grade = "관련", reason = "클라우드 모델 비용 때문에 직접 호스팅하는 오픈 모델 후보를 평가" }
+case_0425 = { grade = "관련", reason = "vLLM을 선택해 LLM 직접 서빙" }
+case_0426 = { grade = "관련", reason = "KServe로 사내 LLM 서빙 표준화" }
+case_1069 = { grade = "관련", reason = "LLM 비용·지연 때문에 지식 증류로 sLLM에서 품질 재현" }
+case_1105 = { grade = "관련", reason = "TRT-LLM·Triton으로 LLM 직접 서빙 최적화" }
+case_1463 = { grade = "관련", reason = "상용 LLM API 대신 Gemma 기반 자체 sLLM 구축" }
+case_1464 = { grade = "관련", reason = "T4 GPU 1장으로 sLLM 학습·운영" }
+case_0289 = { grade = "일부 관련", reason = "LLM 서빙 관측성" }
+case_0542 = { grade = "일부 관련", reason = "LiteLLM 기반 상용 LLM 호출 단일화 (상용 API 쪽 선택)" }
+case_0555 = { grade = "일부 관련", reason = "여러 상용 LLM Provider를 GenAI SDK·게이트웨이로 표준화 (상용 API 쪽 선택)" }
+case_0611 = { grade = "일부 관련", reason = "BentoML 기반 AI 모델 서빙 표준화" }
+case_0714 = { grade = "일부 관련", reason = "음성 AI 모델 전용 서빙 서버" }
+case_1032 = { grade = "일부 관련", reason = "vLLM 플러그인으로 검색 모델 서빙" }
+case_1033 = { grade = "일부 관련", reason = "vLLM IO Processor로 서빙 통합" }
+case_1183 = { grade = "일부 관련", reason = "전통 ML과 멀티모달 LLM 하이브리드로 비용 절감" }
+case_1228 = { grade = "일부 관련", reason = "가드레일로 비싼 LLM 호출 전 위험 요청 차단 (비용 절감)" }
+case_1560 = { grade = "일부 관련", reason = "이미지 검수에 상용 Bedrock Claude를 택함 (다른 선택의 비교 자료, 풀 밖에서 추가)" }
+
+# ---------- 데이터 분포에서 뽑은 주제 (문제 유형이 고르게) ----------
+
+[[queries]]
+id = "d01"
+query = "AI 코딩 에이전트를 팀 개발 프로세스에 도입한 경험"
+source = "데이터"
+note = "개발 생산성"
+judged = [
+    "case_0788", "case_1157", "case_1441", "case_0807", "case_0812", "case_0510",
+    "case_0811", "case_1163", "case_0287", "case_0770", "case_0777", "case_0892",
+    "case_1156", "case_1351", "case_0707", "case_0749", "case_0779", "case_1165",
+    "case_1168", "case_0773", "case_1158", "case_0774", "case_0806", "case_1159",
+    "case_1365", "case_0726", "case_1035", "case_1176", "case_0748", "case_0742",
+    "case_0795", "case_1162", "case_1166", "case_1246", "case_0500", "case_1174",
+    "case_1360", "case_1036", "case_1178", "case_1366", "case_0631", "case_0654",
+    "case_0926", "case_0511", "case_0919", "case_1149", "case_1135",
+]
+
+[queries.labels]
+case_0287 = { grade = "관련", reason = "코딩 에이전트가 팀 규칙을 지키도록 피드백 루프 추가" }
+case_0510 = { grade = "관련", reason = "Cursor Rules·Skills로 프로젝트 맥락을 AI 코딩 도구에 제공" }
+case_0726 = { grade = "관련", reason = "AI에 구현을 위임하는 PoC 중심 개발 방식" }
+case_0777 = { grade = "관련", reason = "AI 에디터를 팀 개발 생산성 도구로 활용" }
+case_0779 = { grade = "관련", reason = "AI 코딩 도구를 마일리지 방식으로 조직에 도입" }
+case_0788 = { grade = "관련", reason = "바이브 코딩에서 에이전틱 코딩으로 팀 협업 수준을 단계적으로 높인 실험" }
+case_0812 = { grade = "관련", reason = "운영 코드베이스에서 AI 에이전트 작업과 사람 검증 병행" }
+case_0892 = { grade = "관련", reason = "spec-kit 기반 스펙 우선 에이전트 코딩" }
+case_1156 = { grade = "관련", reason = "프런트엔드 개발을 AI 워크플로로 재구성" }
+case_1157 = { grade = "관련", reason = "멀티 에이전트 토론으로 개발 프로세스 재설계" }
+case_1159 = { grade = "관련", reason = "OpenAPI 스펙 확정 후 에이전트 구현, 검증력 중심" }
+case_1165 = { grade = "관련", reason = "레거시 프로젝트를 AI 드리븐 프로젝트로 전환" }
+case_1174 = { grade = "관련", reason = "AI 1차 PR 리뷰 + 사람 최종 판단 리뷰 프로세스" }
+case_1351 = { grade = "관련", reason = "AI 작업을 탐색·플래닝·분해·구현·검증 단계로 운영" }
+case_1360 = { grade = "관련", reason = "팀이 Claude AI를 역할별로 두고 MSA 개발·운영" }
+case_1365 = { grade = "관련", reason = "AI 에이전트 세션 지식 기록과 검색" }
+case_1366 = { grade = "관련", reason = "에이전트 병렬 운용 방식" }
+case_1441 = { grade = "관련", reason = "AI-DLC 방법론으로 팀 개발 프로세스에 AI 도입" }
+case_0511 = { grade = "일부 관련", reason = "디자인 시스템 MCP와 프롬프트·하네스 설계" }
+case_0748 = { grade = "일부 관련", reason = "해커톤의 인간-AI 협업 프로세스 평가" }
+case_0749 = { grade = "일부 관련", reason = "해커톤 AI 심사 시스템을 에이전트로 구축" }
+case_0770 = { grade = "일부 관련", reason = "코딩 에이전트에 분산 추적 정보 제공 계획" }
+case_0795 = { grade = "일부 관련", reason = "바이브 코딩으로 48시간 시스템 구축" }
+case_0807 = { grade = "일부 관련", reason = "프롬프트만으로 개발해 본 개인 검증" }
+case_0811 = { grade = "일부 관련", reason = "AI 에이전트 팀과 앱을 만든 개인 실험" }
+case_1135 = { grade = "일부 관련", reason = "ChatGPT를 페어 프로그래밍 파트너로 활용" }
+case_1163 = { grade = "일부 관련", reason = "IaC 저장소를 MCP로 AI 에이전트에 연결" }
+case_1168 = { grade = "일부 관련", reason = "코딩 에이전트에 사내 문서를 RAG로 제공" }
+case_1176 = { grade = "일부 관련", reason = "Git 릴리스 절차를 에이전트 스킬로 자동화" }
+
+[[queries]]
+id = "d02"
+query = "RAG 기반 사내 문서 챗봇 답변 품질 개선"
+source = "데이터"
+note = "검색·추천·모델 품질"
+judged = [
+    "case_0512", "case_0513", "case_0419", "case_0659", "case_0661", "case_1249",
+    "case_0836", "case_1227", "case_1269", "case_0284", "case_0514", "case_0686",
+    "case_0544", "case_0660", "case_0314", "case_0631", "case_0835", "case_0942",
+    "case_0529", "case_0632", "case_0678", "case_0390", "case_0762", "case_0474",
+    "case_0505", "case_1147", "case_1198", "case_0528", "case_0756", "case_1148",
+    "case_0734", "case_1217", "case_1342", "case_1168", "case_1213", "case_1307",
+    "case_0552", "case_0864", "case_0405", "case_1375", "case_1419", "case_1501",
+    "case_0545", "case_1341", "case_1425", "case_0327", "case_0926", "case_1078",
+    "case_1135", "case_0300", "case_1293", "case_1348", "case_1555", "case_0321",
+    "case_1199",
+]
+
+[queries.labels]
+case_0284 = { grade = "관련", reason = "출처를 함께 주는 사내 도구 문서 RAG 챗봇" }
+case_0419 = { grade = "관련", reason = "프론트엔드 문서 RAG 챗봇" }
+case_0512 = { grade = "관련", reason = "Bedrock Knowledge Bases와 OpenSearch로 사내 문서 RAG 챗봇" }
+case_0513 = { grade = "관련", reason = "챗봇 검색 시 컴포넌트명 추출·오타 보정·메타데이터로 Retrieval 개선" }
+case_0529 = { grade = "관련", reason = "RAG 서버 직접 구현으로 교육 운영 정보 검색" }
+case_0545 = { grade = "관련", reason = "가이드와 과거 사례를 근거로 답하는 RAG 라이팅 툴" }
+case_0552 = { grade = "관련", reason = "서포트 채널 질문-답변을 구조화하고 단계적 검색·자동 평가" }
+case_0942 = { grade = "관련", reason = "Bedrock 기반 사내 문서 RAG 봇" }
+case_1198 = { grade = "관련", reason = "파인 튜닝 대신 RAG 선택" }
+case_1199 = { grade = "관련", reason = "청킹 대신 문서 통째 임베딩 후 검색 후 자르기 (풀 밖에서 추가)" }
+case_1213 = { grade = "관련", reason = "필요한 정보만 단계적으로 주는 컨텍스트 엔지니어링" }
+case_1249 = { grade = "관련", reason = "사내 위키·Slack 스레드를 검색하는 RAG 문의 봇" }
+case_1348 = { grade = "관련", reason = "LLM Wiki와 RAG 혼합으로 도메인 지식 제공" }
+case_0300 = { grade = "일부 관련", reason = "RAG를 검색 플랫폼으로 제품화" }
+case_0405 = { grade = "일부 관련", reason = "llms.txt 문서를 BM25로 검색하는 MCP 서버" }
+case_0632 = { grade = "일부 관련", reason = "Text-to-SQL의 검색·평가 시스템" }
+case_0659 = { grade = "일부 관련", reason = "질문-대표질문 유사도 기반 챗봇 (RAG 이전 방식)" }
+case_1147 = { grade = "일부 관련", reason = "보안 상담 근거 수집 멀티 에이전트" }
+case_1148 = { grade = "일부 관련", reason = "검색 에이전트가 근거 패킷을 만들고 검증 에이전트가 확인" }
+case_1168 = { grade = "일부 관련", reason = "코딩 에이전트용 벡터 DB RAG" }
+case_1227 = { grade = "일부 관련", reason = "RAG의 임베딩 보안" }
+
+[[queries]]
+id = "d03"
+query = "외부 PG사 결제 장애 대응"
+source = "데이터"
+note = "장애 대응·복구 + 도메인 필터"
+domain = "결제·금융"
+judged = [
+    "case_0670", "case_0330", "case_0669", "case_1519", "case_0328", "case_0374",
+    "case_0381", "case_0382", "case_1432", "case_0440", "case_0530", "case_0904",
+    "case_1019", "case_1022", "case_0380", "case_1001", "case_0391", "case_0392",
+    "case_0525", "case_1244", "case_1550", "case_0372", "case_0384", "case_1386",
+    "case_1398", "case_1471", "case_0375", "case_0851", "case_1015", "case_0409",
+    "case_0967", "case_1572", "case_0589", "case_0965", "case_0972", "case_0359",
+    "case_0439", "case_0383", "case_0405", "case_0966", "case_1243", "case_1389",
+    "case_1549", "case_0371", "case_0441", "case_0694", "case_0369", "case_0453",
+    "case_0588", "case_0995", "case_1000", "case_0438", "case_0542", "case_0961",
+    "case_1023", "case_1393", "case_0447", "case_0977", "case_1025", "case_1466",
+    "case_0477", "case_1044", "case_1380", "case_1473", "case_0354", "case_0959",
+    "case_1364", "case_0399", "case_0448", "case_0621", "case_1558",
+]
+
+[queries.labels]
+case_0669 = { grade = "관련", reason = "결제 로그 모니터링과 알림으로 결제 장애 인지" }
+case_0670 = { grade = "관련", reason = "장애 결제수단 비활성화, PG 배분율 조정" }
+case_1432 = { grade = "관련", reason = "카드별 승인 경로 자동 분기와 장애 우회" }
+case_1550 = { grade = "관련", reason = "세일 기간 결제 성공률 모니터링과 장애 대응" }
+case_0383 = { grade = "일부 관련", reason = "결제 신규 시스템 Canary 전환" }
+case_0392 = { grade = "일부 관련", reason = "결제 시스템 고가용성 인프라" }
+case_0409 = { grade = "일부 관련", reason = "제휴사 장애 시에도 테스트할 mock 서버" }
+case_0448 = { grade = "일부 관련", reason = "외부 브로커 부하를 RateLimiter로 제어" }
+case_0530 = { grade = "일부 관련", reason = "서비스 지표 기반 장애 탐지" }
+case_0851 = { grade = "일부 관련", reason = "장애 대응 프로세스와 역할" }
+case_0904 = { grade = "일부 관련", reason = "장애 자동 감지와 서비스 상태 가시화" }
+
+[[queries]]
+id = "d04"
+query = "대규모 메트릭 수집 시계열 데이터베이스 운영"
+source = "데이터"
+note = "모니터링·관측성"
+judged = [
+    "case_1041", "case_1125", "case_0785", "case_0896", "case_1042", "case_1124",
+    "case_1263", "case_0583", "case_0622", "case_0825", "case_1126", "case_1210",
+    "case_0445", "case_0877", "case_0430", "case_0576", "case_0989", "case_0497",
+    "case_0444", "case_0498", "case_0577", "case_0393", "case_0870", "case_1142",
+    "case_1582", "case_0367", "case_0434", "case_0491", "case_0990", "case_1294",
+    "case_0792", "case_1039", "case_1251", "case_0377", "case_0958", "case_1419",
+    "case_0938", "case_1040", "case_1427", "case_0327", "case_0539", "case_0683",
+    "case_1180", "case_0455", "case_0810", "case_0832", "case_0933", "case_0404",
+    "case_1340", "case_1465", "case_0360", "case_0578", "case_0849", "case_0339",
+    "case_0820", "case_0873", "case_1144", "case_1537", "case_0441", "case_0631",
+    "case_1010", "case_1367", "case_0768", "case_1431", "case_1038", "case_1211",
+    "case_0536",
+]
+
+[queries.labels]
+case_1038 = { grade = "관련", reason = "카디널리티 급증 쿼리를 분할해 처리" }
+case_1039 = { grade = "관련", reason = "유입량 급증에 indexDB 구조 분석과 Retention 조정" }
+case_1040 = { grade = "관련", reason = "비서비스 컨테이너를 수집에서 제외해 카디널리티 감소" }
+case_1041 = { grade = "관련", reason = "VictoriaMetrics Hot·Warm 클러스터로 대규모 메트릭 저장" }
+case_1042 = { grade = "관련", reason = "카디널리티 증가에 vmstorage 메모리 증설과 Tier별 설정" }
+case_1124 = { grade = "관련", reason = "수천만 시계열을 VictoriaMetrics Cluster로 운영" }
+case_1125 = { grade = "관련", reason = "접근 패턴별 VictoriaMetrics 멀티 클러스터 운영" }
+case_1126 = { grade = "관련", reason = "vmauth 라우팅 게이트웨이로 클러스터 운영 작업 무중단" }
+case_1210 = { grade = "관련", reason = "모니터링 데이터 증가로 자체 시계열 DB 엔진 개발" }
+case_1211 = { grade = "관련", reason = "가중치 부하 분산과 Cassandra·S3 계층형 저장소 (관측 플랫폼)" }
+case_0430 = { grade = "일부 관련", reason = "Kafka 메트릭을 ClickHouse에 장기 저장" }
+case_0497 = { grade = "일부 관련", reason = "대규모 로그의 Elasticsearch hot-warm (메트릭이 아닌 로그)" }
+case_0536 = { grade = "일부 관련", reason = "100만 TPS 로그 시스템 오토스케일링 (로그)" }
+case_0785 = { grade = "일부 관련", reason = "Next.js SSR 프로세스 지표 수집 파이프라인 (Grafana TSDB)" }
+case_0825 = { grade = "일부 관련", reason = "Ingress Nginx Prometheus 메트릭 병목" }
+
+[[queries]]
+id = "d05"
+query = "쿠버네티스 파드 CPU 메모리 리소스 낭비 줄이기"
+source = "데이터"
+note = "인프라·컨테이너, 비용 절감"
+judged = [
+    "case_1033", "case_1270", "case_1298", "case_1415", "case_1038", "case_1190",
+    "case_1271", "case_1295", "case_1327", "case_0435", "case_1088", "case_0604",
+    "case_1006", "case_1464", "case_1092", "case_0868", "case_1007", "case_1076",
+    "case_0592", "case_0886", "case_0958", "case_1414", "case_0901", "case_1032",
+    "case_0329", "case_0731", "case_1301", "case_1313", "case_1090", "case_1420",
+    "case_0425", "case_0719", "case_0936", "case_1416", "case_0406", "case_0536",
+    "case_1128", "case_0872", "case_1211", "case_0498", "case_0598", "case_1042",
+    "case_0343", "case_0869", "case_1091", "case_0842", "case_0704", "case_1105",
+    "case_1291", "case_0456", "case_0559",
+]
+
+[queries.labels]
+case_0604 = { grade = "관련", reason = "CPU·메모리 사용량 기반 인스턴스 Rightsizing 추천 (VM 인스턴스)" }
+case_0958 = { grade = "관련", reason = "k8s 서비스 메트릭으로 리소스·Replica 자동 조정" }
+case_1006 = { grade = "관련", reason = "자체 Resource Recommender로 k8s CPU·메모리 낭비 절감" }
+case_1007 = { grade = "관련", reason = "리소스 추천값을 namespace 기준으로 알림·적용" }
+case_1270 = { grade = "관련", reason = "Spring 서버의 CPU 상한 설정 제거 결정" }
+case_1271 = { grade = "관련", reason = "Node.js 서버는 CPU 상한 유지 결정" }
+case_0406 = { grade = "일부 관련", reason = "GPU를 MIG로 세분화해 밀도 있게 사용" }
+case_0536 = { grade = "일부 관련", reason = "KEDA로 로그 시스템 오토스케일링" }
+case_0559 = { grade = "일부 관련", reason = "서비스별 탄력성 지표로 Scale-in 최적화 (FinOps)" }
+case_0868 = { grade = "일부 관련", reason = "VM 밀도 테스트로 적정 VM 수 결정" }
+case_1076 = { grade = "일부 관련", reason = "Pod 리소스 설정과 cgroups 매핑 원리" }
+case_1190 = { grade = "일부 관련", reason = "Spark on Kubernetes 익스큐터 메모리 오버헤드 조정" }
+case_1415 = { grade = "일부 관련", reason = "Airflow 워커 자원 제한 정책" }
+
+[[queries]]
+id = "d06"
+query = "장애 발생 시 온콜 호출과 장애 채널 생성 자동화"
+source = "데이터"
+note = "업무·운영 자동화"
+judged = [
+    "case_0769", "case_0848", "case_1145", "case_1558", "case_0530", "case_1434",
+    "case_1472", "case_1065", "case_0523", "case_0847", "case_1474", "case_1550",
+    "case_0851", "case_1050", "case_1475", "case_0692", "case_1338", "case_1473",
+    "case_0845", "case_1449", "case_1169", "case_1282", "case_0414", "case_0993",
+    "case_0543", "case_0767", "case_0932", "case_1163", "case_1540", "case_0449",
+    "case_0904", "case_1060", "case_1314", "case_1402", "case_1440", "case_0852",
+    "case_1406", "case_1444", "case_0346", "case_1549", "case_0850", "case_1205",
+    "case_1419", "case_1471", "case_1515", "case_1236", "case_1507", "case_1547",
+    "case_0842", "case_1151", "case_1301", "case_1470", "case_1110", "case_1514",
+    "case_0494", "case_1208", "case_1315", "case_1469", "case_0358", "case_0441",
+    "case_0670",
+]
+
+[queries.labels]
+case_0769 = { grade = "관련", reason = "AI 온콜이 인시던트 담당자 알림 수행" }
+case_0904 = { grade = "관련", reason = "장애 자동 감지 후 담당자 호출·장애 채널 연계" }
+case_1282 = { grade = "관련", reason = "Playwright 관제와 Jira·Slack 연계 장애 티켓·알림" }
+case_1472 = { grade = "관련", reason = "서버리스 온콜 시스템 구축 (팀별 온콜 대상 관리)" }
+case_1473 = { grade = "관련", reason = "온콜 트리거 이메일 화이트리스트" }
+case_1474 = { grade = "관련", reason = "온콜 동시 발신의 API 호출 제한 대응" }
+case_1475 = { grade = "관련", reason = "온콜 시스템 문서화와 조직 확산" }
+case_1558 = { grade = "관련", reason = "Lambda로 인시던트 채널 생성·Jira 티켓·온콜 웹훅 호출 자동화" }
+case_0449 = { grade = "일부 관련", reason = "브로커 이상 자동 감지와 대응" }
+case_0523 = { grade = "일부 관련", reason = "장애 관리 라이프사이클 정의" }
+case_0530 = { grade = "일부 관련", reason = "서비스 지표 기반 장애 탐지" }
+case_0767 = { grade = "일부 관련", reason = "인시던트 알람에 원인·조치 방안 포함" }
+case_0851 = { grade = "일부 관련", reason = "장애 대응 단계와 역할" }
+case_1145 = { grade = "일부 관련", reason = "장애 원인 분석 결과 Slack 보고 자동화" }
+case_1338 = { grade = "일부 관련", reason = "ChatOps로 일감 등록 자동화" }
+case_1434 = { grade = "일부 관련", reason = "Datadog Workflow 장애 자동 분석" }
+
+[[queries]]
+id = "d07"
+query = "CDC로 운영 DB 변경 데이터를 실시간으로 다른 저장소에 동기화"
+source = "데이터"
+note = "데이터 파이프라인, 데이터 정합성 (긴 검색어)"
+judged = [
+    "case_0454", "case_0866", "case_1003", "case_1059", "case_1568", "case_0877",
+    "case_1194", "case_1461", "case_0873", "case_1434", "case_0455", "case_1002",
+    "case_1581", "case_0445", "case_0378", "case_0820", "case_0870", "case_1387",
+    "case_0794", "case_1462", "case_0452", "case_0741", "case_0808", "case_1130",
+    "case_0450", "case_0879", "case_1296", "case_0444", "case_0792", "case_1518",
+    "case_1591", "case_1187", "case_1250", "case_1504", "case_0433", "case_0878",
+    "case_1294", "case_1593", "case_0393", "case_0784", "case_0374", "case_0428",
+    "case_0373", "case_1058", "case_1062", "case_0453", "case_1465", "case_0622",
+    "case_0874", "case_0385", "case_1188", "case_1428", "case_1193",
+]
+
+[queries.labels]
+case_0378 = { grade = "관련", reason = "CDC 기반으로 원장 테이블을 StarRocks에 동기화" }
+case_0385 = { grade = "관련", reason = "CDC 환경의 Iceberg 연속 Update/Delete 처리" }
+case_0444 = { grade = "관련", reason = "CDC 파이프라인 단계별 지연 측정" }
+case_0445 = { grade = "관련", reason = "대규모 테이블 CDC 최초 적재를 Sqoop으로" }
+case_0454 = { grade = "관련", reason = "CDC로 원천 DB를 KTable로 유지해 주문 스트림과 조인" }
+case_0455 = { grade = "관련", reason = "MongoDB CDC로 KTable을 만들어 실시간 결합" }
+case_0741 = { grade = "관련", reason = "Debezium PostgreSQL CDC로 Elasticsearch 동기화" }
+case_0808 = { grade = "관련", reason = "Flink CDC로 MySQL을 Iceberg에 UPSERT" }
+case_0820 = { grade = "관련", reason = "Flink CDC로 MySQL 간 CDC 구축 (글 모음 요약)" }
+case_0866 = { grade = "관련", reason = "Flink CDC로 MySQL 변경을 Iceberg에 적재" }
+case_0870 = { grade = "관련", reason = "Flink CDC로 MySQL 변화분을 Iceberg에 실시간 반영" }
+case_0873 = { grade = "관련", reason = "Flink CDC 증분 스냅샷 병렬 처리" }
+case_0874 = { grade = "관련", reason = "Flink CDC 스냅샷·빈로그 단계 전환" }
+case_0877 = { grade = "관련", reason = "Flink CDC 증분 스냅샷으로 별도 DB에 실시간 복제" }
+case_0878 = { grade = "관련", reason = "Flink CDC 단계별 토픽·병렬성 분리" }
+case_0879 = { grade = "관련", reason = "Flink CDC 청크 키 문제 해결" }
+case_1002 = { grade = "관련", reason = "Debezium·Kafka로 Oracle→MongoDB CDC" }
+case_1003 = { grade = "관련", reason = "Oracle→MongoDB CDC 파이프라인의 초기 적재" }
+case_1058 = { grade = "관련", reason = "Flink 기반 복제·검증과 복구 모듈 분리" }
+case_1059 = { grade = "관련", reason = "Flink JdbcSink 확장으로 CDC 복제 처리량 확보" }
+case_1130 = { grade = "관련", reason = "CDC 기반 트랜잭션 로그 테일링으로 주문 메시지 발행" }
+case_1187 = { grade = "관련", reason = "실시간 CDC와 보정 데이터 순서를 Flink로 처리" }
+case_1294 = { grade = "관련", reason = "ETL 적재 후 MySQL CDC로 변경분 반영해 MongoDB로 이전" }
+case_1296 = { grade = "관련", reason = "Headless CMS 변경 데이터 캡처 설계" }
+case_1387 = { grade = "관련", reason = "Kafka Connect JDBC 소스 커넥터 쿼리 기반 CDC" }
+case_1461 = { grade = "관련", reason = "ODI 배치를 OGG CDC + Kafka 실시간 스트리밍으로 전환" }
+case_1462 = { grade = "관련", reason = "CDC 전환에서 토픽 간 순서 문제를 Retry·DLT로 보완" }
+case_1518 = { grade = "관련", reason = "Monstache로 DocumentDB 변경을 OpenSearch에 실시간 동기화" }
+case_1568 = { grade = "관련", reason = "Debezium CDC와 MSK Connect로 상품 데이터 파이프라인" }
+case_1581 = { grade = "관련", reason = "MSK Connect CDC로 데이터를 실시간 추출" }
+case_0373 = { grade = "일부 관련", reason = "신규 원장에 비동기 적재와 재적재 배치 (CDC 아님)" }
+case_0792 = { grade = "일부 관련", reason = "CDC 정합성 검사 조회 모드" }
+case_0794 = { grade = "일부 관련", reason = "CDC 정합성 검사 Spark 잡" }
+case_1188 = { grade = "일부 관련", reason = "CDC 업데이트로 Iceberg 파일 재작성 부하" }
+case_1193 = { grade = "일부 관련", reason = "CDC로 신구 API 응답 비교 검증" }
+case_1194 = { grade = "일부 관련", reason = "CDC 이벤트로 신규 통계 로직 검증" }
+case_1428 = { grade = "일부 관련", reason = "CDC와 Kafka로 발송 워커 교체" }
+case_1465 = { grade = "일부 관련", reason = "OGG·MSK로 재고 변경 이벤트 실시간 처리" }
+
+[[queries]]
+id = "d08"
+query = "데이터 레이크 테이블 포맷 도입과 운영"
+source = "데이터"
+note = "데이터 파이프라인 + 기술 필터"
+technologies = ["Iceberg"]
+judged = [
+    "case_0428", "case_0830", "case_1084", "case_1523", "case_0870", "case_0896",
+    "case_1055", "case_0786", "case_0871", "case_0879", "case_1066", "case_0577",
+    "case_0808", "case_0832", "case_0793", "case_0810", "case_0820", "case_0866",
+    "case_1243", "case_1440", "case_0547", "case_1003", "case_1186", "case_1404",
+    "case_0520", "case_0622", "case_1062", "case_1187", "case_1578", "case_0631",
+    "case_0767", "case_0831", "case_1125", "case_0404", "case_0938", "case_0990",
+    "case_1465", "case_1575", "case_0359", "case_0582", "case_0867", "case_1140",
+    "case_1568", "case_0409", "case_0948", "case_0989", "case_1188", "case_1428",
+    "case_0578", "case_0971", "case_1330", "case_0601", "case_0809", "case_1126",
+    "case_1210", "case_1340", "case_0877", "case_0897", "case_0983", "case_1172",
+    "case_1194", "case_1328", "case_1560", "case_1582", "case_0402", "case_0413",
+    "case_0545", "case_0378", "case_0709", "case_0784", "case_1361", "case_1462",
+    "case_0385", "case_1189", "case_1449", "case_0950", "case_1158", "case_1579",
+]
+
+[queries.labels]
+case_0385 = { grade = "관련", reason = "CDC 환경 Iceberg Position Delete" }
+case_0428 = { grade = "관련", reason = "데이터레이크에 Iceberg 도입과 입수 자동화" }
+case_0808 = { grade = "관련", reason = "Iceberg UPSERT 운영" }
+case_0809 = { grade = "관련", reason = "형식이 다른 서버 로그를 Iceberg에 적재" }
+case_0810 = { grade = "관련", reason = "Iceberg 메타데이터로 스몰 파일 증상 감지" }
+case_0830 = { grade = "관련", reason = "로그 유형별 Iceberg 적재 전략" }
+case_0831 = { grade = "관련", reason = "서버 로그를 Iceberg APPEND로 적재" }
+case_0832 = { grade = "관련", reason = "Iceberg 스몰 파일·파티션 운영 모니터링" }
+case_0866 = { grade = "관련", reason = "Flink CDC로 Iceberg 적재" }
+case_0867 = { grade = "관련", reason = "샤드 번호 identity 파티션 설계" }
+case_0870 = { grade = "관련", reason = "Flink CDC로 Iceberg 테이블 실시간 반영" }
+case_0871 = { grade = "관련", reason = "샤딩 테이블 통합 Iceberg 테스트와 커밋 충돌" }
+case_1062 = { grade = "관련", reason = "Flink + Apache Paimon으로 실시간 테이블 (다른 테이블 포맷 선택)" }
+case_1084 = { grade = "관련", reason = "장기 보관 로그를 Iceberg에 저장" }
+case_1186 = { grade = "관련", reason = "Hive에서 Iceberg로 전환해 행 단위 upsert" }
+case_1187 = { grade = "관련", reason = "Iceberg 커밋과 CDC 순서 처리" }
+case_1188 = { grade = "관련", reason = "Iceberg rewrite_data_files 운영 부하 대응" }
+case_0786 = { grade = "일부 관련", reason = "CDC 파이프라인 정합성 검사 설계" }
+case_0793 = { grade = "일부 관련", reason = "Iceberg 테이블 정합성 검사 조회 방식" }
+case_0820 = { grade = "일부 관련", reason = "Flink CDC 경험 (글 모음 요약)" }
+case_1066 = { grade = "일부 관련", reason = "StarRocks OLAP 도입" }
+
+[[queries]]
+id = "d09"
+query = "외부 시스템 연동 장애 전파 차단 서킷브레이커"
+source = "데이터"
+note = "API 설계·외부 연동"
+judged = [
+    "case_0668", "case_1238", "case_0780", "case_1455", "case_1507", "case_1572",
+    "case_0347", "case_0449", "case_0546", "case_1452", "case_1472", "case_0348",
+    "case_1235", "case_1544", "case_1558", "case_0555", "case_0841", "case_1001",
+    "case_1110", "case_0669", "case_1398", "case_1400", "case_1505", "case_1596",
+    "case_0686", "case_0694", "case_1022", "case_1060", "case_1113", "case_1142",
+    "case_0730", "case_1324", "case_1377", "case_1584", "case_0731", "case_1471",
+    "case_0479", "case_0588", "case_1469", "case_0350", "case_0448", "case_1372",
+    "case_1379", "case_0598", "case_0842", "case_1166", "case_0589", "case_0692",
+    "case_1178", "case_1490", "case_1503", "case_0311", "case_0758", "case_0374",
+    "case_0530", "case_0993", "case_1473", "case_1109", "case_1450", "case_0767",
+    "case_1442", "case_1221", "case_1012",
+]
+
+[queries.labels]
+case_0668 = { grade = "관련", reason = "공통플랫폼 동기 연동에 Resilience4j 서킷브레이커 적용" }
+case_1060 = { grade = "관련", reason = "Target DB 오류 연속 시 서킷을 열고 DLQ로" }
+case_1221 = { grade = "관련", reason = "엔드포인트별 서킷 브레이커와 재시도 인식 로드 밸런서 (풀 밖에서 추가)" }
+case_1455 = { grade = "관련", reason = "외부 인증 서버 호출에 Circuit Breaker·TimeLimiter·Retry" }
+case_1584 = { grade = "관련", reason = "여러 저장소·외부 시스템 장애가 홈으로 전파되지 않게 fallback과 CircuitBreaker" }
+case_1596 = { grade = "관련", reason = "Redis 통신 실패에 CircuitBreaker와 Retry로 장애 전파 방지" }
+case_0448 = { grade = "일부 관련", reason = "외부 브로커 부하를 RateLimiter로 제어" }
+case_1012 = { grade = "일부 관련", reason = "HTTP 클라이언트 실패 처리 설계 (풀 밖에서 추가)" }
+case_1109 = { grade = "일부 관련", reason = "카오스 엔지니어링으로 SPOF 분석" }
+case_1110 = { grade = "일부 관련", reason = "Toxiproxy로 외부 인프라 장애 주입" }
+case_1450 = { grade = "일부 관련", reason = "인프라 차단 카오스 테스트" }
+case_1452 = { grade = "일부 관련", reason = "MSA 전환 후 DB 장애 시 가격 정보 방어 처리" }
+case_1469 = { grade = "일부 관련", reason = "배달대행사 API 일시 오류 재시도와 중복 접수 처리" }
+
+[[queries]]
+id = "d10"
+query = "느린 조회 쿼리 개선과 인덱스 설계"
+source = "데이터"
+note = "DB 성능·쿼리 최적화"
+judged = [
+    "case_0620", "case_1015", "case_1041", "case_1201", "case_1301", "case_0497",
+    "case_0616", "case_0628", "case_1119", "case_0619", "case_1073", "case_1122",
+    "case_1431", "case_0618", "case_1064", "case_1522", "case_0371", "case_0617",
+    "case_1252", "case_0365", "case_1003", "case_1465", "case_0378", "case_0593",
+    "case_0793", "case_0504", "case_0622", "case_0679", "case_0377", "case_0627",
+    "case_1077", "case_0692", "case_0794", "case_1105", "case_1427", "case_0896",
+    "case_0911", "case_0970", "case_1254", "case_0890", "case_1037", "case_1136",
+    "case_1348", "case_0533", "case_0641", "case_0898", "case_0581", "case_0690",
+    "case_0973", "case_0990", "case_0712", "case_1532", "case_0547", "case_0829",
+    "case_1407", "case_0633", "case_0897", "case_1049", "case_1495", "case_0933",
+    "case_1175", "case_1307", "case_0635", "case_1206", "case_1039", "case_1101",
+    "case_1104", "case_0450",
+]
+
+[queries.labels]
+case_0616 = { grade = "관련", reason = "ES 필드 타입(keyword·numeric)을 검색 방식에 맞게 설계해 응답 개선" }
+case_0690 = { grade = "관련", reason = "개별 조회를 일괄 조회로 바꿔 배치 10배 개선" }
+case_0896 = { grade = "관련", reason = "대량 조회에서 Count 쿼리 분리·Slice 사용" }
+case_1049 = { grade = "관련", reason = "Index Merge 대신 풀스캔 되는 OR 쿼리를 UNION으로 개선" }
+case_1064 = { grade = "관련", reason = "바인딩 타입 고정으로 Oracle child cursor 폭증과 지연 해결" }
+case_1201 = { grade = "관련", reason = "MySQL 함수형 인덱스로 비트 연산 슬로우 쿼리 해결" }
+case_0377 = { grade = "일부 관련", reason = "검색 필드를 Elasticsearch에 위임해 대량 데이터 조회" }
+case_0450 = { grade = "일부 관련", reason = "날짜 파티션과 MongoDB 분리로 조회 병목 해소 (풀 밖에서 추가)" }
+case_0617 = { grade = "일부 관련", reason = "ES function_score 범위를 filter로 줄임" }
+case_0618 = { grade = "일부 관련", reason = "ES painless 점수 계산을 쿼리 단계로 이동" }
+case_0619 = { grade = "일부 관련", reason = "ES 정렬 스크립트 제거로 CPU 절감" }
+case_0890 = { grade = "일부 관련", reason = "MongoDB $lookup 집계로 연관 조회" }
+case_0990 = { grade = "일부 관련", reason = "느린 통계 쿼리를 Hadoop 조회로 대체" }
+case_1015 = { grade = "일부 관련", reason = "캐시로 DB 조회 QPS 감소" }
+case_1252 = { grade = "일부 관련", reason = "벡터 검색 인덱스 유형 비교" }
+case_1407 = { grade = "일부 관련", reason = "읽기 전용 트랜잭션과 Master/Slave 조회" }
+case_1522 = { grade = "일부 관련", reason = "CQRS로 조회 쿼리 분리" }
+
+[[queries]]
+id = "d11"
+query = "제로트러스트 사내 접근 제어"
+source = "데이터"
+note = "인증·보안 (짧은 검색어)"
+judged = [
+    "case_0350", "case_0728", "case_0492", "case_1149", "case_1580", "case_1586",
+    "case_0519", "case_0525", "case_1046", "case_1166", "case_0348", "case_0804",
+    "case_1067", "case_1379", "case_0399", "case_1226", "case_1232", "case_0512",
+    "case_0557", "case_1224", "case_1241", "case_1422", "case_0729", "case_0758",
+    "case_1200", "case_1363", "case_0415", "case_0491", "case_0813", "case_0931",
+    "case_1364", "case_0854", "case_1225", "case_1343", "case_1504", "case_0696",
+    "case_1227", "case_1310", "case_0349", "case_0602", "case_0955", "case_1014",
+    "case_1060", "case_0461", "case_0975", "case_1081", "case_1454", "case_0347",
+    "case_0413", "case_0835", "case_0390", "case_0814", "case_0319", "case_1144",
+    "case_1386", "case_0529", "case_0627", "case_0702", "case_1460", "case_0622",
+    "case_0733", "case_0398", "case_0488", "case_1131", "case_0691", "case_0695",
+    "case_0732", "case_1219", "case_1474", "case_0621", "case_0892", "case_0942",
+    "case_1305",
+]
+
+[queries.labels]
+case_0350 = { grade = "관련", reason = "ZTNA 중심 접근 통제로 제로트러스트 적용" }
+case_0492 = { grade = "관련", reason = "IAM·SASE·ZTNA·UEM 연계 제로트러스트 아키텍처 도입" }
+case_0347 = { grade = "일부 관련", reason = "IDC·AWS 하이브리드 보안 체계 (같은 글, 제로트러스트 이전 단계)" }
+case_0348 = { grade = "일부 관련", reason = "내부망 침투 대비 Wazuh 도입 (같은 글)" }
+case_0349 = { grade = "일부 관련", reason = "컨테이너 런타임 보안 Falco (같은 글)" }
+case_1046 = { grade = "일부 관련", reason = "AI 도구 접근 전 인증·인가 경계" }
+case_1166 = { grade = "일부 관련", reason = "AI 에이전트 인가 아키텍처" }
+case_1226 = { grade = "일부 관련", reason = "AI 에이전트 접근 범위 제한" }
+case_1364 = { grade = "일부 관련", reason = "Rundeck ACL로 역할별 권한 분리" }
+case_1460 = { grade = "일부 관련", reason = "권한별 보안 방식 분리" }
+
+[[queries]]
+id = "d12"
+query = "웹 페이지 초기 로딩 속도 측정과 개선"
+source = "데이터"
+note = "클라이언트 성능(웹·앱)"
+judged = [
+    "case_0836", "case_1119", "case_1120", "case_1597", "case_0596", "case_1073",
+    "case_1077", "case_0540", "case_1115", "case_0835", "case_1482", "case_0645",
+    "case_1037", "case_1074", "case_1011", "case_1097", "case_1476", "case_1517",
+    "case_1588", "case_0297", "case_0817", "case_1036", "case_1532", "case_0493",
+    "case_0570", "case_0288", "case_0599", "case_0818", "case_0826", "case_0471",
+    "case_0837", "case_1016", "case_0334", "case_0734", "case_1583", "case_1075",
+    "case_0479", "case_1079", "case_0827", "case_0384", "case_1417", "case_1492",
+    "case_1543", "case_0412", "case_1128", "case_0365", "case_1108", "case_1495",
+    "case_1548", "case_0488",
+]
+
+[queries.labels]
+case_0599 = { grade = "관련", reason = "보이지 않는 이미지 다운로드를 지연 렌더링으로 제거" }
+case_0835 = { grade = "관련", reason = "라우팅 전 데이터 프리로드로 렌더링 시점 일치" }
+case_0836 = { grade = "관련", reason = "초기 화면 차트만 우선 렌더링하고 나머지는 지연" }
+case_1011 = { grade = "관련", reason = "Suspense 워터폴을 prefetch로 해결" }
+case_1037 = { grade = "관련", reason = "AIB 노출 증가에 따른 LCP 변화와 측정 기준" }
+case_1073 = { grade = "관련", reason = "피드 콘텐츠 인지 속도 지표 도입" }
+case_1074 = { grade = "관련", reason = "이미지를 img 태그로 바꿔 LCP 개선" }
+case_1115 = { grade = "관련", reason = "web-vitals로 LCP 필드 데이터 수집" }
+case_1119 = { grade = "관련", reason = "웹 성능 변화 구간 비교 모니터링" }
+case_1120 = { grade = "관련", reason = "JavaScript 로딩을 DCL 이후로 당겨 초기 로딩 개선" }
+case_1597 = { grade = "관련", reason = "코드 스플리팅·번들 분리로 백오피스 로딩 개선" }
+case_0412 = { grade = "일부 관련", reason = "애셋 WebP 교체와 사전 로드" }
+case_0493 = { grade = "일부 관련", reason = "React.lazy 청크 로딩 실패 대응" }
+case_0817 = { grade = "일부 관련", reason = "Angular 웹 성능 개선 (글 모음 요약)" }
+case_0826 = { grade = "일부 관련", reason = "가상 스크롤로 DOM 감소 (초기 로딩 아님)" }
+case_1016 = { grade = "일부 관련", reason = "SSG 기술 블로그" }
+case_1075 = { grade = "일부 관련", reason = "애니메이션 끊김 개선" }
+case_1476 = { grade = "일부 관련", reason = "모듈 페더레이션 프론트엔드 아키텍처" }
+
+[[queries]]
+id = "d13"
+query = "모노레포 CI 빌드 시간 단축"
+source = "데이터"
+note = "배포·CI/CD + 문제 유형 필터"
+problem_type = "배포·CI/CD"
+judged = [
+    "case_0456", "case_0457", "case_1454", "case_0302", "case_1276", "case_1420",
+    "case_1423", "case_0494", "case_0765", "case_0893", "case_0568", "case_0675",
+    "case_0676", "case_1373", "case_0458", "case_0306", "case_0442", "case_0473",
+    "case_0536", "case_0613", "case_1507", "case_1538", "case_0459", "case_0519",
+    "case_0690", "case_0699", "case_1014", "case_1476", "case_0449", "case_1151",
+    "case_1155", "case_0305", "case_0417", "case_0518", "case_0565", "case_0887",
+    "case_1311", "case_1402", "case_1516", "case_0405", "case_0597", "case_0626",
+    "case_1478", "case_1482", "case_0384", "case_0391", "case_0680", "case_1401",
+    "case_1496", "case_0291", "case_0464", "case_0746", "case_0841", "case_1310",
+    "case_1361", "case_1367", "case_0692", "case_0768", "case_1011", "case_1070",
+    "case_1433", "case_1443", "case_1557", "case_0538", "case_0564", "case_0836",
+    "case_1005", "case_1153", "case_0495", "case_0646", "case_1418", "case_1459",
+    "case_1597", "case_0340", "case_0355", "case_0744", "case_1165", "case_1453",
+    "case_1584", "case_0445", "case_0935", "case_1120", "case_1239", "case_1442",
+    "case_1564", "case_0865", "case_1072", "case_1154", "case_1287", "case_1461",
+    "case_1486", "case_0426", "case_0539", "case_0984", "case_1071", "case_1383",
+    "case_0369", "case_0451", "case_0701", "case_1359", "case_1487", "case_1575",
+]
+
+[queries.labels]
+case_0456 = { grade = "관련", reason = "모노레포 서비스별 동적 파이프라인으로 빌드 병렬화" }
+case_0457 = { grade = "관련", reason = "40GB 모노레포 checkout을 미리 구운 이미지로 단축" }
+case_0458 = { grade = "관련", reason = "Yarn PnP로 SSR Docker 이미지 축소해 빌드·배포 단축" }
+case_0473 = { grade = "관련", reason = "React Native 번들러를 ESBuild로 바꿔 빌드 시간 단축" }
+case_0676 = { grade = "관련", reason = "패키지별 Vite 빌드와 Turborepo Task Dependencies" }
+case_0744 = { grade = "관련", reason = "빌드 도구를 Vite로 교체" }
+case_0893 = { grade = "관련", reason = "레포 규모 증가로 Yarn Berry에서 pnpm으로 전환" }
+case_1373 = { grade = "관련", reason = "CI 빌드 OOM을 계기로 Webpack4를 Vite로 전환" }
+case_0302 = { grade = "일부 관련", reason = "모노리포 라이브러리 버전 카탈로그" }
+case_0442 = { grade = "일부 관련", reason = "모노레포 라이브러리 배포 파이프라인 플러그인" }
+case_0675 = { grade = "일부 관련", reason = "멀티레포를 모노레포로 통합" }
+case_1276 = { grade = "일부 관련", reason = "CI 빌드 실패 원인 분석" }
+case_1359 = { grade = "일부 관련", reason = "Nx·Bun 마이그레이션 빌드 문제" }
+case_1557 = { grade = "일부 관련", reason = "Next.js Docker 이미지 경량화" }
+
+[[queries]]
+id = "d14"
+query = "테스트 코드 작성 전략과 테스트 데이터 픽스처 관리"
+source = "데이터"
+note = "테스트 자동화"
+judged = [
+    "case_0432", "case_0644", "case_0982", "case_1565", "case_0771", "case_0937",
+    "case_0997", "case_0465", "case_0710", "case_0315", "case_0709", "case_0313",
+    "case_1220", "case_0438", "case_0671", "case_0679", "case_1272", "case_0333",
+    "case_0762", "case_0368", "case_0531", "case_0586", "case_1159", "case_0786",
+    "case_1178", "case_1430", "case_0286", "case_0396", "case_0541", "case_1313",
+    "case_0833", "case_1070", "case_1460", "case_0897", "case_0544", "case_0577",
+    "case_0716", "case_0862", "case_1489", "case_0317", "case_0555", "case_0626",
+    "case_0892", "case_0772", "case_1001", "case_1071", "case_1107", "case_1264",
+    "case_1490", "case_1160", "case_1323", "case_0500", "case_0578", "case_0602",
+    "case_0977", "case_1576",
+]
+
+[queries.labels]
+case_0432 = { grade = "관련", reason = "가치 있는 테스트를 골라 작성하는 전략" }
+case_0465 = { grade = "관련", reason = "리팩토링에 깨지지 않는 테스트 구조" }
+case_0644 = { grade = "관련", reason = "프론트엔드 단위 테스트 시나리오 작성" }
+case_0679 = { grade = "관련", reason = "격리 수준에 따라 협동·단독 테스트 선택" }
+case_0937 = { grade = "관련", reason = "DomainFixture로 공통 테스트 데이터 재활용" }
+case_0982 = { grade = "관련", reason = "요청 데이터를 JSON 파일로 관리해 테스트 셋업 단순화" }
+case_0997 = { grade = "관련", reason = "실무 TDD 사이클" }
+case_1001 = { grade = "관련", reason = "필요성이 높은 범위에 집중한 단위·통합 테스트" }
+case_1264 = { grade = "관련", reason = "내부 구현이 아닌 사양 기준 검증" }
+case_1565 = { grade = "관련", reason = "Fixture Monkey로 재사용 가능한 테스트 Fixture 생성" }
+case_0368 = { grade = "일부 관련", reason = "테스트용 계산 API로 전체 조합 검증" }
+case_0396 = { grade = "일부 관련", reason = "Mock 데이터 자동 생성·병합" }
+case_0531 = { grade = "일부 관련", reason = "AI로 테스트 템플릿 생성" }
+case_0602 = { grade = "일부 관련", reason = "MSW 목 데이터 프리셋 관리 GUI" }
+case_0626 = { grade = "일부 관련", reason = "ES 인덱스 분리로 병렬 테스트 격리" }
+case_0709 = { grade = "일부 관련", reason = "테스트에서 생성 값 통제" }
+case_0710 = { grade = "일부 관련", reason = "레거시 수정 전 인수 테스트" }
+case_0771 = { grade = "일부 관련", reason = "단위 테스트 자동 생성" }
+case_1576 = { grade = "일부 관련", reason = "UI 테스트 POM 구조" }
+
+[[queries]]
+id = "d15"
+query = "Oracle에서 MySQL로 무중단 DB 전환"
+source = "데이터"
+note = "DB 마이그레이션·샤딩, MSA 계열 레거시 전환"
+judged = [
+    "case_1047", "case_1048", "case_1049", "case_1058", "case_0454", "case_1312",
+    "case_1570", "case_1003", "case_1568", "case_1591", "case_0376", "case_1328",
+    "case_1329", "case_0373", "case_0404", "case_0520", "case_1002", "case_1294",
+    "case_1579", "case_0372", "case_0394", "case_0808", "case_1387", "case_0450",
+    "case_0691", "case_1064", "case_1392", "case_0374", "case_1431", "case_1465",
+    "case_0746", "case_1404", "case_0820", "case_1461", "case_1468", "case_0441",
+    "case_0747", "case_0784", "case_0830", "case_1243", "case_1458", "case_0787",
+    "case_1278", "case_1337",
+]
+
+[queries.labels]
+case_0376 = { grade = "관련", reason = "거래 승인 원장을 Oracle에서 MySQL로 이관하고 CQRS 도입" }
+case_1047 = { grade = "관련", reason = "Oracle·MySQL 이중 쓰기로 무중단 전환" }
+case_1048 = { grade = "관련", reason = "운영 Read 호출을 캡처해 MySQL에서 재실행 검증" }
+case_1049 = { grade = "관련", reason = "실행 계획 차이로 풀스캔 되는 쿼리 개선" }
+case_1328 = { grade = "관련", reason = "Oracle에서 MySQL로 이관하며 정규화·비정규화 테이블 병행" }
+case_1329 = { grade = "관련", reason = "MySQL 이관 시 하위 호환 자체 ID 생성" }
+case_0373 = { grade = "일부 관련", reason = "신규 원장 점진 적재와 재적재 배치" }
+case_0394 = { grade = "일부 관련", reason = "단일 Oracle 레거시 시스템 재작성" }
+case_1002 = { grade = "일부 관련", reason = "Oracle→MongoDB CDC 파이프라인" }
+case_1003 = { grade = "일부 관련", reason = "Oracle에서 MongoDB로 CDC 이전" }
+case_1064 = { grade = "일부 관련", reason = "CDC 복제 후 Oracle 지연 해결" }
+case_1243 = { grade = "일부 관련", reason = "결제 DB를 Vitess로 교체" }
+case_1294 = { grade = "일부 관련", reason = "MySQL에서 MongoDB로 대용량 이전" }
+case_1312 = { grade = "일부 관련", reason = "읽기 전용 방식으로 MySQL IDC 이전" }
+case_1468 = { grade = "일부 관련", reason = "PL/SQL 프로시저를 Java로 점진 이전" }
+case_1570 = { grade = "일부 관련", reason = "오라클 클라우드 전환 사전 점검" }
+
+# ---------- DB에 없는 주제 ----------
+
+[[queries]]
+id = "a01"
+query = "블록체인 스마트 컨트랙트 가스비 최적화"
+source = "없는 주제"
+judged = [
+    "case_1040", "case_1047", "case_1050", "case_1092", "case_1561", "case_0848",
+    "case_0958", "case_1039", "case_1049", "case_1051", "case_0457", "case_0458",
+    "case_0638", "case_0977", "case_0793", "case_1176", "case_1314", "case_0559",
+    "case_1048", "case_1065", "case_1597", "case_0375", "case_0498", "case_0966",
+    "case_1426", "case_0490", "case_1323", "case_1587", "case_0502", "case_0683",
+    "case_1324", "case_1533", "case_0406", "case_0412", "case_1430", "case_1534",
+    "case_0588", "case_0519", "case_0792", "case_1301", "case_0500", "case_0691",
+    "case_1100", "case_1449", "case_0289", "case_0340", "case_0563", "case_0737",
+    "case_0843", "case_0880", "case_1282", "case_0463", "case_0646", "case_1033",
+    "case_1546", "case_0484", "case_1007", "case_1038", "case_1362", "case_0366",
+    "case_0370", "case_0953", "case_1006", "case_1425", "case_0425", "case_0558",
+    "case_0807", "case_0508", "case_0296", "case_0835", "case_1151", "case_1440",
+]
+
+[[queries]]
+id = "a02"
+query = "Unity 멀티플레이 게임 서버 실시간 상태 동기화"
+source = "없는 주제"
+note = "흔한 단어(서버, 실시간, 동기화)가 많은 질문"
+judged = [
+    "case_0501", "case_0940", "case_1019", "case_0502", "case_0532", "case_0965",
+    "case_1298", "case_0507", "case_0533", "case_0596", "case_0714", "case_0311",
+    "case_0476", "case_0546", "case_0494", "case_0858", "case_0297", "case_0477",
+    "case_0587", "case_1584", "case_0303", "case_1108", "case_0950", "case_1421",
+    "case_0615", "case_0960", "case_1457", "case_0782", "case_0976", "case_1482",
+    "case_1518", "case_0332", "case_0975", "case_1568", "case_0304", "case_0826",
+    "case_0305", "case_0844", "case_0840", "case_1485", "case_0373", "case_0561",
+    "case_0841", "case_1222", "case_1491", "case_0700", "case_1290", "case_0842",
+    "case_1279", "case_1393", "case_1478", "case_0478", "case_0486", "case_0836",
+    "case_1162", "case_1269", "case_0995", "case_1455",
+]
+
+[queries.labels]
+case_0501 = { grade = "일부 관련", reason = "행사 게임에서 수천 명의 게임 상태를 SSE·Redis로 모든 Pod에 전파 (Unity·멀티플레이 서버는 아님)" }
+case_0532 = { grade = "일부 관련", reason = "서버가 입력 시퀀스로 게임을 재현해 점수 검증" }
+case_0533 = { grade = "일부 관련", reason = "행사 미니게임 동시 접속 랭킹 처리" }
+
+[[queries]]
+id = "a03"
+query = "IoT 기기 펌웨어 무선 업데이트 배포 전략"
+source = "없는 주제"
+note = "흔한 단어(배포, 전략, 업데이트)가 많은 질문"
+judged = [
+    "case_0546", "case_0862", "case_0899", "case_1072", "case_1444", "case_0865",
+    "case_1028", "case_1070", "case_0841", "case_1286", "case_1339", "case_0534",
+    "case_1478", "case_1547", "case_0309", "case_0666", "case_1564", "case_0627",
+    "case_0637", "case_0840", "case_1162", "case_0922", "case_1283", "case_1482",
+    "case_1491", "case_0291", "case_1161", "case_1311", "case_1473", "case_0348",
+    "case_1071", "case_0442", "case_0842", "case_0305", "case_0392", "case_1290",
+    "case_1454", "case_1480", "case_0464", "case_0917", "case_1160", "case_1176",
+    "case_0613", "case_1443", "case_1455", "case_0636", "case_0758", "case_0940",
+    "case_1538", "case_0827", "case_1202", "case_1442", "case_1459", "case_0535",
+    "case_1163", "case_1301", "case_1203", "case_1401", "case_0568", "case_1515",
+    "case_1536", "case_1324", "case_1475", "case_1489", "case_0302", "case_0311",
+    "case_0678", "case_0891", "case_1036", "case_1531",
+]
+
+[queries.labels]
+case_0636 = { grade = "일부 관련", reason = "로봇 엣지 디바이스를 k3s 노드로 관리" }
+case_0637 = { grade = "일부 관련", reason = "엣지 디바이스용 MLOps 파이프라인" }
+case_1444 = { grade = "일부 관련", reason = "매장 전자라벨 기기에 데이터 배포 (펌웨어 OTA는 아님)" }
+
+[[queries]]
+id = "a04"
+query = "COBOL 메인프레임 레거시를 자바로 전환"
+source = "없는 주제"
+note = "레거시 전환 글은 있으나 메인프레임·COBOL은 없음. 일부 관련 후보가 나올 수 있음"
+judged = [
+    "case_0382", "case_0394", "case_1100", "case_1521", "case_0381", "case_0384",
+    "case_1013", "case_1468", "case_0538", "case_0715", "case_1523", "case_0367",
+    "case_0553", "case_1087", "case_1392", "case_0368", "case_0591", "case_1287",
+    "case_1453", "case_0383", "case_0410", "case_0710", "case_1047", "case_0887",
+    "case_0391", "case_0413", "case_0691", "case_1428", "case_1445", "case_1049",
+    "case_1586", "case_1321", "case_1331", "case_1395", "case_1501", "case_1522",
+    "case_0460", "case_0631", "case_0711", "case_0364", "case_1346", "case_1373",
+    "case_0592", "case_1165", "case_1422", "case_1439", "case_0473", "case_0779",
+    "case_1048", "case_1337", "case_0728", "case_1288", "case_1289", "case_1454",
+    "case_1461", "case_0786", "case_0962", "case_1081", "case_1398", "case_0917",
+    "case_1444",
+]
+
+[queries.labels]
+case_0391 = { grade = "일부 관련", reason = "20년 레거시의 표준 빌드·인프라 전환" }
+case_0394 = { grade = "일부 관련", reason = "20년 된 레거시 결제 시스템 재작성" }
+case_0591 = { grade = "일부 관련", reason = "C++ 레거시 서버를 Java로 전환 (메인프레임·COBOL은 아님)" }
+case_0887 = { grade = "일부 관련", reason = "Strangler 패턴 Shadow 비교로 레거시 이전" }
+case_1287 = { grade = "일부 관련", reason = "레거시 도메인을 분리해 단계적 전환" }
+case_1288 = { grade = "일부 관련", reason = "레거시 쇄신 방법 (같은 글)" }
+case_1289 = { grade = "일부 관련", reason = "레거시 쇄신 방법 (같은 글)" }
+case_1468 = { grade = "일부 관련", reason = "PL/SQL 프로시저를 Java로 점진 이전" }
+case_1521 = { grade = "일부 관련", reason = "10년 레거시를 Java·Spring Boot로 현대화" }
+
+[[queries]]
+id = "a05"
+query = "Elixir Phoenix로 웹소켓 채팅 서버 구축"
+source = "없는 주제"
+note = "채팅·웹소켓 글은 있으나 Elixir는 없음. 일부 관련 후보가 나올 수 있음"
+judged = [
+    "case_0686", "case_0859", "case_1181", "case_1182", "case_1564", "case_0297",
+    "case_1138", "case_1150", "case_0507", "case_0659", "case_0858", "case_0544",
+    "case_0645", "case_0678", "case_0827", "case_1447", "case_0546", "case_0841",
+    "case_1433", "case_0910", "case_0925", "case_1100", "case_0417", "case_0540",
+    "case_0826", "case_0940", "case_0409", "case_0463", "case_0506", "case_0843",
+    "case_0927", "case_0501", "case_0505", "case_1093", "case_1597", "case_1292",
+    "case_1062", "case_1473", "case_1595", "case_0512", "case_0712", "case_0842",
+    "case_1242", "case_0767", "case_1260", "case_1532", "case_0332", "case_0478",
+    "case_0700", "case_0538", "case_1037", "case_1297", "case_1419", "case_0514",
+    "case_0535", "case_0840", "case_0493", "case_0769", "case_0782", "case_0828",
+]
+
+[queries.labels]
+case_0700 = { grade = "일부 관련", reason = "카카오톡 채팅 서버 스트레스 테스트" }
+case_0841 = { grade = "일부 관련", reason = "웹소켓 프레임 버퍼링으로 메시지 전송 최적화" }
+case_0858 = { grade = "일부 관련", reason = "Go 팬아웃 실시간 메시징 시스템" }
+case_1181 = { grade = "일부 관련", reason = "도메인에 의존하지 않는 채팅 플랫폼 (Elixir는 아님)" }
+case_1182 = { grade = "일부 관련", reason = "채팅 클라이언트를 웹으로 제공" }
