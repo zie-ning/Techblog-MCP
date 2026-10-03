@@ -3,9 +3,11 @@
     uv run python eval/search_experiments.py e1 e2 e4 e5
     uv run python eval/search_experiments.py e3  # 사용자 사전으로 임시 색인 빌드
     uv run python eval/search_experiments.py e6  # OpenAI 임베딩 (캐시 사용)
+    uv run python eval/search_experiments.py e7 e8  # LLM 문서 확장·질의 재작성 (캐시 사용)
 
-서버 코드는 바꾸지 않는다. 관련도 기준·글 묶기·하이브리드는 여기서 순위 목록을 가공해 흉내 내고,
-결정이 나면 서버에 옮긴다. 실험 설계는 docs/milestones/M5.md, 지표는 eval/search/README.md.
+서버 코드는 바꾸지 않는다. 관련도 기준·글 묶기·하이브리드·문서 확장·질의 재작성은
+여기서 순위 목록을 가공해 흉내 내고, 결정이 나면 서버에 옮긴다.
+실험 설계는 docs/milestones/M5.md, 지표는 eval/search/README.md.
 """
 
 import argparse
@@ -51,6 +53,7 @@ from techblog_mcp.search.schema import FTS_COLUMNS  # noqa: E402
 
 ALL = 100_000  # 걸린 항목 전체를 보려고 쓰는 깊이
 RRF_K = 60
+EXPANSION_COLUMN = "expansion"  # E7 문서 확장 열
 
 # ---------- 공통 준비물 ----------
 
@@ -58,11 +61,26 @@ RRF_K = 60
 class Context:
     """한 검색 DB에 대한 실험 준비물: 항목 토큰, 문서 빈도, 글 대응, 질문별 BM25 전체 순위."""
 
-    def __init__(self, conn: sqlite3.Connection, queries: list[EvalQuery]):
+    def __init__(
+        self,
+        conn: sqlite3.Connection,
+        queries: list[EvalQuery],
+        expansion: dict[str, str] | None = None,
+    ):
+        """expansion: E7 문서 확장 DB의 확장 열 텍스트.
+
+        주면 그 열을 가중치 끝에 붙이고 항목 토큰에 더한다.
+        """
         self.conn = conn
         self.queries = queries
         self.post_of = post_map(conn)
         self.tokens = entry_tokens(conn)
+        self.columns = dict(FTS_COLUMNS)
+        self.expansion_text = expansion or {}
+        if expansion is not None:
+            self.columns[EXPANSION_COLUMN] = 1.0
+            for entry_id, text in expansion.items():
+                self.tokens[entry_id] |= set(analyzer.tokenize(text))
         self.df = Counter(t for ts in self.tokens.values() for t in ts)
         self.n = len(self.tokens)
         self._bm25: dict[tuple, list[Ranked]] = {}
@@ -72,8 +90,8 @@ class Context:
         return math.log((self.n - df + 0.5) / (df + 0.5) + 1)
 
     def bm25(self, x: EvalQuery, weights: dict[str, float] | None = None) -> list[Ranked]:
-        w = {**FTS_COLUMNS, **(weights or {})}
-        key = (x.id, tuple(w.values()))
+        w = {**self.columns, **(weights or {})}
+        key = (x.id, x.query, tuple(w.values()))
         if key not in self._bm25:
             self._bm25[key] = bm25_ranking(self.conn, x.query, x.filters(), w, depth=ALL)
         return self._bm25[key]
@@ -632,17 +650,219 @@ def hybrid_systems(ctx: Context, index, lexical: float, cosines: list[float]) ->
     return systems
 
 
+# ---------- E7 문서 확장 ----------
+
+# 확장 열에 넣을 내용. terms만 넣으면 표기 차이만 메우고, all은 예상 검색어 문장까지 넣는다
+EXPANSION_VARIANTS = ("terms", "all")
+E7_WEIGHTS = (0.5, 1.0, 2.0)
+
+
+def expansion_texts(conn: sqlite3.Connection, model: str) -> dict[str, dict[str, str]]:
+    """변형 → 항목 ID → 확장 열 텍스트. LLM 생성물은 캐시를 쓴다."""
+    from eval.search_embed import embedding_text
+    from eval.search_llm import expansions
+
+    inputs = {
+        i: embedding_text(json.loads(d)) for i, d in conn.execute("SELECT id, data FROM entries")
+    }
+    generated = expansions(inputs, model)
+    return {
+        "terms": {i: " ".join(e.terms) for i, e in generated.items()},
+        "all": {i: "\n".join([*e.queries, " ".join(e.terms)]) for i, e in generated.items()},
+    }
+
+
+def build_expanded(conn: sqlite3.Connection, texts: dict[str, str], path: Path) -> None:
+    """확장 열을 더한 검색 DB를 만든다. 서버 스키마는 그대로 두고 빌드 함수만 잠시 바꾼다."""
+    from pipeline import build_index
+    from techblog_mcp.search import schema
+
+    cols = ", ".join(FTS_COLUMNS)
+    ddl, fields = schema.DDL, build_index.fts_fields
+    schema.DDL = ddl.replace(f"{cols}, content=''", f"{cols}, {EXPANSION_COLUMN}, content=''")
+    build_index.fts_fields = lambda e: {**fields(e), EXPANSION_COLUMN: texts.get(e.id, "")}
+    try:
+        cursor = conn.execute("SELECT data FROM entries ORDER BY rowid")
+        build([Entry.model_validate(json.loads(d)) for (d,) in cursor], path)
+    finally:
+        schema.DDL, build_index.fts_fields = ddl, fields
+
+
+def expanded_contexts(
+    conn: sqlite3.Connection, queries: list[EvalQuery], model: str
+) -> dict[str, Context]:
+    from eval.search_llm import CACHE_DIR
+
+    contexts = {}
+    for variant, texts in expansion_texts(conn, model).items():
+        path = CACHE_DIR / f"expanded-{variant}.sqlite"
+        build_expanded(conn, texts, path)
+        contexts[variant] = Context(db.connect(path), queries, expansion=texts)
+    return contexts
+
+
+def e7(ctx: Context, expanded: dict[str, Context], model: str) -> None:
+    cuts = {"": None, "+idf0.5": idf_coverage(0.5), "+idf0.4": idf_coverage(0.4)}
+    rows = run_rows(
+        ctx,
+        [
+            bm25_system(ctx, f"base{s}", cutoff=c, description=f"확장 없음{_cut_desc(s)}")
+            for s, c in cuts.items()
+        ],
+    )
+    for variant, ectx in expanded.items():
+        for w in E7_WEIGHTS:
+            rows += run_rows(
+                ectx,
+                [
+                    bm25_system(
+                        ectx,
+                        f"{variant}-w{w:g}{s}",
+                        weights={EXPANSION_COLUMN: w},
+                        cutoff=c,
+                        description=f"확장 {variant}, 가중치 {w:g}{_cut_desc(s)}",
+                    )
+                    for s, c in cuts.items()
+                ],
+            )
+    text = comparison(
+        "M5 E7: 문서 확장",
+        [
+            f"항목마다 LLM({model})이 만든 예상 검색어 5개와 본문에 없는 다른 표기·동의어를",
+            f"`{EXPANSION_COLUMN}` FTS 열로 더해 색인하고 비교한다(doc2query 방식).",
+            "LLM 입력은 임베딩과 같은 텍스트(제목 + 요약 + 기술). 발췌는 넣지 않았다.",
+            "terms는 다른 표기·동의어만, all은 예상 검색어 문장까지 넣는다.",
+            "다른 열 가중치는 현재 서버 그대로. 관련도 기준 ③은 확장 열 토큰도 일치로 센다.",
+        ],
+        rows,
+        ctx,
+    )
+    selected = [
+        r for r in rows if r.system.name in {"base", "base+idf0.5", "all-w2", "all-w2+idf0.5"}
+    ]
+    examples = _expansion_examples(ctx, expanded["all"])
+    write("e7-expansion", text + "\n" + "\n".join(per_query(selected) + ["", *examples]) + "\n")
+
+
+def _cut_desc(suffix: str) -> str:
+    return {"": ", 기준 없음", "+idf0.5": ", ③ IDF 50%", "+idf0.4": ", ③ IDF 40%"}.get(suffix, "")
+
+
+def _expansion_examples(ctx: Context, ectx: Context, n: int = 5) -> list[str]:
+    """정답 항목 몇 개의 확장 결과 예시 (생성물이 엉뚱하지 않은지 눈으로 확인용)."""
+    seen: list[str] = []
+    for x in ctx.queries:
+        for entry_id in sorted(x.relevant)[:1]:
+            seen.append(entry_id)
+    lines = ["## 확장 예시", "", "질문마다 정답 항목 하나의 확장 열 (앞 5개 질문)", ""]
+    for entry_id in seen[:n]:
+        row = ectx.conn.execute("SELECT data FROM entries WHERE id = ?", [entry_id]).fetchone()
+        title = json.loads(row[0])["post_title"]
+        lines.append(f"- {entry_id} {title}")
+        lines += [f"  - {t}" for t in ectx.expansion_text.get(entry_id, "").splitlines()]
+    return lines
+
+
+# ---------- E8 질의 재작성 ----------
+
+E8_EXPANSION_WEIGHT = 2.0  # E7에서 가장 나았던 확장 열 가중치
+
+
+def multi_query_system(
+    ctx: Context,
+    name: str,
+    subqueries: dict[str, list[str]],
+    keep_original: bool,
+    cutoff: Cutoff | None,
+    description: str,
+    weights: dict[str, float] | None = None,
+) -> System:
+    """검색어 여러 개로 각각 검색해 RRF로 합친다. 관련도 기준은 검색어마다 따로 건다."""
+
+    def rank(x: EvalQuery) -> list[Ranked]:
+        texts = ([x.query] if keep_original else []) + subqueries[x.id]
+        lists = []
+        for text in dict.fromkeys(texts):
+            sub = x.model_copy(update={"query": text})
+            ranked = ctx.bm25(sub, weights)
+            lists.append(cutoff(ctx, sub, ranked) if cutoff else ranked)
+        return rrf(lists)
+
+    return System(name, rank, cutoff=cutoff is not None, description=description)
+
+
+def e8(ctx: Context, expanded: Context | None, model: str) -> None:
+    from eval.search_llm import rewrites
+
+    rw = rewrites({x.id: x.query for x in ctx.queries}, model)
+    cuts = {"": None, "+idf0.5": idf_coverage(0.5), "+idf0.4": idf_coverage(0.4)}
+    targets = [("", ctx, None)]
+    if expanded is not None:
+        targets.append(("exp-", expanded, {EXPANSION_COLUMN: E8_EXPANSION_WEIGHT}))
+    rows = []
+    for prefix, c, w in targets:
+        where = f"확장 all 가중치 {E8_EXPANSION_WEIGHT:g} DB" if prefix else "현재 DB"
+        for s, cut in cuts.items():
+            rows += run_rows(
+                c,
+                [
+                    bm25_system(
+                        c,
+                        f"{prefix}orig{s}",
+                        weights=w,
+                        cutoff=cut,
+                        description=f"{where}, 원래 검색어{_cut_desc(s)}",
+                    ),
+                    multi_query_system(
+                        c,
+                        f"{prefix}rw{s}",
+                        rw,
+                        False,
+                        cut,
+                        f"{where}, 재작성 검색어만 RRF{_cut_desc(s)}",
+                        w,
+                    ),
+                    multi_query_system(
+                        c,
+                        f"{prefix}orig+rw{s}",
+                        rw,
+                        True,
+                        cut,
+                        f"{where}, 원래 + 재작성 검색어 RRF{_cut_desc(s)}",
+                        w,
+                    ),
+                ],
+            )
+    text = comparison(
+        "M5 E8: 질의 재작성",
+        [
+            "코딩 에이전트가 검색어를 짧게 나눠 여러 번 검색하는 상황을",
+            f"LLM({model})으로 흉내 낸다.",
+            "재작성 지시문은 eval/search_llm.py의 REWRITE_INSTRUCTIONS.",
+            "실제 에이전트는 더 큰 모델이고 대화 맥락이 있어 결과가 다를 수 있다.",
+            "검색어마다 BM25 순위(관련도 기준이 있으면 기준 통과분)를 RRF로 합쳐 상위 10건.",
+        ],
+        rows,
+        ctx,
+    )
+    selected = [r for r in rows if r.system.name in {"orig+idf0.5", "rw+idf0.5", "orig+rw+idf0.5"}]
+    listing = ["## 재작성 검색어", "", "| 질문 | 원래 | 재작성 |", "| --- | --- | --- |"]
+    listing += [f"| {x.id} | {x.query} | {' / '.join(rw[x.id])} |" for x in ctx.queries]
+    write("e8-rewrite", text + "\n" + "\n".join(per_query(selected) + ["", *listing]) + "\n")
+
+
 # ---------- 실행 ----------
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="M5 검색 실험")
-    parser.add_argument("experiments", nargs="+", choices=["e1", "e2", "e3", "e4", "e5", "e6"])
+    parser.add_argument("experiments", nargs="+", choices=[f"e{i}" for i in range(1, 9)])
     parser.add_argument("--db", type=Path)
     parser.add_argument("--group", choices=["max", "sum2"], help="E5에서 글 묶기를 함께 적용")
     parser.add_argument("--models", default="openai-small,openai-large")
     parser.add_argument("--lexical", type=float, default=0.5, help="E6 하이브리드의 IDF 일치 기준")
     parser.add_argument("--cosines", default="0.5,0.6,0.7")
+    parser.add_argument("--llm", default="gpt-5.6-luna", help="E7·E8 생성 모델")
     args = parser.parse_args()
 
     conn = db.connect(args.db)
@@ -666,6 +886,12 @@ def main() -> None:
                 args.lexical,
                 [float(c) for c in args.cosines.split(",")],
             )
+    if {"e7", "e8"} & set(args.experiments):
+        expanded = expanded_contexts(conn, queries, args.llm)
+        if "e7" in args.experiments:
+            e7(ctx, expanded, args.llm)
+        if "e8" in args.experiments:
+            e8(ctx, expanded["all"], args.llm)
 
 
 if __name__ == "__main__":

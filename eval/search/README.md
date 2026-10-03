@@ -14,6 +14,12 @@ uv run python eval/search_eval.py --name emb-openai-small --embedding openai-sma
 uv run python eval/search_eval.py --embedding openai-small --embedding openai-large --pool 후보.md
 ```
 
+문서 확장(E7)과 질의 재작성(E8) 실험은 LLM(기본 `gpt-5.6-luna`)으로 확장 텍스트와 재작성 검색어를 만든다. 생성물과 확장 DB는 `eval/search/llm_cache/`(git 제외)에 캐시된다. 생성 지시문은 [../search_llm.py](../search_llm.py)에 있다.
+
+```bash
+uv run python eval/search_experiments.py e7 e8
+```
+
 `--pool`은 평가 대신 판정용 후보 목록을 만든다. 이미 판정한 항목은 라벨이, 새 후보는 `[미판정]`이 붙는다.
 
 ## 질문 구성 (M5 사용자 결정)

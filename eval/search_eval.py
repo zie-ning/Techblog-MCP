@@ -128,12 +128,13 @@ def bm25_ranking(
     """서버 검색(query.search)과 같은 MATCH 식·필터로 bm25 점수까지 돌려준다.
 
     bm25()는 낮을수록(더 음수일수록) 관련도가 높다. 여기서는 부호를 바꿔 클수록 관련 있게 한다.
+    weights는 FTS 열 순서대로 모든 열을 담는다. 실험에서 열을 더한 DB(E7 문서 확장)는 뒤에 붙인다.
     """
     match = q._match_expression(query)
     if match is None:
         return []
     where, params = filters.sql()
-    args = ", ".join(str(weights[c]) for c in FTS_COLUMNS)
+    args = ", ".join(str(w) for w in weights.values())
     rows = conn.execute(
         f"SELECT e.id, bm25(entries_fts, {args}) AS score"
         " FROM entries_fts f JOIN entries e ON e.rowid = f.rowid"
