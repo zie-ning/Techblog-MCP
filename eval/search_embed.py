@@ -1,7 +1,8 @@
 """검색 평가용 항목 임베딩: 계산, 캐시, 코사인 순위.
 
-M5 하이브리드 검색 실험에서만 쓴다. 서버에 넣을지는 평가 수치를 보고 정한다.
-로컬 모델은 fastembed(`uv run --group search-exp`), 기준점은 OpenAI 임베딩(.env의 OPENAI_API_KEY).
+M5 하이브리드 검색 실험에서만 쓴다. OpenAI 임베딩(.env의 OPENAI_API_KEY)을 쓴다.
+로컬 임베딩 모델(fastembed MiniLM)은 M5에서 재 본 뒤 도입하지 않기로 해 지웠다
+(docs/기획.md "임베딩").
 항목 임베딩은 eval/search/embeddings/(git 제외)에 캐시해 텍스트가 바뀐 항목만 다시 계산한다.
 """
 
@@ -21,17 +22,14 @@ CACHE_DIR = ROOT / "eval" / "search" / "embeddings"
 @dataclass(frozen=True)
 class ModelSpec:
     key: str  # 캐시 파일·리포트에 쓰는 짧은 이름
-    provider: str  # fastembed / openai
+    provider: str  # openai
     name: str  # 공급자의 모델 이름
 
 
-# 로컬 후보는 M5 사용자 결정으로 MiniLM 하나. OpenAI는 품질 기준점으로만 잰다
+# 사용자 키로 쓰는 선택 기능 후보 (docs/기획.md "임베딩")
 MODELS: dict[str, ModelSpec] = {
     spec.key: spec
     for spec in [
-        ModelSpec(
-            "minilm", "fastembed", "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
-        ),
         ModelSpec("openai-small", "openai", "text-embedding-3-small"),
         ModelSpec("openai-large", "openai", "text-embedding-3-large"),
     ]
@@ -67,19 +65,6 @@ class Embedder(Protocol):
     def queries(self, texts: list[str]) -> np.ndarray: ...
 
 
-class FastEmbedder:
-    def __init__(self, name: str):
-        from fastembed import TextEmbedding  # 실험 그룹에만 있는 의존성
-
-        self._model = TextEmbedding(name)
-
-    def documents(self, texts: list[str]) -> np.ndarray:
-        return np.array(list(self._model.passage_embed(texts)))
-
-    def queries(self, texts: list[str]) -> np.ndarray:
-        return np.array(list(self._model.query_embed(texts)))
-
-
 class OpenAIEmbedder:
     BATCH = 100
 
@@ -106,8 +91,6 @@ class OpenAIEmbedder:
 
 
 def make_embedder(spec: ModelSpec) -> Embedder:
-    if spec.provider == "fastembed":
-        return FastEmbedder(spec.name)
     return OpenAIEmbedder(spec.name)
 
 

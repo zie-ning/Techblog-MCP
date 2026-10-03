@@ -7,11 +7,11 @@ uv run python eval/search_eval.py                                   # 현재 설
 uv run python eval/search_eval.py --name w-title3 --weights title=3 # 가중치를 바꿔 비교
 ```
 
-임베딩 실험은 기본 동기화에 없는 `search-exp` 의존성 그룹(fastembed)이 필요하다. 항목 임베딩은 `eval/search/embeddings/`(git 제외)에 캐시되고, OpenAI 모델은 `.env`의 `OPENAI_API_KEY`를 쓴다. 모델 목록은 [../search_embed.py](../search_embed.py)의 `MODELS`.
+임베딩 실험은 OpenAI 모델을 쓴다(`.env`의 `OPENAI_API_KEY`). 항목 임베딩은 `eval/search/embeddings/`(git 제외)에 캐시된다. 모델 목록은 [../search_embed.py](../search_embed.py)의 `MODELS`. M5 판정 풀에 쓴 로컬 모델(fastembed MiniLM)은 도입하지 않기로 해 지웠다.
 
 ```bash
-uv run --group search-exp python eval/search_eval.py --name emb-minilm --embedding minilm
-uv run --group search-exp python eval/search_eval.py --embedding minilm --embedding openai-small --embedding openai-large --pool 후보.md
+uv run python eval/search_eval.py --name emb-openai-small --embedding openai-small
+uv run python eval/search_eval.py --embedding openai-small --embedding openai-large --pool 후보.md
 ```
 
 `--pool`은 평가 대신 판정용 후보 목록을 만든다. 이미 판정한 항목은 라벨이, 새 후보는 `[미판정]`이 붙는다.

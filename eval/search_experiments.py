@@ -2,7 +2,7 @@
 
     uv run python eval/search_experiments.py e1 e2 e4 e5
     uv run python eval/search_experiments.py e3  # 사용자 사전으로 임시 색인 빌드
-    uv run --group search-exp python eval/search_experiments.py e6  # 임베딩 (캐시 사용)
+    uv run python eval/search_experiments.py e6  # OpenAI 임베딩 (캐시 사용)
 
 서버 코드는 바꾸지 않는다. 관련도 기준·글 묶기·하이브리드는 여기서 순위 목록을 가공해 흉내 내고,
 결정이 나면 서버에 옮긴다. 실험 설계는 docs/milestones/M5.md, 지표는 eval/search/README.md.
@@ -588,7 +588,8 @@ def e6(ctx: Context, models: list[str], lexical: float, cosines: list[float]) ->
             f"BM25와 임베딩 순위를 RRF(k={RRF_K})로 결합한다. 임베딩 후보는 상위 100건.",
             f"하이브리드 관련도 기준: ③ IDF 일치 {lexical:.0%}를 통과하거나",
             "코사인 유사도가 c 이상인 항목만.",
-            "OpenAI 모델은 품질 기준점이고 서버 도입 후보는 로컬 모델(minilm)뿐이다.",
+            "로컬 모델(MiniLM) 결과는 M5에서 잰 기록이다.",
+            "로컬 임베딩은 도입하지 않기로 해 코드에서 지웠다.",
         ],
         rows,
         ctx,
@@ -639,7 +640,7 @@ def main() -> None:
     parser.add_argument("experiments", nargs="+", choices=["e1", "e2", "e3", "e4", "e5", "e6"])
     parser.add_argument("--db", type=Path)
     parser.add_argument("--group", choices=["max", "sum2"], help="E5에서 글 묶기를 함께 적용")
-    parser.add_argument("--models", default="minilm,openai-small,openai-large")
+    parser.add_argument("--models", default="openai-small,openai-large")
     parser.add_argument("--lexical", type=float, default=0.5, help="E6 하이브리드의 IDF 일치 기준")
     parser.add_argument("--cosines", default="0.5,0.6,0.7")
     args = parser.parse_args()

@@ -47,10 +47,10 @@ def test_embedding_text_uses_summaries_not_evidence():
 
 def test_index_caches_unchanged_entries(conn, tmp_path):
     fake = FakeEmbedder()
-    index = EmbeddingIndex(MODELS["minilm"], cache_dir=tmp_path, embedder=fake)
+    index = EmbeddingIndex(MODELS["openai-small"], cache_dir=tmp_path, embedder=fake)
     assert index.build(conn) == 4
     # 다시 만들면 캐시에서 읽어 새로 계산하지 않는다
-    again = EmbeddingIndex(MODELS["minilm"], cache_dir=tmp_path, embedder=fake)
+    again = EmbeddingIndex(MODELS["openai-small"], cache_dir=tmp_path, embedder=fake)
     assert again.build(conn) == 0
     assert fake.calls == 4
     np.testing.assert_allclose(np.linalg.norm(again.vectors, axis=1), 1.0)
@@ -58,7 +58,7 @@ def test_index_caches_unchanged_entries(conn, tmp_path):
 
 def test_rank_and_query_cache(conn, tmp_path):
     fake = FakeEmbedder()
-    index = EmbeddingIndex(MODELS["minilm"], cache_dir=tmp_path, embedder=fake)
+    index = EmbeddingIndex(MODELS["openai-small"], cache_dir=tmp_path, embedder=fake)
     index.build(conn)
     ranked = index.rank("카프카 kafka 정산", None, depth=2)
     assert ranked[0][0] == "case_0003"
@@ -71,7 +71,7 @@ def test_rank_and_query_cache(conn, tmp_path):
 
 
 def test_embedding_system_applies_filters(conn, tmp_path):
-    index = EmbeddingIndex(MODELS["minilm"], cache_dir=tmp_path, embedder=FakeEmbedder())
+    index = EmbeddingIndex(MODELS["openai-small"], cache_dir=tmp_path, embedder=FakeEmbedder())
     index.build(conn)
     system = embedding_system(conn, index)
     x = EvalQuery(id="q", query="쿠폰", source="M1", domain="결제·금융")
@@ -79,7 +79,7 @@ def test_embedding_system_applies_filters(conn, tmp_path):
 
 
 def test_candidate_pool_also_searches_without_filters(conn, tmp_path):
-    index = EmbeddingIndex(MODELS["minilm"], cache_dir=tmp_path, embedder=FakeEmbedder())
+    index = EmbeddingIndex(MODELS["openai-small"], cache_dir=tmp_path, embedder=FakeEmbedder())
     index.build(conn)
     systems = pool_systems(conn, [index])
     x = EvalQuery(id="q", query="쿠폰 발급", source="M1", domain="결제·금융")
