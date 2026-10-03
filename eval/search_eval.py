@@ -8,6 +8,7 @@
 """
 
 import argparse
+import json
 import sqlite3
 import sys
 import tomllib
@@ -154,6 +155,25 @@ def bm25_system(
     )
 
 
+def filtered_ids(conn: sqlite3.Connection, filters: q.Filters) -> set[str] | None:
+    """필터에 맞는 항목 ID. 필터가 없으면 None(전체)."""
+    if not filters.describe():
+        return None
+    where, params = filters.sql()
+    return {r[0] for r in conn.execute(f"SELECT e.id FROM entries e WHERE {where}", params)}
+
+
+def embedding_system(conn: sqlite3.Connection, index) -> System:
+    """임베딩 코사인 순위. index는 search_embed.EmbeddingIndex (build를 마친 것)."""
+    return System(
+        f"emb-{index.spec.key}",
+        lambda x: [
+            Ranked(i, s) for i, s in index.rank(x.query, filtered_ids(conn, x.filters()), DEPTH)
+        ],
+        description=f"임베딩 {index.spec.name} (코사인)",
+    )
+
+
 # ---------- 지표 ----------
 
 
@@ -264,6 +284,72 @@ def run(system: System, queries: list[EvalQuery], post_of: dict[str, str]) -> li
     return [evaluate_query(x, system.rank(x), post_of) for x in queries]
 
 
+# ---------- 정답 후보 풀 ----------
+
+POOL_DEPTH = 20
+# 후보를 넓게 모으기 위한 BM25 변형 (가중치 실험의 후보와는 별개)
+POOL_WEIGHTS: dict[str, dict[str, float]] = {
+    "bm25": {},
+    "bm25-title": {"title": 4.0},
+    "bm25-flat": dict.fromkeys(FTS_COLUMNS, 1.0),
+    "bm25-keywords": {"keywords": 5.0},
+}
+
+
+def pool_systems(conn: sqlite3.Connection, indexes: list) -> list[System]:
+    systems = [bm25_system(conn, name, w) for name, w in POOL_WEIGHTS.items()]
+    return systems + [embedding_system(conn, index) for index in indexes]
+
+
+def candidate_pool(x: EvalQuery, systems: list[System]) -> dict[str, list[str]]:
+    """후보 항목 ID → 찾은 설정과 순위(예: "bm25#3"). 필터가 있는 질문은 필터 없이도 모은다."""
+    variants = [("", x)]
+    if x.filters().describe():
+        bare = x.model_copy(update={"problem_type": None, "domain": None, "technologies": []})
+        variants.append(("(필터 없음)", bare))
+    found: dict[str, list[str]] = {}
+    for suffix, variant in variants:
+        for system in systems:
+            for rank, r in enumerate(system.rank(variant)[:POOL_DEPTH], start=1):
+                found.setdefault(r.id, []).append(f"{system.name}{suffix}#{rank}")
+    return found
+
+
+def _best_rank(hits: list[str]) -> int:
+    return min(int(h.rsplit("#", 1)[1]) for h in hits)
+
+
+def _short(text: str, limit: int = 110) -> str:
+    text = " ".join(text.split())
+    return text if len(text) <= limit else text[: limit - 1] + "…"
+
+
+def pool_report(conn: sqlite3.Connection, queries: list[EvalQuery], systems: list[System]) -> str:
+    """판정용 후보 목록. 항목마다 제목과 문제 상황·해결 방법 첫 줄을 보여 준다."""
+    entries = {r[0]: json.loads(r[1]) for r in conn.execute("SELECT id, data FROM entries")}
+    lines = [f"# 정답 후보 풀 (설정 {', '.join(s.name for s in systems)}, 상위 {POOL_DEPTH})"]
+    for x in queries:
+        found = candidate_pool(x, systems)
+        unjudged = [i for i in found if x.grade(i) is None]
+        filters = ", ".join(x.filters().describe())
+        lines += [
+            "",
+            f"## {x.id} [{x.source}] {x.query}" + (f" ({filters})" if filters else ""),
+            f"후보 {len(found)}개, 미판정 {len(unjudged)}개",
+        ]
+        for entry_id in sorted(found, key=lambda i: (_best_rank(found[i]), i)):
+            e = entries[entry_id]
+            mark = x.grade(entry_id) or "미판정"
+            problem = e["problem_situation"][0]["text"] if e["problem_situation"] else "-"
+            lines += [
+                f"- {entry_id} [{mark}] {e['company']} · {_short(e['post_title'], 60)}"
+                f" · 최고 {_best_rank(found[entry_id])}위 ({len(found[entry_id])}회)",
+                f"  문제: {_short(problem)}",
+                f"  해결: {_short(e['solution'][0]['text'])}",
+            ]
+    return "\n".join(lines) + "\n"
+
+
 # ---------- 리포트 ----------
 
 
@@ -356,11 +442,39 @@ def main() -> None:
     parser.add_argument("--weights", help="bm25 가중치 변경, 예: title=3,problem=2")
     parser.add_argument("--db", type=Path, help="검색 DB 경로 (기본: 서버와 같은 경로)")
     parser.add_argument("--queries", type=Path, default=QUERIES_PATH)
+    parser.add_argument(
+        "--embedding",
+        action="append",
+        default=[],
+        help="임베딩 모델 키 (search_embed.MODELS). 평가에서는 첫 모델로 순위를 매기고,"
+        " --pool에서는 모든 모델을 후보 풀에 넣는다",
+    )
+    parser.add_argument("--pool", type=Path, help="평가 대신 판정용 후보 풀을 이 경로에 쓴다")
     args = parser.parse_args()
 
     conn = db.connect(args.db)
     queries = load_queries(args.queries)
-    system = bm25_system(conn, args.name, parse_weights(args.weights))
+    indexes = []
+    for key in args.embedding:
+        from eval.search_embed import MODELS, EmbeddingIndex  # numpy 외 의존성은 쓸 때만
+
+        index = EmbeddingIndex(MODELS[key])
+        fresh = index.build(conn)
+        print(f"임베딩 {key}: 항목 {len(index.ids)}개 (새로 계산 {fresh}개)")
+        indexes.append(index)
+
+    if args.pool:
+        args.pool.write_text(
+            pool_report(conn, queries, pool_systems(conn, indexes)), encoding="utf-8"
+        )
+        print(f"후보 풀: {args.pool}")
+        return
+
+    if indexes:
+        system = embedding_system(conn, indexes[0])
+        system.name = args.name
+    else:
+        system = bm25_system(conn, args.name, parse_weights(args.weights))
     results = run(system, queries, post_map(conn))
     report = build_report(system, results, db_meta(conn), f"M5 검색 평가: {args.name}")
     REPORTS.mkdir(parents=True, exist_ok=True)
