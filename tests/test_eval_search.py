@@ -82,8 +82,9 @@ case_0001 = { grade = "관련", reason = "선착순 쿠폰" }
 
 def test_bm25_ranking_matches_server_order(conn):
     ranked = bm25_ranking(conn, "선착순 쿠폰 동시성", q.Filters(), dict(FTS_COLUMNS))
-    server = q.search(conn, "선착순 쿠폰 동시성", q.Filters(), 10)
-    assert [r.id for r in ranked] == [e["id"] for e in server.entries]
+    server = [e["id"] for e in q.search(conn, "선착순 쿠폰 동시성", q.Filters()).entries]
+    # 서버는 관련도 기준을 넘은 항목만 같은 순서로 돌려준다
+    assert [r.id for r in ranked if r.id in server] == server
     scores = [r.score for r in ranked]
     assert scores == sorted(scores, reverse=True)  # 클수록 관련 있게 부호를 바꿈
     # 필터도 서버와 같다

@@ -75,27 +75,30 @@ def unknown_technologies(resolution: TechnologyResolution) -> list[str]:
     return lines
 
 
-def search_result(
-    query: str, filters: Filters, limit: int, result: SearchResult, notes: list[str]
-) -> str:
+# 이 건수 이하면 사례가 적다고 알린다
+FEW_RESULTS = 3
+
+
+def search_result(query: str, filters: Filters, result: SearchResult, notes: list[str]) -> str:
     lines = [f"조건: {_condition(query, filters)}", *notes]
     if not result.entries:
         lines.append(
             "\n결과 없음: 이 조건에 맞는 국내 기업 사례가 DB에 없습니다. "
             "사례를 지어내지 말고, 참고할 국내 사례를 찾지 못했다고 답하세요. "
-            "검색어를 바꾸거나 필터를 빼서 다시 검색해 볼 수 있습니다."
+            "검색어가 길면 하위 주제별로 나누거나, 다른 표현으로 바꾸거나, "
+            "필터를 빼서 다시 검색해 볼 수 있습니다."
         )
         return "\n".join(lines)
 
     shown = len(result.entries)
-    if result.total < limit:
+    if result.total <= FEW_RESULTS:
         lines.append(
             f"결과: {result.total}건뿐입니다. 이 주제의 사례가 적다는 점을 답변에 밝히세요."
         )
+    elif result.total > shown:
+        lines.append(f"결과: 관련도 순 상위 {shown}건 (관련도 기준을 넘은 항목 {result.total}건)")
     else:
-        lines.append(
-            f"결과: 관련도 순 상위 {shown}건 (검색어가 하나라도 걸린 항목 {result.total}건)"
-        )
+        lines.append(f"결과: 관련도 순 {shown}건")
     lines.append("")
     lines.append("\n\n".join(card(e) for e in result.entries))
     lines.append("")

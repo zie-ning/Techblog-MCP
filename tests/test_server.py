@@ -31,7 +31,7 @@ def test_tools_and_prompt_registered():
 
 
 def test_search_card_format():
-    text = call("search", query="선착순 쿠폰 동시성", limit=1)
+    text = call("search", query="선착순 쿠폰 동시성")
     assert (
         "[case_0001] 올리브영 · 2025-03-12 · 동시성·락, 트래픽 급증 대응 / 커머스·주문·재고\n"
         "제목: 선착순 쿠폰 발급 개선기\n"
@@ -46,7 +46,7 @@ def test_search_card_format():
 
 
 def test_search_tip_card_omits_empty_fields():
-    text = call("search", query="AI 에이전트 완료 조건", limit=1)
+    text = call("search", query="AI 에이전트 완료 조건")
     assert "[case_0004]" in text
     assert "제목: AI 코딩 에이전트 활용 팁" in text
     assert "해결 방법: AI 코딩 에이전트의 완료 조건을 측정 가능하게 설계" in text

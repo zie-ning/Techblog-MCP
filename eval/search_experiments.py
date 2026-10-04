@@ -4,6 +4,7 @@
     uv run python eval/search_experiments.py e3  # 사용자 사전으로 임시 색인 빌드
     uv run python eval/search_experiments.py e6  # OpenAI 임베딩 (캐시 사용)
     uv run python eval/search_experiments.py e7 e8  # LLM 문서 확장·질의 재작성 (캐시 사용)
+    uv run python eval/search_experiments.py e9  # 최종 서버 설정
 
 서버 코드는 바꾸지 않는다. 관련도 기준·글 묶기·하이브리드·문서 확장·질의 재작성은
 여기서 순위 목록을 가공해 흉내 내고, 결정이 나면 서버에 옮긴다.
@@ -13,7 +14,6 @@
 import argparse
 import json
 import math
-import re
 import sqlite3
 import sys
 import tempfile
@@ -44,6 +44,7 @@ from eval.search_eval import (  # noqa: E402
     summarize,
     summary_rows,
 )
+from pipeline import expand  # noqa: E402
 from pipeline.build_index import build, fts_fields  # noqa: E402
 from pipeline.extract.schema import Entry  # noqa: E402
 from techblog_mcp import db  # noqa: E402
@@ -67,20 +68,15 @@ class Context:
         queries: list[EvalQuery],
         expansion: dict[str, str] | None = None,
     ):
-        """expansion: E7 문서 확장 DB의 확장 열 텍스트.
-
-        주면 그 열을 가중치 끝에 붙이고 항목 토큰에 더한다.
-        """
+        """expansion: 이 DB를 빌드할 때 쓴 문서 확장 텍스트. 없으면 data/expansions.jsonl."""
         self.conn = conn
         self.queries = queries
         self.post_of = post_map(conn)
-        self.tokens = entry_tokens(conn)
+        if expansion is None:
+            expansion = {i: expand.expansion_text(r) for i, r in expand.load().items()}
+        self.expansion_text = expansion
+        self.tokens = entry_tokens(conn, expansion)
         self.columns = dict(FTS_COLUMNS)
-        self.expansion_text = expansion or {}
-        if expansion is not None:
-            self.columns[EXPANSION_COLUMN] = 1.0
-            for entry_id, text in expansion.items():
-                self.tokens[entry_id] |= set(analyzer.tokenize(text))
         self.df = Counter(t for ts in self.tokens.values() for t in ts)
         self.n = len(self.tokens)
         self._bm25: dict[tuple, list[Ranked]] = {}
@@ -97,21 +93,19 @@ class Context:
         return self._bm25[key]
 
 
-def entry_tokens(conn: sqlite3.Connection) -> dict[str, set[str]]:
+def entry_tokens(conn: sqlite3.Connection, expansion: dict[str, str]) -> dict[str, set[str]]:
     """항목별로 색인된 토큰 집합. 색인과 같은 텍스트(fts_fields)를 같은 분석기로 자른다."""
     tokens = {}
     for entry_id, data in conn.execute("SELECT id, data FROM entries"):
         entry = Entry.model_validate(json.loads(data))
-        tokens[entry_id] = {
-            t for text in fts_fields(entry).values() for t in analyzer.tokenize(text)
-        }
+        fields = fts_fields(entry, expansion.get(entry_id, ""))
+        tokens[entry_id] = {t for text in fields.values() for t in analyzer.tokenize(text)}
     return tokens
 
 
 def query_tokens(query: str) -> list[str]:
     """서버 MATCH 식과 같은 검색어 토큰 (기술 별칭의 표준 이름 토큰 포함)."""
-    match = q._match_expression(query)
-    return re.findall(r'"([^"]+)"', match) if match else []
+    return q.query_tokens(query)
 
 
 # ---------- 순위 가공: 관련도 기준, 글 묶기 ----------
@@ -462,56 +456,8 @@ E5_DETAIL = {"none", "rel0.4", "idf0.4", "idf0.5", "idf0.5@top3", "idf0.5@top4",
 
 # ---------- E3 형태소 사용자 사전 ----------
 
-# 외래어 기술 용어가 뜻 없는 조각으로 잘리는 것을 막는다 (M1 관찰: 시그널링 → 시그널 + 링 등).
-# 태그에서 3번 이상 나온 단어 중 잘림이 확인된 것과 관찰 기록의 단어.
-# 합성어(데이터센터 → 데이터 + 센터)처럼 조각에 뜻이 남는 것은 넣지 않는다.
-USER_WORDS = [
-    "동시성",
-    "시그널링",
-    "아웃박스",
-    "서킷브레이커",
-    "온콜",
-    "리랭킹",
-    "멀티플레이",
-    "디비지움",
-    "커스텀",
-    "메트릭",
-    "시맨틱",
-    "핫픽스",
-    "모노리포",
-    "스냅샷",
-    "스냅숏",
-    "워크플로",
-    "워크플로우",
-    "멀티모달",
-    "런타임",
-    "오케스트레이션",
-    "프라이빗",
-    "타임아웃",
-    "미러링",
-    "타겟팅",
-    "스케줄링",
-    "페이징",
-    "미들웨어",
-    "폴리필",
-    "샌드박스",
-    "헥사고날",
-    "핸들링",
-    "라벨링",
-    "브로드캐스트",
-    "롤아웃",
-    "컴파일",
-    "오토스케일링",
-    "프론트엔드",
-    "프런트엔드",
-    "백오피스",
-    "메타데이터",
-    "데이터셋",
-    "오픈소스",
-    "워크로드",
-    "헬스체크",
-    "크론잡",
-]
+# E3에서 잰 사용자 사전. M5 결정으로 서버 분석기에 들어가 이제 기본값과 같다
+USER_WORDS = analyzer.USER_WORDS
 
 
 @cache
@@ -667,25 +613,16 @@ def expansion_texts(conn: sqlite3.Connection, model: str) -> dict[str, dict[str,
     }
     generated = expansions(inputs, model)
     return {
+        "none": {},
         "terms": {i: " ".join(e.terms) for i, e in generated.items()},
         "all": {i: "\n".join([*e.queries, " ".join(e.terms)]) for i, e in generated.items()},
     }
 
 
 def build_expanded(conn: sqlite3.Connection, texts: dict[str, str], path: Path) -> None:
-    """확장 열을 더한 검색 DB를 만든다. 서버 스키마는 그대로 두고 빌드 함수만 잠시 바꾼다."""
-    from pipeline import build_index
-    from techblog_mcp.search import schema
-
-    cols = ", ".join(FTS_COLUMNS)
-    ddl, fields = schema.DDL, build_index.fts_fields
-    schema.DDL = ddl.replace(f"{cols}, content=''", f"{cols}, {EXPANSION_COLUMN}, content=''")
-    build_index.fts_fields = lambda e: {**fields(e), EXPANSION_COLUMN: texts.get(e.id, "")}
-    try:
-        cursor = conn.execute("SELECT data FROM entries ORDER BY rowid")
-        build([Entry.model_validate(json.loads(d)) for (d,) in cursor], path)
-    finally:
-        schema.DDL, build_index.fts_fields = ddl, fields
+    """확장 열 텍스트를 바꿔 검색 DB를 다시 만든다 (빈 dict면 확장 없음)."""
+    cursor = conn.execute("SELECT data FROM entries ORDER BY rowid")
+    build([Entry.model_validate(json.loads(d)) for (d,) in cursor], path, texts)
 
 
 def expanded_contexts(
@@ -703,14 +640,16 @@ def expanded_contexts(
 
 def e7(ctx: Context, expanded: dict[str, Context], model: str) -> None:
     cuts = {"": None, "+idf0.5": idf_coverage(0.5), "+idf0.4": idf_coverage(0.4)}
+    base = expanded["none"]
     rows = run_rows(
-        ctx,
+        base,
         [
-            bm25_system(ctx, f"base{s}", cutoff=c, description=f"확장 없음{_cut_desc(s)}")
+            bm25_system(base, f"base{s}", cutoff=c, description=f"확장 없음{_cut_desc(s)}")
             for s, c in cuts.items()
         ],
     )
-    for variant, ectx in expanded.items():
+    for variant in EXPANSION_VARIANTS:
+        ectx = expanded[variant]
         for w in E7_WEIGHTS:
             rows += run_rows(
                 ectx,
@@ -851,12 +790,61 @@ def e8(ctx: Context, expanded: Context | None, model: str) -> None:
     write("e8-rewrite", text + "\n" + "\n".join(per_query(selected) + ["", *listing]) + "\n")
 
 
+# ---------- E9 최종 설정 ----------
+
+
+def server_system(
+    ctx: Context, name: str, rewritten: dict[str, list[str]] | None, keep_original: bool
+) -> System:
+    """서버 search 함수 그대로. 재작성 검색어가 있으면 검색어마다 서버 결과(최대 10건)를
+    받아 RRF로 합친다. 에이전트가 검색을 여러 번 하고 결과를 모아 보는 상황이다."""
+
+    def rank(x: EvalQuery) -> list[Ranked]:
+        texts = [x.query] if rewritten is None else rewritten[x.id]
+        if rewritten is not None and keep_original:
+            texts = [x.query, *texts]
+        lists = [
+            [Ranked(e["id"], -i) for i, e in enumerate(q.search(ctx.conn, t, x.filters()).entries)]
+            for t in dict.fromkeys(texts)
+        ]
+        return lists[0] if len(lists) == 1 else rrf(lists)
+
+    return System(name, rank, cutoff=True, description="")
+
+
+def e9(ctx: Context, model: str) -> None:
+    from eval.search_llm import rewrites
+
+    rw = rewrites({x.id: x.query for x in ctx.queries}, model)
+    systems = [
+        server_system(ctx, "server", None, False),
+        server_system(ctx, "server+rw", rw, False),
+        server_system(ctx, "server+orig+rw", rw, True),
+    ]
+    systems[0].description = "서버 search 그대로 (원래 검색어 한 번)"
+    systems[1].description = "재작성 검색어마다 서버 search, 결과를 RRF로 합쳐 10건"
+    systems[2].description = "원래 + 재작성 검색어마다 서버 search, RRF로 합쳐 10건"
+    rows = run_rows(ctx, systems)
+    text = comparison(
+        "M5 E9: 최종 설정",
+        [
+            "M5 결정을 모두 반영한 서버 검색: 문서 확장(expansion 열, 가중치 2),",
+            "형태소 사용자 사전, 관련도 기준(IDF 일치 50%, 기술 별칭은 표준 이름과 한 단위),",
+            "최대 10건. 질의 재작성은 E8과 같은 재작성 검색어로",
+            "에이전트의 여러 번 검색을 흉내 낸다.",
+        ],
+        rows,
+        ctx,
+    )
+    write("e9-final", text + "\n" + "\n".join(per_query(rows)) + "\n")
+
+
 # ---------- 실행 ----------
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="M5 검색 실험")
-    parser.add_argument("experiments", nargs="+", choices=[f"e{i}" for i in range(1, 9)])
+    parser.add_argument("experiments", nargs="+", choices=[f"e{i}" for i in range(1, 10)])
     parser.add_argument("--db", type=Path)
     parser.add_argument("--group", choices=["max", "sum2"], help="E5에서 글 묶기를 함께 적용")
     parser.add_argument("--models", default="openai-small,openai-large")
@@ -886,6 +874,8 @@ def main() -> None:
                 args.lexical,
                 [float(c) for c in args.cosines.split(",")],
             )
+    if "e9" in args.experiments:
+        e9(ctx, args.llm)
     if {"e7", "e8"} & set(args.experiments):
         expanded = expanded_contexts(conn, queries, args.llm)
         if "e7" in args.experiments:

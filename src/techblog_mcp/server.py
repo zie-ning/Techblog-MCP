@@ -17,7 +17,9 @@ from techblog_mcp.search import query as q
 ProblemType = Literal[taxonomy.problem_type_names()]  # type: ignore[valid-type]
 Domain = Literal[taxonomy.domain_names()]  # type: ignore[valid-type]
 
-MAX_DETAIL_IDS = 5  # search 기본 결과 수와 같게 두어 기본 검색 결과를 한 번에 열 수 있게 함
+# 상세는 길어서 한 번에 많이 열면 에이전트 맥락을 많이 차지한다. 소개할 사례만 골라 열게 한다
+# (M5 사용자 결정: search가 최대 10건을 돌려줘도 5건 유지)
+MAX_DETAIL_IDS = 5
 
 # 세 도구 모두 검색 DB를 읽기만 하고 외부와 통신하지 않는다
 READ_ONLY = ToolAnnotations(
@@ -41,7 +43,13 @@ SEARCH_DESCRIPTION = f"""\
 선택지가 있는 설계를 시작하기 전에 호출해 국내 기업이 비슷한 문제를
 어떻게 풀었는지 확인할 것. 단순 CRUD, 버그 수정, 리팩터링에는 호출하지 않는다.
 
-결과는 관련도 순 요약 카드이고 근거 발췌는 get_details로 본다.
+검색어는 단어로 맞춰 찾는다(뜻으로 찾지 않음). 한 가지 주제를 담은 짧은 명사구로 쓰고,
+여러 하위 주제를 묶은 요구는 하위 주제별로 나눠 여러 번 검색할 것
+(예: "Kafka 주문 이벤트 중복 유실 멱등성" → "Kafka 메시지 중복 처리", "주문 이벤트 유실 방지").
+결과가 없으면 다른 표현(한국어/영어 표기 등)으로 한 번 더 찾아볼 것.
+
+결과는 관련도 기준을 넘은 항목만 관련도 순으로 최대 {q.MAX_RESULTS}건이고,
+근거 발췌는 get_details로 본다.
 카드의 성능·운영 줄은 적용 결과나 운영 경험이 원문에 있을 때만 나온다.
 답변에 소개할 사례는 모두 get_details로 열어 확인한 뒤 인용하고,
 카드에 없는 내용을 추측으로 채우지 말 것.
@@ -70,7 +78,11 @@ AGGREGATE_DESCRIPTION = """\
 server = MCPServer(name="techblog", instructions=INSTRUCTIONS)
 
 QueryArg = Annotated[
-    str, Field(description="찾는 문제 상황이나 주제 (자연어). 예: 선착순 쿠폰 발급 동시성")
+    str,
+    Field(
+        description="찾는 문제 상황이나 주제. 한 주제를 담은 짧은 명사구."
+        " 예: 선착순 쿠폰 발급 동시성"
+    ),
 ]
 ProblemTypeArg = Annotated[
     ProblemType | None,
@@ -109,13 +121,10 @@ def search(
     problem_type: ProblemTypeArg = None,
     domain: DomainArg = None,
     technologies: TechnologiesArg = None,
-    limit: Annotated[
-        int, Field(ge=1, le=q.MAX_LIMIT, description=f"결과 수 (최대 {q.MAX_LIMIT})")
-    ] = q.DEFAULT_LIMIT,
 ) -> str:
     filters, notes = _filters(problem_type, domain, technologies)
-    result = q.search(_connection(), query, filters, limit)
-    return render.search_result(query, filters, limit, result, notes)
+    result = q.search(_connection(), query, filters)
+    return render.search_result(query, filters, result, notes)
 
 
 @server.tool(description=GET_DETAILS_DESCRIPTION, structured_output=False, annotations=READ_ONLY)
@@ -152,7 +161,8 @@ def techblog(topic: Annotated[str, Field(description="찾아볼 설계 주제나
     return f"""\
 다음 주제에 대해 techblog MCP 도구로 국내 기업 사례를 찾아 참고 자료로 소개해 줘: {topic}
 
-1. search로 관련 사례를 찾는다. 결과가 적으면 검색어를 바꾸거나 필터를 빼서 한 번 더 찾는다.
+1. search로 관련 사례를 찾는다. 주제가 여러 하위 주제로 나뉘면 하위 주제별로 나눠 검색하고,
+   결과가 적으면 검색어를 바꾸거나 필터를 빼서 한 번 더 찾는다.
 2. 소개할 사례는 모두 get_details로 열어 근거 발췌를 확인한다. 같은 문제에 다른 선택을 한 사례가
    있으면 비교 자료로 함께 연다.
 3. 회사별 접근 방식(문제 상황, 해결 방법, 성능·운영 포인트, 버린 대안)을 출처와 함께 소개한다.

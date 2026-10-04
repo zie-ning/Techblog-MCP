@@ -29,7 +29,7 @@ def _ids(ranked: list[Ranked]) -> list[str]:
 
 
 def test_query_tokens_match_server_expression():
-    assert query_tokens("카프카 정산") == ["카프카", "정산", "kafka"]
+    assert query_tokens("카프카 정산") == ["정산", "카프카", "kafka"]
     assert query_tokens("!!!") == []
 
 

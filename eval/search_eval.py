@@ -130,9 +130,10 @@ def bm25_ranking(
     bm25()는 낮을수록(더 음수일수록) 관련도가 높다. 여기서는 부호를 바꿔 클수록 관련 있게 한다.
     weights는 FTS 열 순서대로 모든 열을 담는다. 실험에서 열을 더한 DB(E7 문서 확장)는 뒤에 붙인다.
     """
-    match = q._match_expression(query)
-    if match is None:
+    tokens = q.query_tokens(query)
+    if not tokens:
         return []
+    match = " OR ".join(f'"{t}"' for t in tokens)
     where, params = filters.sql()
     args = ", ".join(str(w) for w in weights.values())
     rows = conn.execute(
