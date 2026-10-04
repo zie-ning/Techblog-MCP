@@ -18,6 +18,7 @@ uv run python eval/search_eval.py --embedding openai-small --embedding openai-la
 
 ```bash
 uv run python eval/search_experiments.py e7 e8
+uv run python eval/search_experiments.py e9   # 최종 서버 search 그대로
 ```
 
 `--pool`은 평가 대신 판정용 후보 목록을 만든다. 이미 판정한 항목은 라벨이, 새 후보는 `[미판정]`이 붙는다.

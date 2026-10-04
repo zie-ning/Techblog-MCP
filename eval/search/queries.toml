@@ -234,6 +234,7 @@ judged = [
     "case_1539", "case_0549", "case_0674", "case_0965", "case_1108", "case_1298",
     "case_1330", "case_1363", "case_1382", "case_1555", "case_1315", "case_1590",
     "case_0464", "case_0615", "case_0660", "case_1009", "case_0624", "case_1457",
+    "case_0392",
 ]
 
 [queries.labels]
@@ -243,6 +244,7 @@ case_0950 = { grade = "관련", reason = "로컬 캐시와 Redis로 서버 간 �
 case_1015 = { grade = "관련", reason = "Redis 캐시와 로컬 캐시 적용" }
 case_1467 = { grade = "관련", reason = "Caffeine 로컬 캐시 + Redis 원격 캐시 이중 캐시" }
 case_1532 = { grade = "관련", reason = "Redis 캐시와 로컬 캐시, 버전 기반 갱신" }
+case_0392 = { grade = "일부 관련", reason = "대량 트래픽 구간에 다계층 캐시 적용 (일관성·무효화는 다루지 않음)" }
 case_0415 = { grade = "일부 관련", reason = "Redis Look-aside로 강한 일관성 유지 (로컬 캐시는 아님)" }
 case_0541 = { grade = "일부 관련", reason = "@CacheEvict 전체 삭제의 운영 위험" }
 case_0780 = { grade = "일부 관련", reason = "Redis 외부 공유 캐시로 인스턴스 간 캐시 동기화" }
@@ -447,7 +449,7 @@ judged = [
     "case_0552", "case_0864", "case_0405", "case_1375", "case_1419", "case_1501",
     "case_0545", "case_1341", "case_1425", "case_0327", "case_0926", "case_1078",
     "case_1135", "case_0300", "case_1293", "case_1348", "case_1555", "case_0321",
-    "case_1199", "case_1149", "case_0307",
+    "case_1199", "case_1149", "case_0307", "case_0736", "case_1200",
 ]
 
 [queries.labels]
@@ -473,6 +475,7 @@ case_1147 = { grade = "일부 관련", reason = "보안 상담 근거 수집 멀
 case_1148 = { grade = "일부 관련", reason = "검색 에이전트가 근거 패킷을 만들고 검증 에이전트가 확인" }
 case_1149 = { grade = "일부 관련", reason = "보안 분석 워크벤치 (같은 글의 다른 항목)" }
 case_1168 = { grade = "일부 관련", reason = "코딩 에이전트용 벡터 DB RAG" }
+case_1200 = { grade = "일부 관련", reason = "사내 LLM 서비스 에이전트가 검색 결과 컨텍스트로 답변 (답변 품질 개선 각도는 다름)" }
 case_1227 = { grade = "일부 관련", reason = "RAG의 임베딩 보안" }
 
 [[queries]]
@@ -527,7 +530,7 @@ judged = [
     "case_1340", "case_1465", "case_0360", "case_0578", "case_0849", "case_0339",
     "case_0820", "case_0873", "case_1144", "case_1537", "case_0441", "case_0631",
     "case_1010", "case_1367", "case_0768", "case_1431", "case_1038", "case_1211",
-    "case_0536", "case_1212", "case_0794", "case_1115",
+    "case_0536", "case_1212", "case_0794", "case_1115", "case_0816",
 ]
 
 [queries.labels]
@@ -545,6 +548,7 @@ case_0430 = { grade = "일부 관련", reason = "Kafka 메트릭을 ClickHouse�
 case_0497 = { grade = "일부 관련", reason = "대규모 로그의 Elasticsearch hot-warm (메트릭이 아닌 로그)" }
 case_0536 = { grade = "일부 관련", reason = "100만 TPS 로그 시스템 오토스케일링 (로그)" }
 case_0785 = { grade = "일부 관련", reason = "Next.js SSR 프로세스 지표 수집 파이프라인 (Grafana TSDB)" }
+case_0816 = { grade = "일부 관련", reason = "대규모 트래픽에서 Prometheus 메트릭 수집 병목 분석 (시계열 DB 운영은 아님)" }
 case_0825 = { grade = "일부 관련", reason = "Ingress Nginx Prometheus 메트릭 병목" }
 case_1212 = { grade = "일부 관련", reason = "관측 플랫폼 저장소의 페이지 캐시 개선 (같은 글)" }
 
@@ -786,7 +790,7 @@ judged = [
     "case_1175", "case_1307", "case_0635", "case_1206", "case_1039", "case_1101",
     "case_1104", "case_0450", "case_1042", "case_0498", "case_0499", "case_0299",
     "case_0335", "case_0623", "case_0688", "case_0724", "case_0752", "case_0784",
-    "case_0819", "case_1047", "case_1121", "case_1570",
+    "case_0819", "case_1047", "case_1121", "case_1570", "case_1164",
 ]
 
 [queries.labels]
@@ -862,6 +866,7 @@ judged = [
     "case_0479", "case_1079", "case_0827", "case_0384", "case_1417", "case_1492",
     "case_1543", "case_0412", "case_1128", "case_0365", "case_1108", "case_1495",
     "case_1548", "case_0488", "case_0829", "case_1555", "case_0595", "case_1589",
+    "case_0894",
 ]
 
 [queries.labels]
