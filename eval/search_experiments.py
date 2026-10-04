@@ -471,7 +471,11 @@ def _user_kiwi():
 
 
 def e3(conn: sqlite3.Connection, queries: list[EvalQuery]) -> None:
+    """사용자 사전 유무 비교. 사전이 서버 분석기에 들어간 뒤(스키마 5)에는 현재 DB가 이미
+    사전을 쓰므로 '기본'과 '사용자 사전'이 같아진다. 기록은 사전을 넣기 전 DB로 잰 리포트다."""
     base_ctx = Context(conn, queries)
+    # 기본·사용자 사전 색인이 같은 확장 텍스트를 쓰게 한 번만 읽는다
+    texts = {i: expand.expansion_text(r) for i, r in expand.load().items()}
     rows = run_rows(base_ctx, e3_systems(base_ctx, "기본"))
 
     original = analyzer._kiwi
@@ -481,10 +485,10 @@ def e3(conn: sqlite3.Connection, queries: list[EvalQuery]) -> None:
         entries = [Entry.model_validate(json.loads(d)) for (d,) in cursor]
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "user-dict.sqlite"
-            build(entries, path)
+            build(entries, path, texts)
             user_conn = db.connect(path)
             try:
-                user_ctx = Context(user_conn, queries)
+                user_ctx = Context(user_conn, queries, expansion=texts)
                 rows += run_rows(user_ctx, e3_systems(user_ctx, "사용자 사전"))
                 examples = [
                     f"- {w}: {original().tokenize(w)[0].form}… → {analyzer.tokenize(w)}"
