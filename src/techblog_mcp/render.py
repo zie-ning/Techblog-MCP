@@ -75,27 +75,30 @@ def unknown_technologies(resolution: TechnologyResolution) -> list[str]:
     return lines
 
 
-def search_result(
-    query: str, filters: Filters, limit: int, result: SearchResult, notes: list[str]
-) -> str:
+# 이 건수 이하면 사례가 적다고 알린다
+FEW_RESULTS = 3
+
+
+def search_result(query: str, filters: Filters, result: SearchResult, notes: list[str]) -> str:
     lines = [f"조건: {_condition(query, filters)}", *notes]
     if not result.entries:
         lines.append(
             "\n결과 없음: 이 조건에 맞는 국내 기업 사례가 DB에 없습니다. "
             "사례를 지어내지 말고, 참고할 국내 사례를 찾지 못했다고 답하세요. "
-            "검색어를 바꾸거나 필터를 빼서 다시 검색해 볼 수 있습니다."
+            "검색어가 길면 하위 주제별로 나누거나, 다른 표현으로 바꾸거나, "
+            "필터를 빼서 다시 검색해 볼 수 있습니다."
         )
         return "\n".join(lines)
 
     shown = len(result.entries)
-    if result.total < limit:
+    if result.total <= FEW_RESULTS:
         lines.append(
             f"결과: {result.total}건뿐입니다. 이 주제의 사례가 적다는 점을 답변에 밝히세요."
         )
+    elif result.total > shown:
+        lines.append(f"결과: 관련도 순 상위 {shown}건 (관련도 기준을 넘은 항목 {result.total}건)")
     else:
-        lines.append(
-            f"결과: 관련도 순 상위 {shown}건 (검색어가 하나라도 걸린 항목 {result.total}건)"
-        )
+        lines.append(f"결과: 관련도 순 {shown}건")
     lines.append("")
     lines.append("\n\n".join(card(e) for e in result.entries))
     lines.append("")
@@ -160,8 +163,11 @@ def details_result(
     return "\n\n---\n\n".join(parts + ["\n".join(notes)] if notes else parts)
 
 
-def _count(total: int, with_results: int) -> str:
-    return f"{total}건 (성능·운영 포인트 있음 {with_results})"
+_MAX_MEMBERS = 5
+
+
+def _count(total: int, with_metrics: int) -> str:
+    return f"{total}건 (수치 있는 성능·운영 포인트 {with_metrics})"
 
 
 def aggregate_result(
@@ -169,7 +175,7 @@ def aggregate_result(
 ) -> str:
     label = GROUP_BY_LABELS[group_by]
     lines = [
-        f"조건: {_condition(None, filters)} → {_count(result.total, result.with_results)}"
+        f"조건: {_condition(None, filters)} → {_count(result.total, result.with_metrics)}"
         f" / {result.companies}개사",
         f"기준: {label} (상위 {len(result.groups)}개 / 전체 {result.group_count}개)",
         *notes,
@@ -178,6 +184,12 @@ def aggregate_result(
         lines.append(
             "※ 버린 대안이 글에 명시된 항목 중 기술·제품 대안만 셉니다."
             " 설계 방식 대안(패턴, 구현 방식)은 get_details에서 확인하세요."
+        )
+    if group_by == "technology":
+        lines.append(
+            "※ 같은 계열의 제품은 상위 기술로 합쳐 셉니다(예: Amazon MSK는 Kafka 계열)."
+            " 한 항목이 계열 안의 여러 제품을 써도 한 번만 세고,"
+            " '포함'의 건수는 제품별로 센 값입니다."
         )
     if group_by in ("technology", "problem_type", "domain"):
         lines.append(
@@ -198,13 +210,19 @@ def aggregate_result(
             if len(g.companies) > _MAX_COMPANY_NAMES:
                 names += ", …"
             companies = f" · {len(g.companies)}개사 ({names})"
+        members = ""
+        if g.members:
+            top = sorted(g.members.items(), key=lambda kv: (-kv[1], kv[0]))[:_MAX_MEMBERS]
+            members = f"  포함: {', '.join(f'{name} {n}' for name, n in top)}"
         lines.append(
-            f"{rank}. {g.key}  {_count(g.total, g.with_results)}{companies}"
+            f"{rank}. {g.key}  {_count(g.total, g.with_metrics)}{companies}{members}"
             f"  예시: {', '.join(g.examples)}"
         )
     lines.append("")
     lines.append(
-        "성능·운영 포인트 있음은 적용 결과나 운영 경험이 원문에 서술된 항목 수입니다"
-        " (없는 항목은 팁·도입 경험 위주). 예시 ID는 get_details로 확인할 수 있습니다."
+        "수치 있는 성능·운영 포인트는 성능·운영 포인트에 숫자(측정값, 규모 등)가 있는"
+        " 항목 수입니다."
+        " 없는 항목에도 정성적 결과나 운영 경험이 있을 수 있습니다."
+        " 예시 ID는 get_details로 확인할 수 있습니다."
     )
     return "\n".join(lines)

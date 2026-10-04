@@ -25,3 +25,9 @@ data/.view/
 # IDE
 .idea/
 .vscode/
+
+# M5 검색 평가용 임베딩 캐시 (eval/search_embed.py)
+eval/search/embeddings/
+
+# M5 검색 실험용 LLM 생성물 캐시와 확장 DB (eval/search_llm.py)
+eval/search/llm_cache/

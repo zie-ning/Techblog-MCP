@@ -1,5 +1,7 @@
 import pytest
+from conftest import ev, make_entry
 
+from pipeline.build_index import build, has_metrics
 from techblog_mcp import db
 from techblog_mcp.search import analyzer
 from techblog_mcp.search import query as q
@@ -18,44 +20,59 @@ def test_analyzer_keeps_content_morphemes():
     assert "을" not in tokens and "로" not in tokens
 
 
+def test_analyzer_user_words_split_consistently():
+    # 사용자 사전 단어는 문장 안에서도 단독으로 쓸 때와 같게 잘린다 (M5 E3)
+    for word in ["동시성", "제로트러스트", "시그널링"]:
+        assert analyzer.tokenize(word) == [word]
+        assert word in analyzer.tokenize(f"사내 {word} 문제를 해결했다")
+
+
 def ids(result: q.SearchResult) -> list[str]:
     return [e["id"] for e in result.entries]
 
 
 def test_search_ranks_relevant_first(conn):
-    result = q.search(conn, "선착순 쿠폰 동시성", q.Filters(), 5)
+    result = q.search(conn, "선착순 쿠폰 동시성", q.Filters())
     assert ids(result)[0] == "case_0001"
 
 
 def test_search_by_korean_alias_finds_english_name(conn):
     # "카프카"는 색인된 "Kafka"로도 찾는다
-    result = q.search(conn, "카프카 정산", q.Filters(), 5)
+    result = q.search(conn, "카프카 정산", q.Filters())
     assert ids(result)[0] == "case_0003"
 
 
 def test_search_filters(conn):
-    assert ids(q.search(conn, "에이전트 완료 조건", q.Filters(), 5))[0] == "case_0004"
+    assert ids(q.search(conn, "에이전트 완료 조건", q.Filters()))[0] == "case_0004"
     # 보조 문제 유형으로도 매칭
-    assert ids(q.search(conn, "쿠폰", q.Filters(problem_type="트래픽 급증 대응"), 5)) == [
-        "case_0001"
-    ]
-    assert ids(q.search(conn, "적재", q.Filters(domain="결제·금융"), 5)) == ["case_0003"]
+    assert ids(q.search(conn, "쿠폰", q.Filters(problem_type="트래픽 급증 대응"))) == ["case_0001"]
+    assert ids(q.search(conn, "적재", q.Filters(domain="결제·금융"))) == ["case_0003"]
     # 기술 필터는 하나라도 쓴 항목
     tech = q.Filters(technologies=["RabbitMQ", "Kafka"])
-    assert sorted(ids(q.search(conn, "발급 적재", tech, 5))) == ["case_0002", "case_0003"]
+    assert ids(q.search(conn, "쿠폰 발급", tech)) == ["case_0002"]
+    assert ids(q.search(conn, "적재", tech)) == ["case_0003"]
 
 
-def test_search_limit_and_total(conn):
-    result = q.search(conn, "쿠폰 발급", q.Filters(), 1)
+def test_search_relevance_cutoff(conn):
+    # case_0002는 흔한 단어 '쿠폰'만 맞고 주제를 정하는 '비관'·'락'이 없어 걸러진다
+    result = q.search(conn, "쿠폰 비관 락", q.Filters())
+    assert (ids(result), result.total) == (["case_0001"], 1)
+    # DB에 없는 주제는 0건
+    assert q.search(conn, "블록체인 가스비", q.Filters()).entries == []
+
+
+def test_search_caps_results(conn, monkeypatch):
+    monkeypatch.setattr(q, "MAX_RESULTS", 1)
+    result = q.search(conn, "쿠폰 발급", q.Filters())
     assert len(result.entries) == 1
-    assert result.total == 2
+    assert result.total == 2  # 기준을 넘은 건수는 그대로 알려 준다
 
 
 def test_search_without_tokens_falls_back_to_filters(conn):
-    result = q.search(conn, "!!!", q.Filters(domain="LLM·AI"), 5)
+    result = q.search(conn, "!!!", q.Filters(domain="LLM·AI"))
     assert ids(result) == ["case_0004"]
     # 두 번째 도메인으로도 찾는다
-    assert ids(q.search(conn, "!!!", q.Filters(domain="사내 플랫폼·개발 도구"), 5)) == ["case_0004"]
+    assert ids(q.search(conn, "!!!", q.Filters(domain="사내 플랫폼·개발 도구"))) == ["case_0004"]
 
 
 def test_resolve_technologies():
@@ -74,11 +91,39 @@ def test_get_details_with_siblings(conn):
 
 def test_aggregate_by_technology(conn):
     result = q.aggregate(conn, "technology", q.Filters(), 10)
-    assert (result.total, result.with_results, result.companies) == (4, 1, 2)
+    assert (result.total, result.with_metrics, result.companies) == (4, 1, 2)
     groups = {g.key: g for g in result.groups}
     assert groups["Kafka"].companies == ["토스"]
-    assert (groups["Redis"].total, groups["Redis"].with_results) == (1, 1)
-    assert (groups["Claude Code"].total, groups["Claude Code"].with_results) == (1, 0)
+    assert (groups["Redis"].total, groups["Redis"].with_metrics) == (1, 1)
+    assert (groups["Claude Code"].total, groups["Claude Code"].with_metrics) == (1, 0)
+
+
+def test_aggregate_technology_merges_families(tmp_path):
+    entries = [
+        make_entry("case_0001", technologies=["Kafka"]),
+        make_entry("case_0002", technologies=["Amazon MSK"]),
+        # 같은 계열을 두 개 써도 계열로는 한 번만 센다
+        make_entry("case_0003", technologies=["Kafka", "Amazon MSK", "Kafka Connect"]),
+        make_entry("case_0004", technologies=["Redis"]),
+    ]
+    path = tmp_path / "families.sqlite"
+    build(entries, path)
+    conn = db.connect(path)
+    try:
+        result = q.aggregate(conn, "technology", q.Filters(), 10)
+    finally:
+        conn.close()
+    groups = {g.key: g for g in result.groups}
+    assert set(groups) == {"Kafka", "Redis"}
+    assert groups["Kafka"].total == 3
+    assert groups["Kafka"].members == {"Amazon MSK": 2, "Kafka Connect": 1}
+    assert groups["Redis"].members == {}
+
+
+def test_has_metrics_requires_a_number():
+    assert has_metrics(make_entry("a", performance_ops=[ev("첫 화면이 47초에서 1.3초로 줄었다")]))
+    assert not has_metrics(make_entry("a", performance_ops=[ev("같은 질문의 반복이 줄었다")]))
+    assert not has_metrics(make_entry("a"))
 
 
 def test_aggregate_counts_every_problem_type_and_domain(conn):

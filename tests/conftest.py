@@ -43,7 +43,7 @@ SAMPLE_ENTRIES = [
         tags=["선착순", "쿠폰"],
         problem_situation=[ev("선착순 쿠폰 발급 시 한도 초과 발급 발생 (초당 최대 3만 요청)")],
         solution=[ev("Redis 원자 연산으로 발급 수량 관리")],
-        performance_ops=[ev("초과 발급이 사라짐")],
+        performance_ops=[ev("초과 발급이 0건으로 줄었다")],
         rejected_alternatives=[
             RejectedAlternative(
                 name="DB 비관적 락",
