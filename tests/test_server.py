@@ -38,7 +38,7 @@ def test_search_card_format():
         "문제 상황:"
     ) in text
     assert "문제 상황: 선착순 쿠폰 발급 시 한도 초과 발급 발생 (초당 최대 3만 요청)" in text
-    assert "성능·운영: 초과 발급이 사라짐" in text
+    assert "성능·운영: 초과 발급이 0건으로 줄었다" in text
     assert "기술: Redis, Spring Boot" in text
     assert "버린 대안: DB 비관적 락" in text
     assert "원문: https://example.com/coupon" in text
@@ -93,13 +93,13 @@ def test_get_details_limits_to_five():
 
 def test_aggregate_format():
     text = call("aggregate", group_by="technology")
-    assert "조건: 조건 없음 → 4건 (성능·운영 포인트 있음 1) / 2개사" in text
-    assert "Kafka  1건 (성능·운영 포인트 있음 0) · 1개사 (토스)  예시: case_0003" in text
+    assert "조건: 조건 없음 → 4건 (수치 있는 성능·운영 포인트 1) / 2개사" in text
+    assert "Kafka  1건 (수치 있는 성능·운영 포인트 0) · 1개사 (토스)  예시: case_0003" in text
 
 
 def test_aggregate_by_company_omits_redundant_company_list():
     text = call("aggregate", group_by="company")
-    assert "1. 올리브영  3건 (성능·운영 포인트 있음 1)  예시:" in text
+    assert "1. 올리브영  3건 (수치 있는 성능·운영 포인트 1)  예시:" in text
     assert "개사 (올리브영)" not in text
 
 
@@ -138,3 +138,23 @@ def test_reference_principle_is_communicated():
     text = prompt.messages[0].content.text
     assert '"참고 사례"와 "제안"을 나눠서' in text
     assert "그대로 적용하라고 권하지 않는다" in text
+
+
+def test_aggregate_technology_shows_family_members(tmp_path, monkeypatch):
+    from conftest import make_entry
+
+    from pipeline.build_index import build
+
+    path = tmp_path / "families.sqlite"
+    build(
+        [
+            make_entry("case_0001", technologies=["Kafka"]),
+            make_entry("case_0002", technologies=["Amazon MSK"]),
+        ],
+        path,
+    )
+    monkeypatch.setenv(db.DB_PATH_ENV, str(path))
+    server._connection.cache_clear()
+    text = call("aggregate", group_by="technology")
+    assert "1. Kafka  2건" in text and "포함: Amazon MSK 1" in text
+    assert "Amazon MSK는 Kafka 계열" in text

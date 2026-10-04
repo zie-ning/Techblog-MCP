@@ -163,8 +163,11 @@ def details_result(
     return "\n\n---\n\n".join(parts + ["\n".join(notes)] if notes else parts)
 
 
-def _count(total: int, with_results: int) -> str:
-    return f"{total}건 (성능·운영 포인트 있음 {with_results})"
+_MAX_MEMBERS = 5
+
+
+def _count(total: int, with_metrics: int) -> str:
+    return f"{total}건 (수치 있는 성능·운영 포인트 {with_metrics})"
 
 
 def aggregate_result(
@@ -172,7 +175,7 @@ def aggregate_result(
 ) -> str:
     label = GROUP_BY_LABELS[group_by]
     lines = [
-        f"조건: {_condition(None, filters)} → {_count(result.total, result.with_results)}"
+        f"조건: {_condition(None, filters)} → {_count(result.total, result.with_metrics)}"
         f" / {result.companies}개사",
         f"기준: {label} (상위 {len(result.groups)}개 / 전체 {result.group_count}개)",
         *notes,
@@ -181,6 +184,12 @@ def aggregate_result(
         lines.append(
             "※ 버린 대안이 글에 명시된 항목 중 기술·제품 대안만 셉니다."
             " 설계 방식 대안(패턴, 구현 방식)은 get_details에서 확인하세요."
+        )
+    if group_by == "technology":
+        lines.append(
+            "※ 같은 계열의 제품은 상위 기술로 합쳐 셉니다(예: Amazon MSK는 Kafka 계열)."
+            " 한 항목이 계열 안의 여러 제품을 써도 한 번만 세고,"
+            " '포함'의 건수는 제품별로 센 값입니다."
         )
     if group_by in ("technology", "problem_type", "domain"):
         lines.append(
@@ -201,13 +210,19 @@ def aggregate_result(
             if len(g.companies) > _MAX_COMPANY_NAMES:
                 names += ", …"
             companies = f" · {len(g.companies)}개사 ({names})"
+        members = ""
+        if g.members:
+            top = sorted(g.members.items(), key=lambda kv: (-kv[1], kv[0]))[:_MAX_MEMBERS]
+            members = f"  포함: {', '.join(f'{name} {n}' for name, n in top)}"
         lines.append(
-            f"{rank}. {g.key}  {_count(g.total, g.with_results)}{companies}"
+            f"{rank}. {g.key}  {_count(g.total, g.with_metrics)}{companies}{members}"
             f"  예시: {', '.join(g.examples)}"
         )
     lines.append("")
     lines.append(
-        "성능·운영 포인트 있음은 적용 결과나 운영 경험이 원문에 서술된 항목 수입니다"
-        " (없는 항목은 팁·도입 경험 위주). 예시 ID는 get_details로 확인할 수 있습니다."
+        "수치 있는 성능·운영 포인트는 성능·운영 포인트에 숫자(측정값, 규모 등)가 있는"
+        " 항목 수입니다."
+        " 없는 항목에도 정성적 결과나 운영 경험이 있을 수 있습니다."
+        " 예시 ID는 get_details로 확인할 수 있습니다."
     )
     return "\n".join(lines)

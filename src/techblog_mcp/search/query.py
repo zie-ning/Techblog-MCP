@@ -222,22 +222,23 @@ def get_details(conn: sqlite3.Connection, ids: list[str]) -> tuple[list[Detail],
 class Group:
     key: str
     total: int = 0
-    with_results: int = 0  # 그중 성능·운영 포인트(적용 결과 등)가 있는 항목
+    with_metrics: int = 0  # 그중 성능·운영 포인트에 수치가 있는 항목
     companies: list[str] = field(default_factory=list)
     examples: list[str] = field(default_factory=list)
+    # 기술 집계에서 계열로 합쳐진 하위 기술별 항목 수 (예: Kafka 아래 Amazon MSK)
+    members: dict[str, int] = field(default_factory=dict)
 
 
 @dataclass
 class AggregateResult:
     total: int  # 모수: 조건에 맞는 항목 수
-    with_results: int  # 모수 중 성능·운영 포인트가 있는 항목 수
+    with_metrics: int  # 모수 중 성능·운영 포인트에 수치가 있는 항목 수
     companies: int  # 모수: 조건에 맞는 항목을 낸 회사 수
     groups: list[Group]  # 상위 top_n개
     group_count: int  # 전체 그룹 수
 
 
 _GROUP_KEY_SQL: dict[str, str] = {
-    "technology": "SELECT technology FROM entry_technologies WHERE entry_id = ?",
     "problem_type": "SELECT problem_type FROM entry_problem_types WHERE entry_id = ?",
     "domain": "SELECT domain FROM entry_domains WHERE entry_id = ?",
     "rejected_alternative": (
@@ -257,7 +258,7 @@ def aggregate(
             " WHERE r.entry_id = e.id AND r.kind = '기술')"
         )
     rows = conn.execute(
-        "SELECT e.id, e.has_results, e.company"
+        "SELECT e.id, e.has_metrics, e.company"
         f" FROM entries e WHERE {where} ORDER BY e.published_at DESC, e.id DESC",
         params,
     ).fetchall()
@@ -265,10 +266,12 @@ def aggregate(
     groups: dict[str, Group] = {}
     companies_by_group: dict[str, set[str]] = defaultdict(set)
     for row in rows:
-        for key in _group_keys(conn, group_by, row):
+        for key, member in _group_keys(conn, group_by, row):
             group = groups.setdefault(key, Group(key))
             group.total += 1
-            group.with_results += row["has_results"]
+            group.with_metrics += row["has_metrics"]
+            for name in member:
+                group.members[name] = group.members.get(name, 0) + 1
             if row["company"] not in companies_by_group[key]:
                 companies_by_group[key].add(row["company"])
                 group.companies.append(row["company"])
@@ -278,15 +281,37 @@ def aggregate(
     ranked = sorted(groups.values(), key=lambda g: (-g.total, -len(g.companies), g.key))
     return AggregateResult(
         total=len(rows),
-        with_results=sum(r["has_results"] for r in rows),
+        with_metrics=sum(r["has_metrics"] for r in rows),
         companies=len({r["company"] for r in rows}),
         groups=ranked[: max(1, top_n)],
         group_count=len(ranked),
     )
 
 
-def _group_keys(conn: sqlite3.Connection, group_by: GroupBy, row: sqlite3.Row) -> list[str]:
+def _group_keys(
+    conn: sqlite3.Connection, group_by: GroupBy, row: sqlite3.Row
+) -> list[tuple[str, list[str]]]:
+    """(그룹 이름, 그 그룹에 합쳐진 하위 기술들). 하위 기술은 기술 집계에서만 있다."""
     if group_by == "company":
-        return [row["company"]]
-    # 한 항목은 여러 그룹에 들어갈 수 있다(기술·문제 유형·도메인). 같은 그룹에는 한 번만 센다
-    return list(dict.fromkeys(r[0] for r in conn.execute(_GROUP_KEY_SQL[group_by], [row["id"]])))
+        return [(row["company"], [])]
+    if group_by == "technology":
+        return _technology_families(conn, row["id"])
+    # 한 항목은 여러 그룹에 들어갈 수 있다(문제 유형·도메인). 같은 그룹에는 한 번만 센다
+    keys = dict.fromkeys(r[0] for r in conn.execute(_GROUP_KEY_SQL[group_by], [row["id"]]))
+    return [(key, []) for key in keys]
+
+
+def _technology_families(conn: sqlite3.Connection, entry_id: str) -> list[tuple[str, list[str]]]:
+    """항목의 기술을 계열(상위 기술)로 합친다. 같은 계열의 제품을 여러 개 써도 한 번만 센다.
+
+    예: Kafka와 Amazon MSK를 함께 쓴 항목은 Kafka 계열 1건이고 하위 기술은 [Amazon MSK].
+    """
+    families: dict[str, list[str]] = {}
+    for (name,) in conn.execute(
+        "SELECT technology FROM entry_technologies WHERE entry_id = ?", [entry_id]
+    ):
+        family = taxonomy.technology_family(name)
+        members = families.setdefault(family, [])
+        if family != name:
+            members.append(name)
+    return list(families.items())

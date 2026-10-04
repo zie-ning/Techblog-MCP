@@ -21,6 +21,15 @@ from techblog_mcp.search import schema
 from techblog_mcp.search.analyzer import analyze
 
 
+def has_metrics(entry: Entry) -> bool:
+    """성능·운영 포인트에 숫자가 있는 항목 (M5 결정: 정량 결과가 있는 사례를 구분하는 표시).
+
+    "47초 → 1.3초"는 있고 "같은 질문의 반복이 줄었다"는 없다. 글에 수치가 없는 항목이
+    절반 가까이라 모든 항목에 붙던 이전 표시(96%)보다 근거가 강한 사례를 가려 준다.
+    """
+    return any(any(c.isdigit() for c in p.text) for p in entry.performance_ops)
+
+
 def _join(*parts: object) -> str:
     return "\n".join(str(p) for p in parts if p)
 
@@ -83,7 +92,7 @@ def _insert(conn: sqlite3.Connection, rowid: int, e: Entry, expansion: str) -> N
         (
             rowid,
             e.id,
-            int(bool(e.performance_ops)),
+            int(has_metrics(e)),
             e.company,
             e.post_url,
             e.published_at,

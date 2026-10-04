@@ -1,5 +1,7 @@
 import pytest
+from conftest import ev, make_entry
 
+from pipeline.build_index import build, has_metrics
 from techblog_mcp import db
 from techblog_mcp.search import analyzer
 from techblog_mcp.search import query as q
@@ -89,11 +91,39 @@ def test_get_details_with_siblings(conn):
 
 def test_aggregate_by_technology(conn):
     result = q.aggregate(conn, "technology", q.Filters(), 10)
-    assert (result.total, result.with_results, result.companies) == (4, 1, 2)
+    assert (result.total, result.with_metrics, result.companies) == (4, 1, 2)
     groups = {g.key: g for g in result.groups}
     assert groups["Kafka"].companies == ["토스"]
-    assert (groups["Redis"].total, groups["Redis"].with_results) == (1, 1)
-    assert (groups["Claude Code"].total, groups["Claude Code"].with_results) == (1, 0)
+    assert (groups["Redis"].total, groups["Redis"].with_metrics) == (1, 1)
+    assert (groups["Claude Code"].total, groups["Claude Code"].with_metrics) == (1, 0)
+
+
+def test_aggregate_technology_merges_families(tmp_path):
+    entries = [
+        make_entry("case_0001", technologies=["Kafka"]),
+        make_entry("case_0002", technologies=["Amazon MSK"]),
+        # 같은 계열을 두 개 써도 계열로는 한 번만 센다
+        make_entry("case_0003", technologies=["Kafka", "Amazon MSK", "Kafka Connect"]),
+        make_entry("case_0004", technologies=["Redis"]),
+    ]
+    path = tmp_path / "families.sqlite"
+    build(entries, path)
+    conn = db.connect(path)
+    try:
+        result = q.aggregate(conn, "technology", q.Filters(), 10)
+    finally:
+        conn.close()
+    groups = {g.key: g for g in result.groups}
+    assert set(groups) == {"Kafka", "Redis"}
+    assert groups["Kafka"].total == 3
+    assert groups["Kafka"].members == {"Amazon MSK": 2, "Kafka Connect": 1}
+    assert groups["Redis"].members == {}
+
+
+def test_has_metrics_requires_a_number():
+    assert has_metrics(make_entry("a", performance_ops=[ev("첫 화면이 47초에서 1.3초로 줄었다")]))
+    assert not has_metrics(make_entry("a", performance_ops=[ev("같은 질문의 반복이 줄었다")]))
+    assert not has_metrics(make_entry("a"))
 
 
 def test_aggregate_counts_every_problem_type_and_domain(conn):
