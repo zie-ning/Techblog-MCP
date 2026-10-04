@@ -31,3 +31,7 @@ eval/search/embeddings/
 
 # M5 검색 실험용 LLM 생성물 캐시와 확장 DB (eval/search_llm.py)
 eval/search/llm_cache/
+
+# 계획 모드가 자동으로 만드는 계획 파일 (저장소에 둘 사본은 m{N}-{이름}.md로 따로 저장)
+.claude/plans/*
+!.claude/plans/m[0-9]*.md
