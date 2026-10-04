@@ -3,6 +3,7 @@
 한쪽만 바꾸면 색인된 토큰과 검색어 토큰이 달라져 검색이 깨진다.
 """
 
+import threading
 from functools import cache
 
 # 검색어로 의미 있는 품사: 명사, 외국어, 한자, 숫자, 어근, 동사·형용사 어간
@@ -62,14 +63,28 @@ USER_WORDS = [
 ]
 
 
+_kiwi_lock = threading.Lock()
+
+
 @cache
-def _kiwi():
+def _load_kiwi():
     from kiwipiepy import Kiwi  # 불러오는 데 1~2초 걸려 처음 쓸 때 연다
 
     kiwi = Kiwi()
     for word in USER_WORDS:
         kiwi.add_user_word(word, "NNP", 0)
     return kiwi
+
+
+def _kiwi():
+    # 서버가 기동 때 백그라운드에서 미리 불러오는 중이면 끝날 때까지 기다린다 (두 번 만들지 않음)
+    with _kiwi_lock:
+        return _load_kiwi()
+
+
+def warm_up() -> None:
+    """Kiwi를 불러오고 한 번 분석해 둔다. 사용자 사전을 넣은 뒤 첫 분석이 1~2초 더 걸린다."""
+    tokenize("검색 준비")
 
 
 def tokenize(text: str) -> list[str]:

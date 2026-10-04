@@ -158,3 +158,13 @@ def test_aggregate_technology_shows_family_members(tmp_path, monkeypatch):
     text = call("aggregate", group_by="technology")
     assert "1. Kafka  2건" in text and "포함: Amazon MSK 1" in text
     assert "Amazon MSK는 Kafka 계열" in text
+
+
+def test_prepare_survives_missing_db(tmp_path, monkeypatch):
+    # 기동 때 백그라운드 준비가 실패해도 서버가 죽지 않고, 도구 호출에서 이유를 알린다
+    monkeypatch.setenv(db.DB_PATH_ENV, str(tmp_path / "none.sqlite"))
+    server._open_connection.cache_clear()
+    for thread in server._prepare():
+        thread.join()
+    with pytest.raises(ToolError, match="검색 DB가 없습니다"):
+        asyncio.run(server.server.call_tool("search", {"query": "쿠폰"}))

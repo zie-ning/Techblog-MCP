@@ -5,14 +5,17 @@
 
 import sqlite3
 import threading
+from collections.abc import Callable
 from functools import cache
 from typing import Annotated, Literal
 
 from mcp.server.mcpserver import MCPServer
+from mcp.server.mcpserver.exceptions import ToolError
 from mcp.types import ToolAnnotations
 from pydantic import Field
 
 from techblog_mcp import db, render, taxonomy
+from techblog_mcp.search import analyzer
 from techblog_mcp.search import query as q
 
 ProblemType = Literal[taxonomy.problem_type_names()]  # type: ignore[valid-type]
@@ -112,14 +115,29 @@ def _open_connection() -> sqlite3.Connection:
 def _connection() -> sqlite3.Connection:
     # 기동 때 시작한 DB 준비(첫 실행이면 다운로드)와 도구 호출이 겹치면 도구 호출이 끝나길 기다린다
     with _connection_lock:
-        return _open_connection()
+        try:
+            return _open_connection()
+        except db.DatabaseNotFound as e:
+            # 예상한 실패라 ToolError로 바꿔 이유와 해결 방법만 도구 결과로 돌려준다
+            raise ToolError(str(e)) from e
 
 
-def _prepare_database() -> None:
+def _quietly(step: Callable[[], object]) -> None:
     try:
-        _connection()
+        step()
     except Exception:
-        pass  # 실패 이유는 도구를 호출할 때 다시 시도하며 결과로 알린다
+        pass  # 실패하면 도구를 호출할 때 다시 시도하며 이유를 결과로 알린다
+
+
+def _prepare() -> list[threading.Thread]:
+    """첫 도구 호출을 빠르게 하려고 DB(첫 실행이면 다운로드)와 형태소 분석기를 동시에 준비한다."""
+    threads = [
+        threading.Thread(target=_quietly, args=(step,), daemon=True)
+        for step in (_connection, analyzer.warm_up)
+    ]
+    for thread in threads:
+        thread.start()
+    return threads
 
 
 def _filters(
@@ -194,6 +212,6 @@ def techblog(topic: Annotated[str, Field(description="찾아볼 설계 주제나
 
 
 def main() -> None:
-    # initialize 응답을 막지 않도록 DB 준비는 백그라운드에서 한다
-    threading.Thread(target=_prepare_database, daemon=True).start()
+    # initialize 응답을 막지 않도록 준비는 백그라운드에서 한다
+    _prepare()
     server.run()
