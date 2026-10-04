@@ -28,7 +28,7 @@ CACHE_DIR_ENV = "TECHBLOG_MCP_CACHE_DIR"
 DEFAULT_DB_PATH = Path(__file__).resolve().parents[2] / "data" / "techblog.sqlite"
 RELEASE_MANIFEST_PATH = Path(__file__).with_name("db_release.json")
 
-REPO_URL = "https://github.com/zie-ning/Techblog-Search-MCP"
+REPO_URL = "https://github.com/zie-ning/Techblog-MCP"
 ASSET_NAME = "techblog.sqlite"
 DOWNLOAD_TIMEOUT = 30  # 초. 연결·읽기 각각의 대기 시간
 CHUNK_SIZE = 1 << 16
