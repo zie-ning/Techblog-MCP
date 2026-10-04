@@ -4,6 +4,7 @@
 """
 
 import sqlite3
+import threading
 from functools import cache
 from typing import Annotated, Literal
 
@@ -22,6 +23,7 @@ Domain = Literal[taxonomy.domain_names()]  # type: ignore[valid-type]
 MAX_DETAIL_IDS = 5
 
 # 세 도구 모두 검색 DB를 읽기만 하고 외부와 통신하지 않는다
+# (첫 실행 때 고정된 DB 파일을 내려받는 것은 서버 준비 과정이라 도구 동작으로 보지 않는다)
 READ_ONLY = ToolAnnotations(
     read_only_hint=True, destructive_hint=False, idempotent_hint=True, open_world_hint=False
 )
@@ -99,9 +101,25 @@ TechnologiesArg = Annotated[
 ]
 
 
+_connection_lock = threading.Lock()
+
+
 @cache
-def _connection() -> sqlite3.Connection:
+def _open_connection() -> sqlite3.Connection:
     return db.connect()
+
+
+def _connection() -> sqlite3.Connection:
+    # 기동 때 시작한 DB 준비(첫 실행이면 다운로드)와 도구 호출이 겹치면 도구 호출이 끝나길 기다린다
+    with _connection_lock:
+        return _open_connection()
+
+
+def _prepare_database() -> None:
+    try:
+        _connection()
+    except Exception:
+        pass  # 실패 이유는 도구를 호출할 때 다시 시도하며 결과로 알린다
 
 
 def _filters(
@@ -176,4 +194,6 @@ def techblog(topic: Annotated[str, Field(description="찾아볼 설계 주제나
 
 
 def main() -> None:
+    # initialize 응답을 막지 않도록 DB 준비는 백그라운드에서 한다
+    threading.Thread(target=_prepare_database, daemon=True).start()
     server.run()

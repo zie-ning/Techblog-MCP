@@ -11,9 +11,9 @@ from techblog_mcp import db, server
 @pytest.fixture(autouse=True)
 def use_sample_db(sample_db, monkeypatch):
     monkeypatch.setenv(db.DB_PATH_ENV, str(sample_db))
-    server._connection.cache_clear()
+    server._open_connection.cache_clear()
     yield
-    server._connection.cache_clear()
+    server._open_connection.cache_clear()
 
 
 def call(name: str, **arguments) -> str:
@@ -154,7 +154,7 @@ def test_aggregate_technology_shows_family_members(tmp_path, monkeypatch):
         path,
     )
     monkeypatch.setenv(db.DB_PATH_ENV, str(path))
-    server._connection.cache_clear()
+    server._open_connection.cache_clear()
     text = call("aggregate", group_by="technology")
     assert "1. Kafka  2건" in text and "포함: Amazon MSK 1" in text
     assert "Amazon MSK는 Kafka 계열" in text
