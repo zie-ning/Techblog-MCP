@@ -27,6 +27,7 @@ uv run python -m pipeline.collect kakao --refresh                              #
 uv run python -m pipeline.extract oliveyoung --post-ids-file eval/m1_posts.txt # 추출 (OPENAI_API_KEY 필요, .env 가능)
 uv run python -m pipeline.extract oliveyoung --outdated                        # 프롬프트·모델이 바뀐 글만 재추출
 uv run python -m pipeline.normalize [--apply]                                  # 기술명 재정규화·미등록 리포트
+uv run python -m pipeline.expand                                               # 문서 확장 (새·바뀐 항목만, OPENAI_API_KEY 필요)
 uv run python -m pipeline.build_index                                          # 검색 DB 빌드
 uv run python -m pipeline.view                                                 # jsonl을 보기 좋은 json으로 변환 (data/.view/, git 제외)
 uv run techblog-mcp                                                            # MCP 서버 (stdio)
@@ -48,6 +49,7 @@ CI(`.github/workflows/ci.yml`)는 Python 3.11과 3.14에서 `uv sync --locked` �
 ```
 블로그 → pipeline/collect → data/raw/ (원문 캐시, git 제외)
        → pipeline/extract (글 유형 분류, 구조화, 발췌 검증) → data/entries.jsonl (커밋)
+       → pipeline/expand (항목별 예상 검색어·다른 표기) → data/expansions.jsonl (커밋)
        → pipeline/build_index (kiwipiepy 형태소 분석 → SQLite FTS5) → 검색 DB (빌드 산출물, git 제외)
        → src/techblog_mcp (MCP 도구가 검색 DB 조회)
 ```
@@ -58,7 +60,8 @@ CI(`.github/workflows/ci.yml`)는 Python 3.11과 3.14에서 `uv sync --locked` �
 - **발췌 검증**: 추출된 `evidence`는 원문에 실제로 존재하는지 코드로 검사한다. LLM이 지어낸 내용을 거르는 핵심 장치이므로 우회하지 않는다.
 - **프롬프트 버전**: 추출 프롬프트·출력 스키마를 고치면 `pipeline/extract/prompt_version.py`의 해시가 자동으로 바뀐다. `data/prompt_versions/`의 스냅샷은 자동 생성물이라 직접 고치지 않는다.
 - **`src/techblog_mcp/taxonomy/`는 추출과 서버가 공유**한다 (설치 패키지에 포함돼야 해서 패키지 안에 둠). 문제 유형·도메인 정의에서 MCP 도구 입력 스키마의 `enum`을 자동 생성하므로 두 곳의 값이 항상 같아야 한다. 기술명은 기술 사전(표준 이름 + 별칭)으로 정규화한다.
-- **형태소 분석은 색인과 검색에서 같은 방식**을 써야 한다 (kiwipiepy, `techblog_mcp.search.analyzer`). 한쪽만 바꾸면 검색이 깨진다. DB 스키마를 바꾸면 `search/schema.py`의 `SCHEMA_VERSION`을 올린다.
+- **형태소 분석은 색인과 검색에서 같은 방식**을 써야 한다 (kiwipiepy, `techblog_mcp.search.analyzer`, 사용자 사전 `USER_WORDS` 포함). 한쪽만 바꾸면 검색이 깨진다. DB 스키마나 사용자 사전을 바꾸면 `search/schema.py`의 `SCHEMA_VERSION`을 올린다.
+- **문서 확장**(`pipeline/expand.py`)은 추출과 별도 단계다. 항목을 재추출하거나 추가하면 `pipeline.expand`로 확장을 만든 뒤 색인을 빌드한다. 확장은 검색 보조 정보라 발췌 검증 대상이 아니고 카드·상세에 보여 주지 않는다.
 - **MCP SDK는 2.x**다. `FastMCP`가 아니라 `mcp.server.mcpserver.MCPServer`를 쓴다.
 - **DB 경로 로딩은 `src/techblog_mcp/db.py` 한 곳**에 둔다. 나중에 GitHub Release에서 DB를 내려받는 방식으로 교체할 지점이다.
 
@@ -68,7 +71,7 @@ CI(`.github/workflows/ci.yml`)는 Python 3.11과 3.14에서 `uv sync --locked` �
 - **핵심은 `search`다.** `aggregate`는 중요도가 가장 낮은 보조 도구라, 집계를 깔끔하게 만들려고 `search`의 검색 정확도를 낮추는 설계(예: 분류를 하나만 고르게 강제)는 하지 않는다 (`docs/기획.md` "도구 우선순위").
 - 세 도구 모두 읽기 전용 annotation(`readOnlyHint` 등)을 단다. DB에 쓰는 도구를 추가하면 annotation도 바꾼다.
 - 결과는 JSON이 아니라 읽기 쉬운 텍스트로 반환한다. `search` 카드에는 근거 발췌를 넣지 않고, 문제 상황·성능·운영 포인트는 있을 때만 한 줄씩 보여 준다.
-- `search` 필터는 문제 유형·도메인(enum), 기술(자유 입력 → 서버 정규화), `limit`(기본 5, 최대 10). 회사·날짜 필터는 의도적으로 없다. `limit`은 M5에서 제거하고 서버가 관련도 기준으로 최대 10건을 돌려주도록 바꿀 예정이다.
+- `search` 필터는 문제 유형·도메인(enum), 기술(자유 입력 → 서버 정규화). 회사·날짜 필터와 결과 수 파라미터는 의도적으로 없다. 서버가 관련도 기준(IDF 가중 일치 비율 50%, `query.MIN_IDF_COVERAGE`)을 넘는 항목만 최대 10건 돌려준다. 긴 주제는 에이전트가 나눠 여러 번 검색하도록 도구 설명으로 안내한다(질의 재작성).
 - `aggregate`는 모수(전체 건수·회사 수)와 예시 ID를 함께 반환하고, 건수와 함께 성능·운영 포인트가 있는 건수를 표시한다. 문제 유형·도메인은 다중 선택(문제 유형 1~3개, 도메인 1~2개)이라 해당하는 값마다 센다.
 - 결과가 없거나 적으면 그 사실을 명시해 에이전트가 사례를 지어내지 않게 한다.
 
