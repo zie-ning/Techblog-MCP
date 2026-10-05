@@ -140,7 +140,8 @@ def test_reference_principle_is_communicated():
     assert "그대로 적용하라고 권하지 않는다" in text
 
 
-def test_aggregate_technology_shows_family_members(tmp_path, monkeypatch):
+@pytest.fixture
+def family_db(tmp_path, monkeypatch):
     from conftest import make_entry
 
     from pipeline.build_index import build
@@ -155,9 +156,21 @@ def test_aggregate_technology_shows_family_members(tmp_path, monkeypatch):
     )
     monkeypatch.setenv(db.DB_PATH_ENV, str(path))
     server._open_connection.cache_clear()
+
+
+def test_aggregate_technology_shows_family_members(family_db):
     text = call("aggregate", group_by="technology")
     assert "1. Kafka  2건" in text and "포함: Amazon MSK 1" in text
     assert "Amazon MSK는 Kafka 계열" in text
+
+
+def test_technology_filter_expands_family(family_db):
+    # 상위 기술 필터는 계열 전체를 찾아 집계의 계열 합산과 숫자가 맞는다 (M6 결정)
+    text = call("aggregate", group_by="company", technologies=["카프카"])
+    assert "기술 ∋ Kafka 계열 → 2건" in text
+    # 하위 기술로 거르면 그 기술만
+    text = call("aggregate", group_by="company", technologies=["Amazon MSK"])
+    assert "기술 ∋ Amazon MSK → 1건" in text
 
 
 def test_prepare_survives_missing_db(tmp_path, monkeypatch):

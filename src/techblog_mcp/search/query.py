@@ -34,8 +34,17 @@ class Filters:
         if self.domain:
             parts.append(f"도메인 = {self.domain}")
         if self.technologies:
-            parts.append(f"기술 ∋ {' 또는 '.join(self.technologies)}")
+            names = [
+                f"{t} 계열" if len(taxonomy.technology_members(t)) > 1 else t
+                for t in self.technologies
+            ]
+            parts.append(f"기술 ∋ {' 또는 '.join(names)}")
         return parts
+
+    def technology_names(self) -> list[str]:
+        """필터에 거는 이름. 상위 기술은 하위 기술까지 펼쳐 aggregate의 계열 합산과 맞춘다."""
+        names = [m for t in self.technologies for m in taxonomy.technology_members(t)]
+        return list(dict.fromkeys(names))
 
     def sql(self) -> tuple[str, list]:
         """entries 테이블(별칭 e)에 거는 WHERE 조건."""
@@ -54,12 +63,13 @@ class Filters:
             params.append(self.problem_type)
         if self.technologies:
             # 여러 기술을 주면 하나라도 쓴 항목을 찾는다
-            marks = ", ".join("?" * len(self.technologies))
+            names = self.technology_names()
+            marks = ", ".join("?" * len(names))
             clauses.append(
                 "EXISTS (SELECT 1 FROM entry_technologies t"
                 f" WHERE t.entry_id = e.id AND t.technology IN ({marks}))"
             )
-            params.extend(self.technologies)
+            params.extend(names)
         return " AND ".join(clauses), params
 
 

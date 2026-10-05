@@ -100,7 +100,10 @@ DomainArg = Annotated[
 ]
 TechnologiesArg = Annotated[
     list[str] | None,
-    Field(description="기술 필터 (자유 입력, 예: 카프카 → Kafka). 하나라도 쓴 항목을 찾는다"),
+    Field(
+        description="기술 필터 (자유 입력, 예: 카프카 → Kafka). 하나라도 쓴 항목을 찾는다."
+        " 상위 기술은 같은 계열의 하위 기술까지 포함한다 (Kafka → Amazon MSK 등)"
+    ),
 ]
 
 
