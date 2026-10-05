@@ -152,7 +152,7 @@ def search(conn: sqlite3.Connection, query: str, filters: Filters) -> SearchResu
         f" WHERE entries_fts MATCH ? AND {where} ORDER BY bm25(entries_fts, {weights})",
         [" OR ".join(map(_phrase, tokens)), *params],
     ).fetchall()
-    coverage = _idf_coverage(conn, units)
+    coverage = _idf_coverage(conn, _without_filter_terms(units, filters))
     passed = [r[0] for r in ranked if coverage(r[0]) >= MIN_IDF_COVERAGE]
     shown = passed[:MAX_RESULTS]
     data = dict(
@@ -162,6 +162,22 @@ def search(conn: sqlite3.Connection, query: str, filters: Filters) -> SearchResu
         ).fetchall()
     )
     return SearchResult([json.loads(data[i]) for i in shown], len(passed))
+
+
+def _without_filter_terms(units: list[tuple[str, ...]], filters: Filters) -> list[tuple[str, ...]]:
+    """관련도 기준에서 필터 이름과 겹치는 검색어 단위를 뺀다 (M6).
+
+    색인의 keywords 열에는 분류·기술 이름이 들어 있어, 필터를 건 후보는 모두 필터 이름의 토큰을
+    가진다. 검색어가 필터 이름을 되풀이하면(문제 유형 "트래픽 급증 대응" + 검색어 "트래픽 급증
+    대기열") 그 단위가 후보마다 자동으로 맞아 주제 단어("대기열")가 없는 항목도 기준을 넘는다.
+    다 빠지면(검색어가 필터 이름뿐이면) 원래 단위로 잰다.
+    """
+    names = [filters.problem_type, filters.domain, *filters.technology_names()]
+    filter_tokens = {t for name in names if name for t in tokenize(name)}
+    if not filter_tokens:
+        return units
+    remaining = [u for u in units if not any(t in filter_tokens for t in u)]
+    return remaining or units
 
 
 def _idf_coverage(conn: sqlite3.Connection, units: list[tuple[str, ...]]):

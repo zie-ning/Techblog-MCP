@@ -152,6 +152,36 @@ def test_aggregate_top_n_and_examples(conn):
     assert len(top.examples) == q.EXAMPLES_PER_GROUP
 
 
+def test_filter_terms_in_query_do_not_inflate_relevance(tmp_path):
+    # 필터 이름을 되풀이한 검색어 단위는 후보마다 자동으로 맞으므로 관련도 기준에서 뺀다 (M6)
+    surge = ["트래픽 급증 대응"]
+    entries = [
+        make_entry(
+            "case_0001",
+            problem_types=surge,
+            solution=[ev("주문서 진입 요청을 대기열로 순차 처리")],
+        ),
+        make_entry(
+            "case_0002",
+            problem_types=surge,
+            problem_situation=[ev("세일 기간 계산대 대기 이탈 증가")],
+            solution=[ev("셀프계산대 도입")],
+        ),
+        *[make_entry(f"case_01{i:02d}", solution=[ev(f"무관한 해결 {i}")]) for i in range(6)],
+    ]
+    path = tmp_path / "filter.sqlite"
+    build(entries, path)
+    conn = db.connect(path)
+    try:
+        filters = q.Filters(problem_type="트래픽 급증 대응")
+        result = q.search(conn, "트래픽 급증 대기열", filters)
+        assert ids(result) == ["case_0001"]
+        # 검색어가 필터 이름뿐이면 원래 단위로 잰다 (결과를 비우지 않음)
+        assert q.search(conn, "트래픽 급증", filters).total == 2
+    finally:
+        conn.close()
+
+
 def test_connect_missing_db(tmp_path):
     with pytest.raises(db.DatabaseNotFound):
         db.connect(tmp_path / "none.sqlite")
