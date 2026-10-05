@@ -6,7 +6,7 @@
 
 ## 지금 할 일
 
-- **[M6. 마무리와 배포](milestones/M6.md)** (브랜치 `feat/m6-release`): DB 전달 방식(Release 다운로드)·이용약관 확인·기동 시간 단축·도구 설명 확정 완료. 다음은 README, 깨끗한 환경 확인
+- **[M6. 마무리와 배포](milestones/M6.md)** (브랜치 `feat/m6-release`): DB 전달 방식(Release 다운로드)·이용약관 확인·기동 시간 단축·도구 설명 확정·README 완료. 다음은 깨끗한 환경에서 설치·실행 확인
 
 ## 마일스톤 현황
 
@@ -37,7 +37,7 @@
 
 | 문서 | 역할 |
 | --- | --- |
-| [../README.md](../README.md) | 프로젝트 소개, 개발 환경, 파이프라인 명령 (M6에서 설치 안내로 확장) |
+| [../README.md](../README.md) | 사용자용 설치·사용 안내, 데이터 출처·저작권, 개발 명령 |
 | [../CLAUDE.md](../CLAUDE.md) | Claude Code 작업 지침: 명령어, 아키텍처, 여러 파일에 걸친 규칙 |
 | [../.claude/rules/](../.claude/rules/) | 커밋·이슈·PR 작성 규칙 |
 
