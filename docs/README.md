@@ -6,7 +6,7 @@
 
 ## 지금 할 일
 
-- **[M6. 마무리와 배포](milestones/M6.md)** (브랜치 `feat/m6-release`): DB 전달 방식(Release 다운로드)·이용약관 확인·기동 시간 단축·도구 설명 확정·README 완료. 다음은 깨끗한 환경에서 설치·실행 확인
+- **[M6. 마무리와 배포](milestones/M6.md)** (브랜치 `feat/m6-release`): DB 전달 방식(Release 다운로드)·이용약관 확인·기동 시간 단축·도구 설명 확정·README·깨끗한 환경 확인 완료. 남은 일: Claude Code 실제 질문 확인(로그인 필요), PR
 
 ## 마일스톤 현황
 
