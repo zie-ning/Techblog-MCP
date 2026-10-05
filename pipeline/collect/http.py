@@ -16,7 +16,7 @@ import httpx
 
 from pipeline.collect.curl_transport import CurlTransport
 
-USER_AGENT = "TechblogCaseBot/0.1 (+https://github.com/zie-ning/Techblog-Search-MCP)"
+USER_AGENT = "TechblogCaseBot/0.1 (+https://github.com/zie-ning/Techblog-MCP)"
 
 # WAF가 Python TLS 클라이언트를 막아 curl로 요청하는 호스트.
 # 운영 측 허락을 받은 곳만 추가한다 (docs/기획.md "수집 예절")
