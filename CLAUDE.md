@@ -42,7 +42,7 @@ CI(`.github/workflows/ci.yml`)는 Python 3.11과 3.14에서 `uv sync --locked` �
 
 두 부분으로 나뉘고, 의존성도 분리한다.
 
-- **`src/techblog_mcp/`** — 사용자가 `uvx`로 설치하는 MCP 서버 패키지. 검색에 필요한 의존성만 `[project].dependencies`에 둔다.
+- **`src/techblog_mcp/`** — 사용자가 `uv tool install git+…`로 설치하는 MCP 서버 패키지(PyPI 전환은 M8). 검색에 필요한 의존성만 `[project].dependencies`에 둔다.
 - **`pipeline/`** — 수집·추출·색인 빌드. 배포 패키지에 포함되지 않는다. OpenAI SDK, 크롤링 라이브러리 등은 서버 의존성이 아니라 별도 의존성 그룹에 둔다. 테스트에서는 `pythonpath = ["."]` 설정으로 import한다.
 
 데이터 흐름:

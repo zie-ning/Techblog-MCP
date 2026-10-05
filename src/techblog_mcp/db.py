@@ -3,7 +3,7 @@
 DB는 다음 순서로 찾는다.
 1. 환경 변수 `TECHBLOG_MCP_DB`로 지정한 경로
 2. 저장소의 `data/techblog.sqlite` (개발용, pipeline.build_index로 생성)
-3. GitHub Release에서 내려받아 사용자 캐시 폴더에 둔 DB (`uvx` 설치 사용자)
+3. GitHub Release에서 내려받아 사용자 캐시 폴더에 둔 DB (git 주소로 설치한 사용자)
 
 내려받을 Release 태그와 체크섬은 `db_release.json`에 고정한다 (M6 결정). 같은 코드면 항상
 같은 데이터를 쓰고, 받은 파일이 그 파일인지 체크섬으로 확인한다. 이 파일은
