@@ -23,37 +23,48 @@
 
 [uv](https://docs.astral.sh/uv/getting-started/installation/)와 [Git](https://git-scm.com/downloads)이 필요합니다(uv가 GitHub에서 코드를 받을 때 Git을 씁니다). Python은 uv가 알아서 준비합니다.
 
-### Claude Code
+### 1. 서버 설치
 
 ```bash
-claude mcp add --scope user techblog -- uvx --from git+https://github.com/zie-ning/Techblog-MCP techblog-mcp
+uv tool install git+https://github.com/zie-ning/Techblog-MCP
+```
+
+`techblog-mcp` 명령이 생깁니다. 설치 끝에 "not on your PATH" 경고가 나오면 아래 명령을 실행하고 터미널과 클라이언트를 다시 시작하세요.
+
+```bash
+uv tool update-shell
+```
+
+### 2. 클라이언트에 등록
+
+**Claude Code**
+
+```bash
+claude mcp add --scope user techblog -- techblog-mcp
 ```
 
 - `--scope user`는 모든 프로젝트에서 쓰는 설정입니다. 지금 프로젝트에서만 쓰려면 빼세요.
 - Claude Code에서 `/mcp`를 입력해 `techblog`가 연결됐는지 확인합니다.
 
-### Cursor
-
-`~/.cursor/mcp.json`(모든 프로젝트) 또는 프로젝트의 `.cursor/mcp.json`에 추가합니다.
+**Cursor**: `~/.cursor/mcp.json`(모든 프로젝트) 또는 프로젝트의 `.cursor/mcp.json`에 추가합니다.
 
 ```json
 {
   "mcpServers": {
     "techblog": {
-      "command": "uvx",
-      "args": ["--from", "git+https://github.com/zie-ning/Techblog-MCP", "techblog-mcp"]
+      "command": "techblog-mcp"
     }
   }
 }
 ```
 
-### 다른 MCP 클라이언트
+**다른 MCP 클라이언트**: stdio 서버를 지원하면 `techblog-mcp` 명령을 등록하면 됩니다. 클라이언트가 명령을 찾지 못하면 `uv tool dir --bin`이 알려 주는 폴더의 전체 경로(Windows는 `techblog-mcp.exe`)를 쓰세요.
 
-stdio 서버를 지원하는 클라이언트라면 위와 같은 명령(`uvx --from git+https://github.com/zie-ning/Techblog-MCP techblog-mcp`)을 등록하면 됩니다.
+> 설치해 두고 실행하므로 서버를 켤 때 인터넷이 필요 없습니다(검색 DB를 처음 받을 때만 필요). `uvx --from git+…`로 등록하는 방법도 있지만, 켤 때마다 GitHub를 확인해 기동이 2~3초 느리고 오프라인에서는 켜지지 않아 권하지 않습니다.
 
 ## 처음 쓸 때 알아 둘 것
 
-- **첫 실행은 조금 걸립니다.** 패키지 설치와 검색 DB(약 9MB) 다운로드 때문에 첫 질문의 답이 10~20초 늦을 수 있습니다. 한 번만 그렇고, 이후에는 서버가 켜진 뒤 2~3초 안에 검색 준비가 끝납니다.
+- **첫 실행은 조금 걸립니다.** 검색 DB(약 9MB)를 내려받느라 첫 질문의 답이 10초 정도 늦을 수 있습니다. 한 번만 그렇고, 이후에는 서버가 켜진 뒤 2~3초 안에 검색 준비가 끝납니다.
 - **도구 호출 허용**: 도구를 쓸 때마다 허용 여부를 묻습니다. 세 도구 모두 검색 DB를 읽기만 하므로 "항상 허용"을 골라도 됩니다.
   - Claude Code에서는 허용 창에서 "Yes, and don't ask again"을 고르거나, `settings.json`의 `permissions.allow`에 `"mcp__techblog"`를 넣으면 이 서버의 도구를 모두 허용합니다.
 - **`/techblog` prompt**는 MCP prompt를 지원하는 클라이언트에서만 쓸 수 있습니다. Claude Code CLI와 Cursor는 지원하고, Claude 데스크톱 앱의 Code 탭에서는 실행되지 않습니다. 이 경우에는 그냥 질문하면 됩니다.
@@ -80,17 +91,20 @@ techblog MCP의 search 도구로 국내 기업 사례를 먼저 확인한다.
 
 ## 업데이트와 문제 해결
 
-- **새 버전으로 업데이트**: uv 캐시를 지우고 클라이언트를 다시 시작하면 최신 코드와 그 코드에 맞는 DB를 받습니다.
+- **새 버전으로 업데이트**: 아래 명령 후 클라이언트를 다시 시작하면 최신 코드와 그 코드에 맞는 DB를 받습니다. 업데이트하기 전까지는 설치한 버전이 그대로 유지됩니다.
 
   ```bash
-  uv cache clean techblog-mcp
+  uv tool upgrade techblog-mcp
   ```
+
+- **삭제**: `uv tool uninstall techblog-mcp`. 검색 DB는 아래 폴더를 지우면 됩니다.
 
 - **검색 DB 위치**: Windows `%LOCALAPPDATA%\techblog-mcp`, macOS `~/Library/Caches/techblog-mcp`, Linux `~/.cache/techblog-mcp`. 내려받은 파일은 체크섬으로 검증하며, 지워도 다음 실행 때 다시 받습니다.
 - **환경 변수**
   - `TECHBLOG_MCP_DB`: 이미 가진 DB 파일 경로를 쓸 때 (내려받지 않음)
   - `TECHBLOG_MCP_CACHE_DIR`: DB를 받을 폴더를 바꿀 때
 - **"검색 DB를 내려받지 못했습니다"**: 첫 실행에는 GitHub에 접속할 수 있어야 합니다. 네트워크를 확인하고 다시 질문하면 다시 시도합니다.
+- **클라이언트에서 `techblog-mcp`를 찾지 못함**: `uv tool update-shell` 후 클라이언트를 완전히 다시 시작하거나, 등록할 때 `uv tool dir --bin` 폴더의 전체 경로를 쓰세요.
 - **Windows에서 설치 중 `Filename too long`**: uv 캐시 경로가 길면 Windows 경로 길이 제한에 걸릴 수 있습니다. Git의 긴 경로 지원을 켜고 다시 시도하세요.
 
   ```bash
