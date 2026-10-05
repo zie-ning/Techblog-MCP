@@ -3,6 +3,8 @@ name = "techblog-mcp"
 version = "0.1.0"
 description = "국내 IT 기업 기술 블로그의 해결 사례와 실무 인사이트를 코딩 에이전트에 제공하는 MCP 서버"
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [
     { name = "zie-ning", email = "jeeun03@gmail.com" }
 ]
