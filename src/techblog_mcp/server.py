@@ -4,14 +4,18 @@
 """
 
 import sqlite3
+import threading
+from collections.abc import Callable
 from functools import cache
 from typing import Annotated, Literal
 
 from mcp.server.mcpserver import MCPServer
+from mcp.server.mcpserver.exceptions import ToolError
 from mcp.types import ToolAnnotations
 from pydantic import Field
 
 from techblog_mcp import db, render, taxonomy
+from techblog_mcp.search import analyzer
 from techblog_mcp.search import query as q
 
 ProblemType = Literal[taxonomy.problem_type_names()]  # type: ignore[valid-type]
@@ -22,6 +26,7 @@ Domain = Literal[taxonomy.domain_names()]  # type: ignore[valid-type]
 MAX_DETAIL_IDS = 5
 
 # 세 도구 모두 검색 DB를 읽기만 하고 외부와 통신하지 않는다
+# (첫 실행 때 고정된 DB 파일을 내려받는 것은 서버 준비 과정이라 도구 동작으로 보지 않는다)
 READ_ONLY = ToolAnnotations(
     read_only_hint=True, destructive_hint=False, idempotent_hint=True, open_world_hint=False
 )
@@ -46,6 +51,8 @@ SEARCH_DESCRIPTION = f"""\
 검색어는 단어로 맞춰 찾는다(뜻으로 찾지 않음). 한 가지 주제를 담은 짧은 명사구로 쓰고,
 여러 하위 주제를 묶은 요구는 하위 주제별로 나눠 여러 번 검색할 것
 (예: "Kafka 주문 이벤트 중복 유실 멱등성" → "Kafka 메시지 중복 처리", "주문 이벤트 유실 방지").
+필터로 지정한 조건은 검색어에 다시 쓰지 말고, 그 안에서 찾을 구체적인 주제만 쓸 것
+(예: problem_type="트래픽 급증 대응"이면 query="이벤트 대기열").
 결과가 없으면 다른 표현(한국어/영어 표기 등)으로 한 번 더 찾아볼 것.
 
 결과는 관련도 기준을 넘은 항목만 관련도 순으로 최대 {q.MAX_RESULTS}건이고,
@@ -62,18 +69,28 @@ GET_DETAILS_DESCRIPTION = f"""\
 search나 aggregate 결과의 항목 ID(case_0001 형식)로 전체 내용을 조회한다.
 한 번에 최대 {MAX_DETAIL_IDS}건.
 
-문제 상황·해결 방법·성능/운영 포인트·버린 대안을
-필드마다 원문 근거 발췌와 함께 돌려주고, 원문 제목·링크와 같은 글의 다른 항목 ID도 알려 준다.
-답변에 소개할 사례는 모두 이 도구로 열어 확인할 것. 소개하지 않을 사례까지 열 필요는 없다."""
+문제 상황·해결 방법·성능/운영 포인트·버린 대안을 돌려주고, 원문 제목·링크와
+같은 글의 다른 항목 ID도 알려 준다. 각 필드의 본문 줄은 요약이고, "근거"는 원문에서 그대로
+옮긴 문장이다(원문에 있는지 검증함). 원문 표현을 인용할 때는 근거 문장을 쓸 것.
 
-AGGREGATE_DESCRIPTION = """\
+원문 전체가 아니라 요약과 짧은 발췌만 있다. 결과에 없는 세부 내용은 추측으로 채우지 말고
+원문 링크를 안내할 것. 답변에 소개할 사례는 모두 이 도구로 열어 확인하고, 소개하지 않을
+사례까지 열 필요는 없다. 같은 글의 다른 항목은 질문과 관련 있어 보일 때 이어서 열 것."""
+
+AGGREGATE_DESCRIPTION = f"""\
 조건에 맞는 항목을 기술, 문제 유형, 도메인, 회사, 버린 대안별로 센다.
-"Kafka를 쓰는 국내 회사는 몇 곳?", "메시징 문제에 어떤 기술을 많이 쓰나?"처럼
+"메시징 문제에 어떤 기술을 많이 다뤘나?", "Kafka 사례를 쓴 회사는 몇 곳?"처럼
 여러 회사의 선택을 비교할 때 호출한다.
 
+건수는 {COMPANIES}의 기술 블로그(2023-09 이후)에 글로 쓴 사례의 수다.
+회사의 실제 도입 현황이나 국내 업계 전체를 대표하는 값이 아니므로, 답변에서 그렇게 밝힐 것.
+
+범위는 문제 유형·도메인·기술 필터로만 좁힌다(검색어로는 집계할 수 없음).
+필터로 표현되지 않는 주제는 search를 쓸 것.
+
 모수(전체 건수·회사 수)와 항목별 건수(성능·운영 포인트에 수치가 있는 건수 포함),
-회사 이름, 예시 ID를 돌려준다. 기술별 집계는 같은 계열 제품을 상위 기술로 합친다
-(예: Amazon MSK는 Kafka 계열에 포함하고 내역을 보여 준다).
+회사 이름, 예시 ID를 돌려준다. 기술은 같은 계열 제품을 상위 기술로 합친다
+(예: Amazon MSK는 Kafka 계열). 기술 필터도 같은 기준이라 "Kafka"로 거르면 계열 전체가 포함된다.
 예시 ID는 get_details로 이어서 볼 수 있다. 결과에 없는 수치를 지어내지 말 것."""
 
 server = MCPServer(name="techblog", instructions=INSTRUCTIONS)
@@ -95,13 +112,47 @@ DomainArg = Annotated[
 ]
 TechnologiesArg = Annotated[
     list[str] | None,
-    Field(description="기술 필터 (자유 입력, 예: 카프카 → Kafka). 하나라도 쓴 항목을 찾는다"),
+    Field(
+        description="기술 필터 (자유 입력, 예: 카프카 → Kafka). 하나라도 쓴 항목을 찾는다."
+        " 상위 기술은 같은 계열의 하위 기술까지 포함한다 (Kafka → Amazon MSK 등)"
+    ),
 ]
 
 
+_connection_lock = threading.Lock()
+
+
 @cache
-def _connection() -> sqlite3.Connection:
+def _open_connection() -> sqlite3.Connection:
     return db.connect()
+
+
+def _connection() -> sqlite3.Connection:
+    # 기동 때 시작한 DB 준비(첫 실행이면 다운로드)와 도구 호출이 겹치면 도구 호출이 끝나길 기다린다
+    with _connection_lock:
+        try:
+            return _open_connection()
+        except db.DatabaseNotFound as e:
+            # 예상한 실패라 ToolError로 바꿔 이유와 해결 방법만 도구 결과로 돌려준다
+            raise ToolError(str(e)) from e
+
+
+def _quietly(step: Callable[[], object]) -> None:
+    try:
+        step()
+    except Exception:
+        pass  # 실패하면 도구를 호출할 때 다시 시도하며 이유를 결과로 알린다
+
+
+def _prepare() -> list[threading.Thread]:
+    """첫 도구 호출을 빠르게 하려고 DB(첫 실행이면 다운로드)와 형태소 분석기를 동시에 준비한다."""
+    threads = [
+        threading.Thread(target=_quietly, args=(step,), daemon=True)
+        for step in (_connection, analyzer.warm_up)
+    ]
+    for thread in threads:
+        thread.start()
+    return threads
 
 
 def _filters(
@@ -176,4 +227,6 @@ def techblog(topic: Annotated[str, Field(description="찾아볼 설계 주제나
 
 
 def main() -> None:
+    # initialize 응답을 막지 않도록 준비는 백그라운드에서 한다
+    _prepare()
     server.run()

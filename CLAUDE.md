@@ -29,6 +29,7 @@ uv run python -m pipeline.extract oliveyoung --outdated                        #
 uv run python -m pipeline.normalize [--apply]                                  # 기술명 재정규화·미등록 리포트
 uv run python -m pipeline.expand                                               # 문서 확장 (새·바뀐 항목만, OPENAI_API_KEY 필요)
 uv run python -m pipeline.build_index                                          # 검색 DB 빌드
+uv run python -m pipeline.release_db [--upload]                                # 검색 DB를 GitHub Release로 배포 (gh 로그인 필요)
 uv run python -m pipeline.view                                                 # jsonl을 보기 좋은 json으로 변환 (data/.view/, git 제외)
 uv run techblog-mcp                                                            # MCP 서버 (stdio)
 ```
@@ -41,7 +42,7 @@ CI(`.github/workflows/ci.yml`)는 Python 3.11과 3.14에서 `uv sync --locked` �
 
 두 부분으로 나뉘고, 의존성도 분리한다.
 
-- **`src/techblog_mcp/`** — 사용자가 `uvx`로 설치하는 MCP 서버 패키지. 검색에 필요한 의존성만 `[project].dependencies`에 둔다.
+- **`src/techblog_mcp/`** — 사용자가 `uv tool install git+…`로 설치하는 MCP 서버 패키지(PyPI 전환은 M8). 검색에 필요한 의존성만 `[project].dependencies`에 둔다.
 - **`pipeline/`** — 수집·추출·색인 빌드. 배포 패키지에 포함되지 않는다. OpenAI SDK, 크롤링 라이브러리 등은 서버 의존성이 아니라 별도 의존성 그룹에 둔다. 테스트에서는 `pythonpath = ["."]` 설정으로 import한다.
 
 데이터 흐름:
@@ -63,7 +64,7 @@ CI(`.github/workflows/ci.yml`)는 Python 3.11과 3.14에서 `uv sync --locked` �
 - **형태소 분석은 색인과 검색에서 같은 방식**을 써야 한다 (kiwipiepy, `techblog_mcp.search.analyzer`, 사용자 사전 `USER_WORDS` 포함). 한쪽만 바꾸면 검색이 깨진다. DB 스키마나 사용자 사전을 바꾸면 `search/schema.py`의 `SCHEMA_VERSION`을 올린다.
 - **문서 확장**(`pipeline/expand.py`)은 추출과 별도 단계다. 항목을 재추출하거나 추가하면 `pipeline.expand`로 확장을 만든 뒤 색인을 빌드한다. 확장은 검색 보조 정보라 발췌 검증 대상이 아니고 카드·상세에 보여 주지 않는다.
 - **MCP SDK는 2.x**다. `FastMCP`가 아니라 `mcp.server.mcpserver.MCPServer`를 쓴다.
-- **DB 경로 로딩은 `src/techblog_mcp/db.py` 한 곳**에 둔다. 나중에 GitHub Release에서 DB를 내려받는 방식으로 교체할 지점이다.
+- **DB 경로 로딩은 `src/techblog_mcp/db.py` 한 곳**에 둔다. 환경 변수 → 저장소 `data/techblog.sqlite` → GitHub Release 다운로드(사용자 캐시) 순으로 찾는다. 받을 Release는 `db_release.json`(태그·sha256)에 고정하며 `pipeline.release_db --upload`가 갱신한다. DB 스키마를 바꾸면 새 Release를 올려야 `test_shipped_manifest_matches_schema`가 통과한다.
 
 ### MCP 도구 계약
 
@@ -71,8 +72,8 @@ CI(`.github/workflows/ci.yml`)는 Python 3.11과 3.14에서 `uv sync --locked` �
 - **핵심은 `search`다.** `aggregate`는 중요도가 가장 낮은 보조 도구라, 집계를 깔끔하게 만들려고 `search`의 검색 정확도를 낮추는 설계(예: 분류를 하나만 고르게 강제)는 하지 않는다 (`docs/기획.md` "도구 우선순위").
 - 세 도구 모두 읽기 전용 annotation(`readOnlyHint` 등)을 단다. DB에 쓰는 도구를 추가하면 annotation도 바꾼다.
 - 결과는 JSON이 아니라 읽기 쉬운 텍스트로 반환한다. `search` 카드에는 근거 발췌를 넣지 않고, 문제 상황·성능·운영 포인트는 있을 때만 한 줄씩 보여 준다.
-- `search` 필터는 문제 유형·도메인(enum), 기술(자유 입력 → 서버 정규화). 회사·날짜 필터와 결과 수 파라미터는 의도적으로 없다. 서버가 관련도 기준(IDF 가중 일치 비율 50%, `query.MIN_IDF_COVERAGE`)을 넘는 항목만 최대 10건 돌려준다. 긴 주제는 에이전트가 나눠 여러 번 검색하도록 도구 설명으로 안내한다(질의 재작성).
-- `aggregate`는 모수(전체 건수·회사 수)와 예시 ID를 함께 반환하고, 건수와 함께 성능·운영 포인트에 수치(숫자)가 있는 건수(`has_metrics`)를 표시한다. 기술 집계는 사전의 상위 기술(`parent`)로 같은 계열을 합쳐 세고 하위 기술 내역을 보여 준다. 문제 유형·도메인은 다중 선택(문제 유형 1~3개, 도메인 1~2개)이라 해당하는 값마다 센다.
+- `search` 필터는 문제 유형·도메인(enum), 기술(자유 입력 → 서버 정규화). 회사·날짜 필터와 결과 수 파라미터는 의도적으로 없다. 서버가 관련도 기준(IDF 가중 일치 비율 50%, `query.MIN_IDF_COVERAGE`)을 넘는 항목만 최대 10건 돌려준다. 필터 이름과 겹치는 검색어 단위는 기준 계산에서 뺀다(색인 keywords 열에 분류·기술 이름이 있어서). 검색 변경은 `eval/search_experiments.py e9`로 평가한다(`eval/search_eval.py`는 관련도 기준을 적용하지 않는 기준선). 긴 주제는 에이전트가 나눠 여러 번 검색하도록 도구 설명으로 안내한다(질의 재작성).
+- `aggregate`는 모수(전체 건수·회사 수)와 예시 ID를 함께 반환하고, 건수와 함께 성능·운영 포인트에 수치(숫자)가 있는 건수(`has_metrics`)를 표시한다. 기술 집계는 사전의 상위 기술(`parent`)로 같은 계열을 합쳐 세고 하위 기술 내역을 보여 준다. 기술 필터도 같은 기준이라 상위 기술을 주면 하위 기술까지 찾는다(`taxonomy.technology_members`). 문제 유형·도메인은 다중 선택(문제 유형 1~3개, 도메인 1~2개)이라 해당하는 값마다 센다.
 - 결과가 없거나 적으면 그 사실을 명시해 에이전트가 사례를 지어내지 않게 한다.
 
 ## 수집 규칙

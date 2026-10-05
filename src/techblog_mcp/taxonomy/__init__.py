@@ -92,6 +92,23 @@ def technology_family(name: str) -> str:
     return tech.parent if tech and tech.parent else name
 
 
+def technology_members(name: str) -> tuple[str, ...]:
+    """필터에서 펼칠 이름: 자기 자신 + 하위 기술 (예: Kafka → Kafka, Amazon MSK, …).
+
+    하위 기술로 찾으면 그 기술만 찾는다 (M6 결정, docs/기획.md).
+    """
+    return (name, *_children().get(name, ()))
+
+
+@cache
+def _children() -> dict[str, tuple[str, ...]]:
+    children: dict[str, list[str]] = {}
+    for t in technologies():
+        if t.parent:
+            children.setdefault(t.parent, []).append(t.name)
+    return {parent: tuple(names) for parent, names in children.items()}
+
+
 def problem_type_names() -> tuple[str, ...]:
     return tuple(c.name for c in problem_types())
 

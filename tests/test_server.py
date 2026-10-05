@@ -11,9 +11,9 @@ from techblog_mcp import db, server
 @pytest.fixture(autouse=True)
 def use_sample_db(sample_db, monkeypatch):
     monkeypatch.setenv(db.DB_PATH_ENV, str(sample_db))
-    server._connection.cache_clear()
+    server._open_connection.cache_clear()
     yield
-    server._connection.cache_clear()
+    server._open_connection.cache_clear()
 
 
 def call(name: str, **arguments) -> str:
@@ -140,7 +140,8 @@ def test_reference_principle_is_communicated():
     assert "그대로 적용하라고 권하지 않는다" in text
 
 
-def test_aggregate_technology_shows_family_members(tmp_path, monkeypatch):
+@pytest.fixture
+def family_db(tmp_path, monkeypatch):
     from conftest import make_entry
 
     from pipeline.build_index import build
@@ -154,7 +155,29 @@ def test_aggregate_technology_shows_family_members(tmp_path, monkeypatch):
         path,
     )
     monkeypatch.setenv(db.DB_PATH_ENV, str(path))
-    server._connection.cache_clear()
+    server._open_connection.cache_clear()
+
+
+def test_aggregate_technology_shows_family_members(family_db):
     text = call("aggregate", group_by="technology")
     assert "1. Kafka  2건" in text and "포함: Amazon MSK 1" in text
     assert "Amazon MSK는 Kafka 계열" in text
+
+
+def test_technology_filter_expands_family(family_db):
+    # 상위 기술 필터는 계열 전체를 찾아 집계의 계열 합산과 숫자가 맞는다 (M6 결정)
+    text = call("aggregate", group_by="company", technologies=["카프카"])
+    assert "기술 ∋ Kafka 계열 → 2건" in text
+    # 하위 기술로 거르면 그 기술만
+    text = call("aggregate", group_by="company", technologies=["Amazon MSK"])
+    assert "기술 ∋ Amazon MSK → 1건" in text
+
+
+def test_prepare_survives_missing_db(tmp_path, monkeypatch):
+    # 기동 때 백그라운드 준비가 실패해도 서버가 죽지 않고, 도구 호출에서 이유를 알린다
+    monkeypatch.setenv(db.DB_PATH_ENV, str(tmp_path / "none.sqlite"))
+    server._open_connection.cache_clear()
+    for thread in server._prepare():
+        thread.join()
+    with pytest.raises(ToolError, match="검색 DB가 없습니다"):
+        asyncio.run(server.server.call_tool("search", {"query": "쿠폰"}))

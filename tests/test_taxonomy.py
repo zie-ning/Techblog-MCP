@@ -59,6 +59,9 @@ def test_technology_category_and_family():
     assert taxonomy.technology_family("Amazon MSK") == "Kafka"
     assert taxonomy.technology_family("Kafka") == "Kafka"
     assert taxonomy.technology_family("사전에 없는 기술") == "사전에 없는 기술"
+    # 필터에서 펼칠 때는 반대 방향: Kafka는 MSK를 포함하고, MSK는 자기 자신만
+    assert {"Kafka", "Amazon MSK"} <= set(taxonomy.technology_members("Kafka"))
+    assert taxonomy.technology_members("Amazon MSK") == ("Amazon MSK",)
 
 
 def test_every_technology_has_valid_category_and_parent():
