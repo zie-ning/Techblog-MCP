@@ -6,7 +6,8 @@
 
 ## 지금 할 일
 
-- **[M6. 마무리와 배포](milestones/M6.md)** (브랜치 `feat/m6-release`): DB 전달 방식(Release 다운로드)·이용약관 확인·기동 시간 단축·도구 설명 확정·README·깨끗한 환경 확인 완료. 남은 일: Claude Code 실제 질문 확인(로그인 필요), PR
+- **M6 PR**: 브랜치 `feat/m6-release`를 `main`에 병합 (사용자 지시 후)
+- **다음 마일스톤**: [M7. 에이전트 A/B 평가](milestones/M7.md) (확장 중 가장 먼저, 구현계획.md)
 
 ## 마일스톤 현황
 
@@ -18,7 +19,7 @@
 | M3. 파일럿과 추출 평가 | ✅ 완료 | 추출 모델 `gpt-5.6-luna` 확정, 사례·인사이트 구분 폐지, 분류 다중 선택, 정답셋 24편과 LLM 채점 | [M3.md](milestones/M3.md) |
 | M4. 전체 추출 | ✅ 완료 | 1,262편 추출(항목 1,315개, $6.4), 문제 유형 21개로 확정, 기술 사전 278종 | [M4.md](milestones/M4.md) |
 | M5. 검색 평가와 튜닝 | ✅ 완료 | 실험 E1~E9, 임베딩 없이 문서 확장·질의 재작성 안내·관련도 기준(IDF 50%)·형태소 사용자 사전 도입. Recall@5 0.551 → 0.589, 없는 주제 결과 없음 0% → 100%. aggregate는 계열 합산·수치 표시로 변경 | [M5.md](milestones/M5.md) |
-| M6. 마무리와 배포 | 🔄 진행 중 | 검색 DB는 GitHub Release에서 내려받기(태그·체크섬 고정), 이용약관 확인 후 요약·발췌·링크 배포 + 고지 | [M6.md](milestones/M6.md) |
+| M6. 마무리와 배포 | ✅ 완료 | 검색 DB는 GitHub Release 다운로드(태그·체크섬 고정), 기동 때 백그라운드 준비, 기술 필터 계열 펼치기, 이용약관 확인 후 고지와 함께 배포, `uv tool install` 설치 README, 깨끗한 환경·Claude Code 실사용 확인. PyPI 전환은 M8로 | [M6.md](milestones/M6.md) |
 | M7. 에이전트 A/B 평가 (확장) | ⏳ 대기 | M1 시나리오 재사용, 헤드리스 자동화 | [M7.md](milestones/M7.md) |
 | M8. 자동 갱신 파이프라인 (확장) | ⏳ 대기 | | [M8.md](milestones/M8.md) |
 | M9. 원격 HTTP 서버 (확장) | ⏳ 대기 | | [M9.md](milestones/M9.md) |
