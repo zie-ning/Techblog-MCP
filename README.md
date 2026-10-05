@@ -91,6 +91,11 @@ techblog MCP의 search 도구로 국내 기업 사례를 먼저 확인한다.
   - `TECHBLOG_MCP_DB`: 이미 가진 DB 파일 경로를 쓸 때 (내려받지 않음)
   - `TECHBLOG_MCP_CACHE_DIR`: DB를 받을 폴더를 바꿀 때
 - **"검색 DB를 내려받지 못했습니다"**: 첫 실행에는 GitHub에 접속할 수 있어야 합니다. 네트워크를 확인하고 다시 질문하면 다시 시도합니다.
+- **Windows에서 설치 중 `Filename too long`**: uv 캐시 경로가 길면 Windows 경로 길이 제한에 걸릴 수 있습니다. Git의 긴 경로 지원을 켜고 다시 시도하세요.
+
+  ```bash
+  git config --global core.longpaths true
+  ```
 
 ## 데이터 출처와 저작권
 
