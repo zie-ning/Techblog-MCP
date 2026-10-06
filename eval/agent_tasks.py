@@ -21,7 +21,7 @@ from eval.search_eval import EvalQuery, load_queries  # noqa: E402
 
 TASKS_PATH = ROOT / "eval" / "agent" / "tasks.toml"
 
-Category = Literal["design", "few", "noise", "aggregate", "absent", "no_call", "concept"]
+Category = Literal["design", "few", "noise", "aggregate", "absent", "no_call", "concept", "open"]
 ExpectCall = Literal["required", "forbidden", "optional"]
 Tool = Literal["search", "get_details", "aggregate"]
 
@@ -34,6 +34,7 @@ EXPECT_CALL_BY_CATEGORY: dict[str, ExpectCall] = {
     "absent": "optional",
     "no_call": "forbidden",
     "concept": "optional",
+    "open": "optional",  # DB와 무관하게 고른 과제라 호출이 맞는지 미리 알 수 없다
 }
 
 # 같은 사례가 여러 질의에서 다른 등급을 받으면 높은 쪽을 쓴다

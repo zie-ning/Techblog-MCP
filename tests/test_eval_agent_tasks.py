@@ -16,7 +16,7 @@ def _query(qid: str, labels: dict[str, str]) -> EvalQuery:
 
 def test_shipped_tasks_are_valid():
     tasks = load_tasks()
-    assert 20 <= len(tasks) <= 30
+    assert 30 <= len(tasks) <= 40
     # 호출해야 하는 과제, 하지 말아야 하는 과제, 없는 주제를 모두 포함한다 (M7 넘어온 항목)
     categories = {t.category for t in tasks}
     assert {"design", "no_call", "absent"} <= categories

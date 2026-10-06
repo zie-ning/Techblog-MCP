@@ -291,3 +291,79 @@ expect_call = "optional"
 search_refs = []
 source = "M1 시나리오 8 (문구 그대로)"
 check = "정답 없음. 호출 비율만 본다"
+
+
+# ---------- DB와 무관하게 고른 설계 과제 (M7 채점 재설계, 사용자 결정) ----------
+# DB를 검색하지 않고 흔한 백엔드·AI 설계 질문으로 먼저 썼다. DB에 사례가 있는지와 상관없이
+# 그대로 실행한다. DB가 다루는 주제에 맞춰 고른 위 과제들의 편향을 보완하기 위함이다.
+
+
+[[tasks]]
+id = "o01"
+category = "open"
+prompt = "푸시·SMS·이메일 알림을 하루 수천만 건 보내는 발송 시스템을 설계해줘. 실패하면 재시도해야 하고 같은 알림이 두 번 가면 안 돼."
+expect_call = "optional"
+source = "DB와 무관하게 선정"
+
+[[tasks]]
+id = "o02"
+category = "open"
+prompt = "B2B SaaS를 만들고 있어. 고객사(테넌트)가 수백 곳인데 DB를 테넌트별로 나눌지, 한 테이블에 tenant_id로 같이 둘지 고민이야. 어떻게 결정하면 좋을까?"
+expect_call = "optional"
+source = "DB와 무관하게 선정"
+
+[[tasks]]
+id = "o03"
+category = "open"
+prompt = "API 서버가 여러 대인 환경에서 사용자별 요청 수 제한(rate limiting)을 걸고 싶어. 구조를 설계해줘."
+expect_call = "optional"
+source = "DB와 무관하게 선정"
+
+[[tasks]]
+id = "o04"
+category = "open"
+prompt = "사용자가 수 GB짜리 동영상 파일을 올리는 기능을 만들어야 해. 업로드 중에 네트워크가 끊겨도 이어서 올릴 수 있게 하려면 어떻게 설계해야 해?"
+expect_call = "optional"
+source = "DB와 무관하게 선정"
+
+[[tasks]]
+id = "o05"
+category = "open"
+prompt = "매일 새벽에 전날 거래 수백만 건을 정산하는 배치를 만들어야 해. 중간에 실패해도 안전하게 다시 돌릴 수 있는 구조로 설계해줘."
+expect_call = "optional"
+source = "DB와 무관하게 선정"
+
+[[tasks]]
+id = "o06"
+category = "open"
+prompt = "LLM으로 고객 상담 챗봇을 만들고 있어. 프롬프트 인젝션이나 다른 고객의 개인정보가 새는 걸 막으려면 어떻게 설계해야 할까?"
+expect_call = "optional"
+source = "DB와 무관하게 선정"
+
+[[tasks]]
+id = "o07"
+category = "open"
+prompt = "기능 출시를 서버 배포와 분리하려고 피처 플래그를 도입하려고 해. 사내에 직접 만들지 외부 서비스를 쓸지, 만든다면 구조는 어떻게 가져가야 할까?"
+expect_call = "optional"
+source = "DB와 무관하게 선정"
+
+[[tasks]]
+id = "o08"
+category = "open"
+prompt = "상품 검색창에 자동완성을 넣으려고 해. 한글 초성 검색도 되고 응답이 빨라야 해. 어떻게 설계하면 좋을까?"
+expect_call = "optional"
+source = "DB와 무관하게 선정"
+
+[[tasks]]
+id = "o09"
+category = "open"
+prompt = "마이크로서비스가 30개쯤 되는데 장애가 나면 어느 서비스에서 느려졌는지 찾기가 너무 어려워. 분산 추적을 도입하려면 어떻게 해야 해?"
+expect_call = "optional"
+source = "DB와 무관하게 선정"
+
+[[tasks]]
+id = "o10"
+category = "open"
+prompt = "병원 진료 예약 시스템을 만들고 있어. 같은 시간대에 두 사람이 동시에 예약해서 중복 예약이 생기지 않게 하려면 어떻게 해야 해?"
+expect_call = "optional"
+source = "DB와 무관하게 선정"
