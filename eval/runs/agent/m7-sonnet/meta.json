@@ -1,0 +1,8 @@
+{
+  "claude_code_version": "2.1.286 (Claude Code)",
+  "model": "sonnet",
+  "reps": 3,
+  "git_commit": "15759f65d87a5aaa9ed4360a393fe585d878cdb8",
+  "git_dirty": false,
+  "db_sha256": "4f980e8d36ef7fb0eaf3333c86992b4e8d96000254d51cb8a2ea597e7e40304a"
+}
