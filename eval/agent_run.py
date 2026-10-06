@@ -5,7 +5,7 @@
     uv run python eval/agent_run.py                         # 전체 (이미 끝난 실행은 건너뜀)
     uv run python eval/agent_run.py --rebuild               # 원본 로그로 records.jsonl 재생성
 
-조건(mcp·none·web)과 실행 옵션의 근거는 docs/기획.md "에이전트 평가 (M7)"와
+조건(mcp·none·web·web-ask)과 실행 옵션의 근거는 docs/기획.md "에이전트 평가 (M7)"와
 docs/milestones/M7.md 진행 기록. 결과는 eval/runs/agent/<name>/에 둔다.
 - raw/<과제>__<조건>__r<회차>.jsonl: stream-json 원본 (git 제외)
 - records.jsonl: 실행마다 도구 호출·결과·답변을 뽑은 기록 (채점 입력, 커밋)
@@ -48,12 +48,23 @@ class Condition:
     name: str
     mcp: bool
     allowed_tools: tuple[str, ...]
+    append_system_prompt: str | None = None
 
+
+# web 조건에서 에이전트가 웹 검색을 스스로 쓰지 않아(M7 진행 기록), 사례가 필요하면 웹 검색을 쓰라고
+# 지시한 조건을 따로 둔다 (사용자 결정). 사용자가 CLAUDE.md에 넣는 지시문과 같은 수준으로만 쓴다
+WEB_ASK_PROMPT = (
+    "설계처럼 선택지가 있는 작업에서는 답하기 전에 WebSearch로 국내 기업 기술 블로그의 실제 사례를 "
+    "찾아본다. 사례를 인용할 때는 회사명과 원문 링크를 밝히고, 찾지 못한 사례는 만들어내지 않는다."
+)
 
 CONDITIONS = {
     "mcp": Condition("mcp", mcp=True, allowed_tools=tuple(MCP_TOOLS)),
     "none": Condition("none", mcp=False, allowed_tools=()),
     "web": Condition("web", mcp=False, allowed_tools=tuple(WEB_TOOLS)),
+    "web-ask": Condition(
+        "web-ask", mcp=False, allowed_tools=tuple(WEB_TOOLS), append_system_prompt=WEB_ASK_PROMPT
+    ),
 }
 # 호출 금지 과제는 techblog 도구가 있을 때만 의미가 있어 mcp 조건만 돌린다 (사용자 결정)
 MCP_ONLY_CATEGORIES = {"no_call"}
@@ -120,6 +131,8 @@ def build_command(claude: str, spec: RunSpec, model: str, config_path: Path) -> 
     ]
     if spec.condition.allowed_tools:
         command += ["--allowedTools", " ".join(spec.condition.allowed_tools)]
+    if spec.condition.append_system_prompt:
+        command += ["--append-system-prompt", spec.condition.append_system_prompt]
     return command
 
 
@@ -297,7 +310,7 @@ def main() -> None:
     parser.add_argument("--jobs", type=int, default=3, help="동시에 띄울 claude 프로세스 수")
     parser.add_argument("--timeout", type=int, default=900, help="실행 1회의 제한 시간(초)")
     parser.add_argument("--tasks", help="쉼표로 구분한 과제 id (기본: 전체)")
-    parser.add_argument("--conditions", default="mcp,none,web")
+    parser.add_argument("--conditions", default="mcp,none,web,web-ask")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument(
         "--rebuild", action="store_true", help="실행하지 않고 records.jsonl만 다시 만듦"
@@ -327,10 +340,9 @@ def main() -> None:
     if claude is None:
         sys.exit("claude 명령을 찾을 수 없습니다")
     (out_dir / "raw").mkdir(parents=True, exist_ok=True)
-    for with_server, name in ((True, "mcp"), (False, "none"), (False, "web")):
-        (out_dir / f"mcp_{name}.json").write_text(
-            json.dumps(mcp_config(with_server), indent=2), encoding="utf-8"
-        )
+    for condition in CONDITIONS.values():
+        config = json.dumps(mcp_config(condition.mcp), indent=2)
+        (out_dir / f"mcp_{condition.name}.json").write_text(config, encoding="utf-8")
     write_meta(out_dir, claude, args.model, args.reps)
 
     with ThreadPoolExecutor(max_workers=args.jobs) as pool:

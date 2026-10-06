@@ -100,6 +100,11 @@ def test_build_command_allows_only_condition_tools(tmp_path: Path):
     assert "--allowedTools" not in none
     web = build_command("claude", RunSpec(_task("t01"), CONDITIONS["web"], 1), "sonnet", config)
     assert web[web.index("--allowedTools") + 1] == "WebSearch WebFetch"
+    assert "--append-system-prompt" not in web
+
+    ask = build_command("claude", RunSpec(_task("t01"), CONDITIONS["web-ask"], 1), "sonnet", config)
+    assert ask[ask.index("--allowedTools") + 1] == "WebSearch WebFetch"
+    assert "WebSearch" in ask[ask.index("--append-system-prompt") + 1]
 
 
 def test_mcp_config_pins_repository_db():
