@@ -35,3 +35,7 @@ eval/search/llm_cache/
 # 계획 모드가 자동으로 만드는 계획 파일 (저장소에 둘 사본은 m{N}-{이름}.md로 따로 저장)
 .claude/plans/*
 !.claude/plans/m[0-9]*.md
+
+# M7 에이전트 평가 원본 로그와 로컬 경로가 든 MCP 설정 (eval/agent_run.py). records.jsonl만 커밋
+eval/runs/agent/*/raw/
+eval/runs/agent/*/mcp_*.json

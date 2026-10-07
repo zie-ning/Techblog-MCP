@@ -1,0 +1,369 @@
+# M7 에이전트 평가 과제셋. 형식과 기준은 README.md, 로더는 ../agent_tasks.py.
+#
+# [[tasks]]
+# id = "t01"
+# category = "design"              # design / few / noise / aggregate / absent / no_call / concept
+# prompt = "..."                   # 에이전트에게 그대로 넣는 입력. 도구를 쓰라는 말은 넣지 않는다
+# expect_call = "required"         # required: 불러야 함 / forbidden: 부르면 안 됨 / optional: 관찰만
+# expect_tool = "aggregate"        # 특정 도구를 기대할 때만 (선택)
+# search_refs = ["m01"]            # 관련 사례 라벨을 가져올 검색 평가셋 질의 id (eval/search/queries.toml)
+# source = "M1 시나리오 1"
+# check = "..."                    # 이 과제에서 특히 볼 것
+
+
+# ---------- 설계: 호출해서 사례를 소개해야 함 ----------
+
+
+[[tasks]]
+id = "t01"
+category = "design"
+prompt = "선착순 쿠폰 발급 기능 설계해줘. 세일 때 동시에 수만 명이 몰려."
+expect_call = "required"
+search_refs = ["m01", "m05", "m06"]
+source = "M1 시나리오 1 (문구 그대로)"
+check = "사례와 제안 구분. 1단계 시험 실행에서 get_details로 열지 않은 사례를 인용함"
+
+[[tasks]]
+id = "t02"
+category = "design"
+prompt = "Kafka로 주문 이벤트를 주고받는데, 메시지가 중복되거나 유실될 때 어떻게 대비하는 게 좋을까?"
+expect_call = "required"
+search_refs = ["m08"]
+source = "M1 시나리오 2 (문구 그대로)"
+check = "기술 필터(Kafka) 사용 여부, 여러 사례 비교"
+
+[[tasks]]
+id = "t03"
+category = "design"
+prompt = "로컬 캐시랑 Redis를 같이 쓰려고 하는데, 서버가 여러 대일 때 캐시 데이터 일관성은 어떻게 맞춰?"
+expect_call = "required"
+search_refs = ["m07"]
+source = "M1 시나리오 3 (문구 그대로)"
+check = "get_details로 근거를 확인한 뒤 무효화 방식을 인용하는가"
+
+[[tasks]]
+id = "t04"
+category = "design"
+prompt = "사내에서 LLM을 직접 서빙하려고 해. 상용 API 대신 작은 모델을 쓰는 게 나을까?"
+expect_call = "required"
+search_refs = ["m10"]
+source = "M1 시나리오 5 (문구 그대로)"
+check = "버린 대안과 그 이유를 비교 자료로 쓰는가"
+
+[[tasks]]
+id = "t05"
+category = "design"
+prompt = "주문을 DB에 저장한 다음 이벤트를 발행하는데, 커밋은 됐는데 이벤트 발행이 실패하는 경우가 생겨. 둘 다 확실히 처리되게 하려면 어떻게 해야 해?"
+expect_call = "required"
+search_refs = ["m09"]
+source = "M1 시나리오 2 관찰 기록 (아웃박스)"
+check = "검색어에 '아웃박스'를 쓰는가 (M1의 형태소 분리 문제)"
+
+[[tasks]]
+id = "t06"
+category = "design"
+prompt = "백엔드 8명인 우리 팀에 AI 코딩 에이전트를 본격적으로 도입하려고 해. 어떻게 도입하고 정착시키면 좋을까?"
+expect_call = "required"
+search_refs = ["d01"]
+source = "검색 평가셋 d01"
+check = "관련 사례가 많은 주제(관련 19건). 사례를 고르는 방식"
+
+[[tasks]]
+id = "t07"
+category = "design"
+prompt = "사내 문서로 RAG 챗봇을 만들었는데 엉뚱한 답을 할 때가 많아. 답변 품질을 어떻게 개선하고 평가하면 될까?"
+expect_call = "required"
+search_refs = ["d02"]
+source = "검색 평가셋 d02"
+check = "개선과 평가를 나눠 검색하는가 (질의 재작성)"
+
+[[tasks]]
+id = "t08"
+category = "design"
+prompt = "결제 서비스를 운영 중인데 외부 PG사가 장애가 나면 우리 결제도 같이 멈춰. 어떻게 대비해야 할까?"
+expect_call = "required"
+search_refs = ["d03"]
+source = "검색 평가셋 d03"
+check = "도메인 필터(결제·금융) 사용 여부"
+
+[[tasks]]
+id = "t09"
+category = "design"
+prompt = "쿠버네티스 클러스터 비용이 너무 많이 나와. 파드 requests가 실제 사용량보다 과하게 잡혀 있는 것 같은데, 어떻게 줄여 나가면 좋을까?"
+expect_call = "required"
+search_refs = ["d05"]
+source = "검색 평가셋 d05"
+check = "비용 절감 수치를 인용할 때 원문과 맞는가"
+
+[[tasks]]
+id = "t10"
+category = "design"
+prompt = "운영 MySQL의 변경 사항을 검색용 Elasticsearch에 실시간으로 반영하고 싶어. 구조를 설계해줘."
+expect_call = "required"
+search_refs = ["d07"]
+source = "검색 평가셋 d07"
+check = "CDC 사례(관련 31건) 중 무엇을 고르는가"
+
+[[tasks]]
+id = "t11"
+category = "design"
+prompt = "우리 서비스가 호출하는 외부 API 하나가 느려지면 스레드가 전부 묶여서 장애가 서비스 전체로 번져. 어떻게 막아야 해?"
+expect_call = "required"
+search_refs = ["d09"]
+source = "검색 평가셋 d09"
+check = "서킷브레이커·타임아웃 설정값을 인용할 때 원문과 맞는가"
+
+[[tasks]]
+id = "t12"
+category = "design"
+prompt = "Oracle을 MySQL로 무중단 전환해야 해. 데이터는 수억 건이고 서비스는 24시간 돌아가. 전환 계획을 세워줘."
+expect_call = "required"
+search_refs = ["d15"]
+source = "검색 평가셋 d15"
+check = "사례의 규모·조건과 사용자 상황의 차이를 짚는가"
+
+[[tasks]]
+id = "t13"
+category = "design"
+prompt = "모노레포로 바꿨더니 CI 빌드가 30분 넘게 걸려. 어떻게 줄일 수 있을까?"
+expect_call = "required"
+search_refs = ["d13"]
+source = "검색 평가셋 d13"
+check = "짧은 개선 질문에서도 호출하는가"
+
+[[tasks]]
+id = "t14"
+category = "design"
+prompt = "서비스가 늘면서 Prometheus 하나로는 메트릭을 감당하지 못하고 있어. 대규모 메트릭 수집·저장 구조를 어떻게 가져가면 좋을까?"
+expect_call = "required"
+search_refs = ["d04"]
+source = "검색 평가셋 d04"
+check = "기술 필터와 검색어의 조합"
+
+[[tasks]]
+id = "t15"
+category = "design"
+prompt = "우리 웹 서비스의 첫 화면 로딩이 느리다는 피드백이 많아. 무엇부터 측정하고 어떻게 개선해 나가야 할까?"
+expect_call = "required"
+search_refs = ["d12"]
+source = "검색 평가셋 d12"
+check = "클라이언트(프런트엔드) 주제에서도 호출하는가"
+
+
+# ---------- 사례가 적은 주제 ----------
+
+
+[[tasks]]
+id = "t16"
+category = "few"
+prompt = "WebRTC로 1:1 영상 통화 서버를 만들려고 해. 구조를 설계해줘."
+expect_call = "required"
+search_refs = ["m03"]
+source = "M1 시나리오 6 (문구 그대로). M4 이후 LINE 영상 통화 항목 1건이 생김"
+check = "사례가 적다는 사실을 밝히는가, 일부 관련 카드를 사례처럼 부풀리지 않는가"
+
+
+# ---------- 검색 잡음이 알려진 주제 (M6에서 넘어온 항목) ----------
+
+
+[[tasks]]
+id = "t17"
+category = "noise"
+prompt = "콘서트 티켓 오픈 때 수십만 명이 동시에 접속해. 대기열을 띄워서 순서대로 입장시키는 시스템을 설계해줘."
+expect_call = "required"
+search_refs = ["m02"]
+source = "M6 '대기열' 형태소 분리"
+check = "'대기'만 맞은 무관 카드(셀프계산대 대기, 출고 대기)를 걸러 내는가. 결과 카드 무관 비율"
+
+[[tasks]]
+id = "t18"
+category = "noise"
+prompt = "상품 정보를 Redis에 캐시하고 있는데 가격을 바꾸면 가끔 예전 가격이 보여. 캐시와 DB의 일관성을 어떻게 맞춰야 해?"
+expect_call = "required"
+search_refs = ["m07"]
+source = "M6 '캐시'와 '캐싱' 표기 차이"
+check = "search('캐시 일관성', problem_type='캐싱')처럼 불러 무관 카드가 섞이는가"
+
+
+# ---------- 집계 ----------
+
+
+[[tasks]]
+id = "t19"
+category = "aggregate"
+prompt = "국내 회사들은 메시지 큐로 주로 뭘 써?"
+expect_call = "required"
+expect_tool = "aggregate"
+search_refs = ["m04"]
+source = "M1 시나리오 4 (문구 그대로)"
+check = "aggregate(group_by=technology)를 쓰는가, 모수(전체 건수·회사 수)를 해석해 밝히는가"
+
+[[tasks]]
+id = "t20"
+category = "aggregate"
+prompt = "국내 IT 회사들은 LLM을 실제로 어떤 문제에 많이 쓰고 있어?"
+expect_call = "required"
+expect_tool = "aggregate"
+search_refs = []
+source = "새 과제"
+check = "LLM·AI 도메인으로 문제 유형을 집계하는가, 건수를 지어내지 않는가"
+
+
+# ---------- DB에 없는 주제: 사례를 지어내지 않아야 함 ----------
+
+
+[[tasks]]
+id = "t21"
+category = "absent"
+prompt = "이더리움 스마트 컨트랙트의 가스비를 줄이려고 해. 설계할 때 뭘 고려해야 할까? 참고할 만한 국내 사례도 있으면 알려줘."
+expect_call = "optional"
+search_refs = ["a01"]
+source = "검색 평가셋 a01"
+check = "사례를 요청했지만 데이터가 없음. '찾지 못했다'고 밝히는가"
+
+[[tasks]]
+id = "t22"
+category = "absent"
+prompt = "Unity로 만든 멀티플레이 게임의 서버를 설계하고 있어. 플레이어 상태를 실시간으로 동기화하는 구조를 잡아줘. 국내 회사들이 어떻게 하는지도 궁금해."
+expect_call = "optional"
+search_refs = ["a02"]
+source = "검색 평가셋 a02"
+check = "흔한 단어(서버, 실시간, 동기화)로 나온 일부 관련 카드를 게임 사례처럼 소개하지 않는가"
+
+[[tasks]]
+id = "t23"
+category = "absent"
+prompt = "IoT 기기 수십만 대에 펌웨어를 무선으로 업데이트(OTA)하는 배포 전략을 설계해줘."
+expect_call = "optional"
+search_refs = ["a03"]
+source = "검색 평가셋 a03"
+check = "사례 요청이 없는 경우. 앱·서버 배포 사례를 OTA 사례처럼 소개하지 않는가"
+
+[[tasks]]
+id = "t24"
+category = "absent"
+prompt = "Elixir와 Phoenix로 웹소켓 채팅 서버를 만들려고 해. 동시 접속 10만 명 기준으로 구조를 잡아줘."
+expect_call = "optional"
+search_refs = ["a05"]
+source = "검색 평가셋 a05"
+check = "다른 언어의 채팅 사례를 소개한다면 Elixir가 아니라고 밝히는가"
+
+
+# ---------- 호출하지 말아야 함 ----------
+
+
+[[tasks]]
+id = "t25"
+category = "no_call"
+prompt = "이 코드의 변수 이름을 camelCase로 바꿔줘: `user_name = get_user_name(user_id)`"
+expect_call = "forbidden"
+search_refs = []
+source = "M1 시나리오 7 (문구 그대로)"
+check = "호출하지 않음"
+
+[[tasks]]
+id = "t26"
+category = "no_call"
+prompt = "회원 정보를 조회하는 REST API를 Spring Boot로 만들어줘. 회원 ID로 이름과 이메일을 돌려주면 돼."
+expect_call = "forbidden"
+search_refs = []
+source = "M1 시나리오 7-b (문구 그대로)"
+check = "단순 CRUD 경계. 호출하지 않음"
+
+[[tasks]]
+id = "t27"
+category = "no_call"
+prompt = "이 코드에서 가끔 NullPointerException이 나. 고쳐줘: `String name = userRepository.findById(id).get().getName();`"
+expect_call = "forbidden"
+search_refs = []
+source = "M1 시나리오 7-c (문구 그대로)"
+check = "버그 수정 경계. 호출하지 않음"
+
+
+# ---------- 개념 질문: 호출 여부 관찰 ----------
+
+
+[[tasks]]
+id = "t28"
+category = "concept"
+prompt = "Redis 분산락이 어떻게 동작하는지 원리를 설명해줘."
+expect_call = "optional"
+search_refs = []
+source = "M1 시나리오 8 (문구 그대로)"
+check = "정답 없음. 호출 비율만 본다"
+
+
+# ---------- DB와 무관하게 고른 설계 과제 (M7 채점 재설계, 사용자 결정) ----------
+# DB를 검색하지 않고 흔한 백엔드·AI 설계 질문으로 먼저 썼다. DB에 사례가 있는지와 상관없이
+# 그대로 실행한다. DB가 다루는 주제에 맞춰 고른 위 과제들의 편향을 보완하기 위함이다.
+
+
+[[tasks]]
+id = "o01"
+category = "open"
+prompt = "푸시·SMS·이메일 알림을 하루 수천만 건 보내는 발송 시스템을 설계해줘. 실패하면 재시도해야 하고 같은 알림이 두 번 가면 안 돼."
+expect_call = "optional"
+source = "DB와 무관하게 선정"
+
+[[tasks]]
+id = "o02"
+category = "open"
+prompt = "B2B SaaS를 만들고 있어. 고객사(테넌트)가 수백 곳인데 DB를 테넌트별로 나눌지, 한 테이블에 tenant_id로 같이 둘지 고민이야. 어떻게 결정하면 좋을까?"
+expect_call = "optional"
+source = "DB와 무관하게 선정"
+
+[[tasks]]
+id = "o03"
+category = "open"
+prompt = "API 서버가 여러 대인 환경에서 사용자별 요청 수 제한(rate limiting)을 걸고 싶어. 구조를 설계해줘."
+expect_call = "optional"
+source = "DB와 무관하게 선정"
+
+[[tasks]]
+id = "o04"
+category = "open"
+prompt = "사용자가 수 GB짜리 동영상 파일을 올리는 기능을 만들어야 해. 업로드 중에 네트워크가 끊겨도 이어서 올릴 수 있게 하려면 어떻게 설계해야 해?"
+expect_call = "optional"
+source = "DB와 무관하게 선정"
+
+[[tasks]]
+id = "o05"
+category = "open"
+prompt = "매일 새벽에 전날 거래 수백만 건을 정산하는 배치를 만들어야 해. 중간에 실패해도 안전하게 다시 돌릴 수 있는 구조로 설계해줘."
+expect_call = "optional"
+source = "DB와 무관하게 선정"
+
+[[tasks]]
+id = "o06"
+category = "open"
+prompt = "LLM으로 고객 상담 챗봇을 만들고 있어. 프롬프트 인젝션이나 다른 고객의 개인정보가 새는 걸 막으려면 어떻게 설계해야 할까?"
+expect_call = "optional"
+source = "DB와 무관하게 선정"
+
+[[tasks]]
+id = "o07"
+category = "open"
+prompt = "기능 출시를 서버 배포와 분리하려고 피처 플래그를 도입하려고 해. 사내에 직접 만들지 외부 서비스를 쓸지, 만든다면 구조는 어떻게 가져가야 할까?"
+expect_call = "optional"
+source = "DB와 무관하게 선정"
+
+[[tasks]]
+id = "o08"
+category = "open"
+prompt = "상품 검색창에 자동완성을 넣으려고 해. 한글 초성 검색도 되고 응답이 빨라야 해. 어떻게 설계하면 좋을까?"
+expect_call = "optional"
+source = "DB와 무관하게 선정"
+
+[[tasks]]
+id = "o09"
+category = "open"
+prompt = "마이크로서비스가 30개쯤 되는데 장애가 나면 어느 서비스에서 느려졌는지 찾기가 너무 어려워. 분산 추적을 도입하려면 어떻게 해야 해?"
+expect_call = "optional"
+source = "DB와 무관하게 선정"
+
+[[tasks]]
+id = "o10"
+category = "open"
+prompt = "병원 진료 예약 시스템을 만들고 있어. 같은 시간대에 두 사람이 동시에 예약해서 중복 예약이 생기지 않게 하려면 어떻게 해야 해?"
+expect_call = "optional"
+source = "DB와 무관하게 선정"
