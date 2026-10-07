@@ -1,6 +1,6 @@
 # 에이전트 평가 과제셋
 
-M7 에이전트 A/B 평가용 과제 28개. 파일은 [tasks.toml](tasks.toml), 형식은 [../agent_tasks.py](../agent_tasks.py)의 `Task`다. 평가 조건(`mcp`·`none`·`web`)과 결정 근거는 [docs/기획.md "에이전트 평가 (M7)"](../../docs/기획.md#에이전트-평가-m7), 진행 기록은 [docs/milestones/M7.md](../../docs/milestones/M7.md)에 있다.
+M7 에이전트 A/B 평가용 과제 38개. 파일은 [tasks.toml](tasks.toml), 형식은 [../agent_tasks.py](../agent_tasks.py)의 `Task`다. 평가 조건(`mcp`·`none`·`web`·`web-ask`)과 결정 근거는 [docs/기획.md "에이전트 평가 (M7)"](../../docs/기획.md#에이전트-평가-m7), 진행 기록은 [docs/milestones/M7.md](../../docs/milestones/M7.md)에 있다.
 
 ```bash
 uv run python eval/agent_tasks.py   # 검증 후 과제 목록과 관련 사례 수 출력
@@ -10,7 +10,7 @@ uv run python eval/agent_tasks.py   # 검증 후 과제 목록과 관련 사례 
 
 | 필드 | 뜻 |
 | --- | --- |
-| `id` | `t01`~ |
+| `id` | `t01`~ (DB에 맞춰 고른 과제), `o01`~ (DB와 무관하게 고른 과제) |
 | `category` | 과제 분류 (아래 표) |
 | `prompt` | 에이전트에게 그대로 넣는 입력. 도구를 쓰라거나 사례를 찾으라는 말은 넣지 않는다(`absent` 일부는 사용자가 사례를 직접 요청하는 경우를 일부러 넣음) |
 | `expect_call` | `required`(불러야 함) / `forbidden`(부르면 안 됨) / `optional`(호출 여부만 관찰). 분류마다 고정이며 로더가 검사한다 |
@@ -29,9 +29,12 @@ uv run python eval/agent_tasks.py   # 검증 후 과제 목록과 관련 사례 
 | `absent` | 4 | optional | DB에 없는 주제에서 사례를 지어내거나 일부 관련 카드를 사례처럼 소개하지 않는가 |
 | `no_call` | 3 | forbidden | 코드 수정·단순 CRUD·버그 수정에서 부르지 않는가 |
 | `concept` | 1 | optional | 개념 질문에서의 호출 비율 (정답 없음) |
+| `open` | 10 | optional | DB를 보지 않고 고른 흔한 백엔드·AI 설계 질문. DB에 맞춰 고른 위 과제들의 편향을 보완한다 |
+
+"보는 것"은 과제를 고른 의도다. 최종 채점은 분류와 상관없이 같은 과제의 두 답변 중 질문한 개발자에게 더 도움이 되는 쪽을 판정한다([../agent_judge.py](../agent_judge.py)). 호출 금지 과제는 `mcp` 조건만 돌린다.
 
 M1 실사용 시나리오 중 9개(1~6, 7, 7-b, 7-c, 8)는 문구를 그대로 썼다. 시나리오 6-b와 9는 prompt(`/mcp__techblog__techblog`)를 직접 부르는 경우라 `none`·`web` 조건과 비교할 수 없어 뺐다.
 
 ## 관련 사례 라벨의 한계
 
-라벨은 M5에서 검색 결과 후보를 판정한 것이다. 에이전트가 판정되지 않은 사례를 인용할 수 있으므로, 채점할 때 라벨 밖의 인용은 미판정으로 따로 센다. `search_refs`가 비어 있는 과제(`aggregate` t20, `no_call`, `concept`)는 라벨을 쓰지 않는다.
+라벨은 M5에서 검색 결과 후보를 판정한 것이다. 사례 인용을 채점하는 방식은 MCP에 유리해 버렸으므로, 라벨은 채점이 아니라 인용한 사례가 주제에 맞는지 보는 진단에만 쓴다. 에이전트가 판정되지 않은 사례를 인용할 수 있으므로 라벨 밖의 인용은 미판정으로 따로 센다. `search_refs`가 비어 있는 과제(`aggregate` t20, `no_call`, `concept`, `open`)는 라벨이 없다.
