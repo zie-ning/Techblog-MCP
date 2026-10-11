@@ -29,6 +29,7 @@ uv run python -m pipeline.extract oliveyoung --outdated                        #
 uv run python -m pipeline.normalize [--apply]                                  # 기술명 재정규화·미등록 리포트
 uv run python -m pipeline.expand                                               # 문서 확장 (새·바뀐 항목만, OPENAI_API_KEY 필요)
 uv run python -m pipeline.build_index                                          # 검색 DB 빌드
+uv run python -m pipeline.update [--dry-run]                                   # 자동 갱신: 새 글만 수집→추출→확장→빌드 (종료 코드 0/2/1)
 uv run python -m pipeline.release_db [--upload]                                # 검색 DB를 GitHub Release로 배포 (gh 로그인 필요)
 uv run python -m pipeline.view                                                 # jsonl을 보기 좋은 json으로 변환 (data/.view/, git 제외)
 uv run techblog-mcp                                                            # MCP 서버 (stdio)
@@ -54,6 +55,8 @@ CI(`.github/workflows/ci.yml`)는 Python 3.11과 3.14에서 `uv sync --locked` �
        → pipeline/build_index (kiwipiepy 형태소 분석 → SQLite FTS5) → 검색 DB (빌드 산출물, git 제외)
        → src/techblog_mcp (MCP 도구가 검색 DB 조회)
 ```
+
+`pipeline/update.py`는 위 단계를 새 글만 대상으로 한 번에 실행한다. 새 글 판단은 원문 캐시가 아니라 `data/posts.jsonl`의 추출 기록 기준이다(캐시가 없는 CI에서도 증분). 수집·추출 반복문은 `pipeline/collect/run.py`, `pipeline/extract/run.py`에 두고 개별 명령과 함께 쓴다.
 
 ### 여러 파일에 걸친 규칙
 
