@@ -6,6 +6,7 @@ import pytest
 from pipeline import expand, update
 from pipeline.collect import raw
 from pipeline.collect.common import save_feed_posts
+from pipeline.extract import quality
 from pipeline.extract.schema import Classification, EntryDraft, Extraction, Point
 from pipeline.extract.store import Store
 from techblog_mcp import db
@@ -47,8 +48,9 @@ class FakeLLM:
     model = "fake-model"
     reasoning_effort = "medium"
 
-    def __init__(self, fail_on: str | None = None):
+    def __init__(self, fail_on: str | None = None, made_up: bool = False):
         self.fail_on = fail_on
+        self.made_up = made_up  # 원문에 없는 발췌를 섞는다
         self.steps: list[str] = []
 
     def parse(self, instructions, messages, schema, usage, step):
@@ -66,7 +68,11 @@ class FakeLLM:
                 tags=["쿠폰"],
                 problem_situation=[],
                 solution=[Point(text="Redis 원자 연산", evidence=EVIDENCE)],
-                performance_ops=[],
+                performance_ops=(
+                    [Point(text="지어낸 수치", evidence="처리량이 10배 늘었습니다.")]
+                    if self.made_up
+                    else []
+                ),
                 rejected_alternatives=[],
             )
             return Extraction(entries=[draft])
@@ -182,3 +188,16 @@ def test_dry_run_does_not_call_llm_or_build(paths):
     assert report.entry_count is None
     assert not paths.db.exists()
     assert not (paths.data_dir / "posts.jsonl").exists()
+
+
+def test_evidence_spike_is_reported_but_deployed(paths, monkeypatch):
+    monkeypatch.setattr(quality, "MIN_EVIDENCE", 1)
+    olive = FakeBlog("oliveyoung", ["a"])
+    report = run([olive], FakeLLM(made_up=True), paths)
+
+    # 지어낸 발췌는 걸러 격리하고, 급등을 알리되 DB는 만든다
+    assert [c.spike for c in report.checks] == [True, True]
+    assert report.exit_code == update.EXIT_PARTIAL
+    assert report.entry_count == 1
+    [q] = Store.in_dir(paths.data_dir).quarantine
+    assert q.failed[0].evidence == "처리량이 10배 늘었습니다."

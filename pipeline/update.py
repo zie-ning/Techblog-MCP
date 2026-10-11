@@ -10,8 +10,10 @@
 여러 번 실행해도 결과가 같다(멱등). 실패한 글은 기록을 남기지 않아 다음 실행에서 다시 시도한다.
 한 블로그의 추출 대상이 상한(--max-new)을 넘으면 URL·ID 체계 변경 등으로 기존 글이 새 글로
 보이는 경우일 수 있어 그 블로그는 추출하지 않고 보류한다 (docs/기획.md "자동 갱신").
+발췌 검증에 실패한 내용은 data/quarantine.jsonl에 격리하고, 이번 실행의 발췌 탈락률이
+급등하면 알린다(pipeline/extract/quality.py). 탈락한 내용은 이미 걸러졌으므로 배포는 막지 않는다.
 
-종료 코드: 0 정상, 2 일부 실패·보류(성공한 부분은 반영), 1 실행 불가(API 키 없음 등).
+종료 코드: 0 정상, 2 일부 실패·보류·탈락률 급등(성공한 부분은 반영), 1 실행 불가.
 OPENAI_API_KEY는 환경 변수나 저장소 루트의 `.env`로 설정한다.
 """
 
@@ -30,7 +32,7 @@ from pipeline.build_index import build
 from pipeline.collect import raw
 from pipeline.collect.http import PoliteClient
 from pipeline.collect.run import COLLECTORS, Collector, CollectReport, collect_sources
-from pipeline.extract import prompt_version
+from pipeline.extract import prompt_version, quality
 from pipeline.extract.extractor import LLM
 from pipeline.extract.run import DEFAULT_MODEL, ExtractReport, extract_all, plan, usage_summary
 from pipeline.extract.store import DATA_DIR, Store
@@ -71,11 +73,22 @@ class UpdateReport:
     extract: ExtractReport = field(default_factory=ExtractReport)
     expanded: int = 0  # 새로 만든 확장 수
     expand_error: str | None = None
+    checks: list[quality.Check] = field(default_factory=list)  # 발췌 탈락률 판단
     entry_count: int | None = None  # 빌드한 DB의 항목 수. 빌드하지 않았으면 None
 
     @property
     def partial(self) -> bool:
-        return bool(self.collect.failed or self.held or self.extract.failures or self.expand_error)
+        return bool(
+            self.collect.failed
+            or self.held
+            or self.extract.failures
+            or self.expand_error
+            or self.spikes
+        )
+
+    @property
+    def spikes(self) -> list[quality.Check]:
+        return [c for c in self.checks if c.spike]
 
     @property
     def exit_code(self) -> int:
@@ -131,8 +144,12 @@ def update(
     if todo:
         prompt_version.save_snapshot(paths.prompt_versions)
         llm = make_llm(DEFAULT_MODEL, "medium")
+        previous = list(store.posts.values())
         report.extract = extract_all(todo, store, llm, current_version, workers, "update")
         print(f"추출 {report.extract.done}/{len(todo)}편. {usage_summary(report.extract.usage)}")
+        report.checks = quality.check_run(report.extract.records, previous)
+        for c in report.checks:
+            print(c)
 
     print("== 문서 확장")
     records = expand.load(paths.expansions)
@@ -170,11 +187,13 @@ def print_summary(report: UpdateReport) -> None:
         lines.append(f"추출 실패 {post.source}/{post.post_id}: {error}")
     if report.expand_error:
         lines.append(f"확장 실패: {report.expand_error}")
+    for c in report.spikes:
+        lines.append(f"발췌 탈락률 급등: {c} (격리분은 data/quarantine.jsonl)")
     lines.append(
         f"추출 {report.extract.done}편, 확장 {report.expanded}개, "
         + (f"DB 항목 {report.entry_count}개" if report.entry_count is not None else "빌드 안 함")
     )
-    lines.append("결과: " + ("일부 실패·보류" if report.partial else "정상"))
+    lines.append("결과: " + ("일부 실패·보류·급등" if report.partial else "정상"))
     print("\n".join(lines))
 
 

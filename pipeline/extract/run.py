@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from pipeline.collect.raw import RawPost
 from pipeline.extract import tracing
 from pipeline.extract.extractor import LLM, extract_post, extraction_reason
-from pipeline.extract.schema import Usage
+from pipeline.extract.schema import PostRecord, Usage
 from pipeline.extract.store import Store
 
 # M3 모델 비교로 확정 (docs/기획.md "추출 LLM"). effort 기본값 medium
@@ -49,6 +49,7 @@ def plan(
 @dataclass
 class ExtractReport:
     done: int = 0
+    records: list[PostRecord] = field(default_factory=list)  # 이번에 추출한 글의 기록
     failures: list[tuple[RawPost, str]] = field(default_factory=list)
     usage: Usage = field(default_factory=Usage)
 
@@ -93,6 +94,7 @@ def extract_all(
             store.save()  # 중간에 멈춰도 진행분을 잃지 않도록 매번 저장
             report.done += 1
             r = result.record
+            report.records.append(r)
             report.usage.add(r.usage)
             print(
                 f"{label} {r.kind}/{r.post_type} 항목 {len(ids)}개, "
