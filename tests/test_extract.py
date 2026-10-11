@@ -369,3 +369,15 @@ def test_no_quarantine_file_without_failures(tmp_path):
     store.save()
     assert not (tmp_path / "quarantine.jsonl").exists()
     assert store.record_for(POST.url).first_attempt_dropped == 0
+
+
+def test_old_post_record_is_saved_unchanged(tmp_path):
+    store = Store.in_dir(tmp_path)
+    store.add(_result(1))
+    old = store.record_for(POST.url).model_copy(
+        update={"first_attempt_total": None, "first_attempt_dropped": None}
+    )
+    store.posts[POST.url] = old
+    store.save()
+    line = (tmp_path / "posts.jsonl").read_text(encoding="utf-8")
+    assert "first_attempt" not in line

@@ -84,7 +84,8 @@ class Store:
 
     def save(self) -> None:
         posts = sorted(self.posts.values(), key=lambda p: (p.source, p.published_at, p.url))
-        _write(self.posts_path, [p.model_dump_json() for p in posts])
+        # 나중에 추가한 선택 필드(재시도 전 탈락 수)가 없는 옛 기록에 null을 쓰지 않는다
+        _write(self.posts_path, [p.model_dump_json(exclude_none=True) for p in posts])
         entries = sorted(self.entries, key=lambda e: e.id)
         _write(self.entries_path, [e.model_dump_json() for e in entries])
         # 격리분이 없으면 빈 파일을 만들지 않는다
