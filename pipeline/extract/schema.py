@@ -174,6 +174,32 @@ class Usage(BaseModel):
             setattr(self, name, getattr(self, name) + getattr(other, name))
 
 
+class FailedEvidence(BaseModel):
+    """발췌 검증에 실패한 포인트 하나."""
+
+    field: str  # problem_situation, solution, performance_ops, rejected_alternatives
+    text: str  # 요약 문장 (버린 대안이면 "이름: 버린 이유")
+    evidence: str
+
+
+class QuarantineRecord(BaseModel):
+    """발췌 검증에 실패한 내용이 있는 항목 하나. `data/quarantine.jsonl`에 격리 보관한다.
+
+    검색 DB에는 넣지 않는다. 검증 기준이 너무 엄격한지 LLM이 지어낸 것인지 점검하는 데 쓴다.
+    """
+
+    source: str
+    post_id: str
+    post_url: str
+    post_title: str
+    model: str
+    prompt_version: str
+    extracted_at: str
+    entry_dropped: bool  # 해결 방법이 모두 탈락해 항목 전체를 버렸는지
+    failed: list[FailedEvidence]
+    draft: EntryDraft  # 검증 전 LLM 출력 항목 전체
+
+
 class PostRecord(BaseModel):
     """추출을 거친 글 한 편의 기록. 제외된 글도 남겨 다시 추출하지 않게 한다."""
 
@@ -196,6 +222,10 @@ class PostRecord(BaseModel):
     reasoning_effort: str = ""
     evidence_total: int = 0  # 채택한 시도의 검증 전 발췌 수 (발췌 원문 존재율의 분모)
     usage: Usage = Usage()
+    # M8: 재시도 전(첫 구조화) 발췌 수와 탈락 수. 재시도가 가리는 품질 저하를 일찍 보려고 둔다.
+    # 이전 기록에는 없어 None이다
+    first_attempt_total: int | None = None
+    first_attempt_dropped: int | None = None
 
     @model_validator(mode="before")
     @classmethod
