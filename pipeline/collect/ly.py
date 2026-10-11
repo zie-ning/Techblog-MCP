@@ -6,6 +6,7 @@
 """
 
 import re
+from collections.abc import Collection
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -50,7 +51,10 @@ def parse_post(html: str, post_id: str, url: str, collected_at: datetime) -> raw
 
 
 def collect(
-    client: PoliteClient, raw_dir: Path = raw.RAW_DIR, refresh: bool = False
+    client: PoliteClient,
+    raw_dir: Path = raw.RAW_DIR,
+    refresh: bool = False,
+    known: Collection[str] = frozenset(),
 ) -> CollectResult:
     targets = parse_targets(client.get(SITEMAP_URL).content)
     collected_at = datetime.now(UTC)
@@ -60,4 +64,5 @@ def collect(
         lambda post_id, url: parse_post(client.get(url).text, post_id, url, collected_at),
         raw_dir,
         refresh,
+        known,
     )

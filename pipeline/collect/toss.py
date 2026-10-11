@@ -7,6 +7,7 @@ UX 디자인 글인 Design 카테고리는 수집하지 않는다 (docs/기획.m
 """
 
 import json
+from collections.abc import Collection
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -74,7 +75,10 @@ def parse_article(html: str) -> str:
 
 
 def collect(
-    client: PoliteClient, raw_dir: Path = raw.RAW_DIR, refresh: bool = False
+    client: PoliteClient,
+    raw_dir: Path = raw.RAW_DIR,
+    refresh: bool = False,
+    known: Collection[str] = frozenset(),
 ) -> CollectResult:
     targets: dict[str, ListItem] = {}
     page, has_next = 1, True
@@ -104,5 +108,10 @@ def collect(
         )
 
     return collect_each(
-        SOURCE, [(key, item.url) for key, item in targets.items()], fetch_one, raw_dir, refresh
+        SOURCE,
+        [(key, item.url) for key, item in targets.items()],
+        fetch_one,
+        raw_dir,
+        refresh,
+        known,
     )

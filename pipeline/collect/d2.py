@@ -6,6 +6,7 @@
 """
 
 import json
+from collections.abc import Collection
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -73,7 +74,10 @@ def parse_detail(body: bytes, collected_at: datetime) -> raw.RawPost:
 
 
 def collect(
-    client: PoliteClient, raw_dir: Path = raw.RAW_DIR, refresh: bool = False
+    client: PoliteClient,
+    raw_dir: Path = raw.RAW_DIR,
+    refresh: bool = False,
+    known: Collection[str] = frozenset(),
 ) -> CollectResult:
     targets: list[ListItem] = []
     page, has_next = 0, True
@@ -93,4 +97,5 @@ def collect(
         lambda post_id, url: parse_detail(client.get(detail_url(post_id)).content, collected_at),
         raw_dir,
         refresh,
+        known,
     )
