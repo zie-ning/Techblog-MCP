@@ -33,7 +33,9 @@ class PoliteClient:
     def __init__(self, delay: float = 1.0, timeout: float = 30.0):
         self._delay = delay
         self._client = httpx.Client(
-            headers={"User-Agent": USER_AGENT},
+            # zstandard가 설치돼 있으면 httpx가 zstd도 받겠다고 알리는데, 토스 API의 zstd 응답을
+            # httpx 0.28이 풀지 못한다(DecodingError). 널리 쓰는 압축만 받는다
+            headers={"User-Agent": USER_AGENT, "Accept-Encoding": "gzip, deflate"},
             timeout=timeout,
             follow_redirects=True,
             mounts={f"https://{host}": CurlTransport(timeout) for host in CURL_HOSTS},
