@@ -61,7 +61,7 @@ CI(`.github/workflows/ci.yml`)는 Python 3.11과 3.14에서 `uv sync --locked` �
 ### 여러 파일에 걸친 규칙
 
 - **항목 구조는 하나**: 글은 추출/제외만 분류하고, 항목은 문제 상황 / 해결 방법 / 성능·운영 포인트 + 글에 명시된 경우에만 버린 대안 (1글 = N개, 팁 모음·도구 활용 경험 글은 1개). 해결 방법만 필수. M3에서 사례·인사이트 구분을 없앴다(이전 기록은 `pipeline/extract/schema.py`가 읽을 때 변환). 모든 항목 필드는 `{text, evidence}` 형태로 원문 발췌를 함께 가진다.
-- **발췌 검증**: 추출된 `evidence`는 원문에 실제로 존재하는지 코드로 검사한다. LLM이 지어낸 내용을 거르는 핵심 장치이므로 우회하지 않는다.
+- **발췌 검증**: 추출된 `evidence`는 원문에 실제로 존재하는지 코드로 검사한다. LLM이 지어낸 내용을 거르는 핵심 장치이므로 우회하지 않는다. 실패한 포인트는 버리되 `data/quarantine.jsonl`에 격리 보관하고(검색 DB에는 넣지 않음), 최종·재시도 전 탈락률 급등은 `pipeline/extract/quality.py`가 판단한다.
 - **프롬프트 버전**: 추출 프롬프트·출력 스키마를 고치면 `pipeline/extract/prompt_version.py`의 해시가 자동으로 바뀐다. `data/prompt_versions/`의 스냅샷은 자동 생성물이라 직접 고치지 않는다.
 - **`src/techblog_mcp/taxonomy/`는 추출과 서버가 공유**한다 (설치 패키지에 포함돼야 해서 패키지 안에 둠). 문제 유형·도메인 정의에서 MCP 도구 입력 스키마의 `enum`을 자동 생성하므로 두 곳의 값이 항상 같아야 한다. 기술명은 기술 사전(표준 이름 + 별칭)으로 정규화한다.
 - **형태소 분석은 색인과 검색에서 같은 방식**을 써야 한다 (kiwipiepy, `techblog_mcp.search.analyzer`, 사용자 사전 `USER_WORDS` 포함). 한쪽만 바꾸면 검색이 깨진다. DB 스키마나 사용자 사전을 바꾸면 `search/schema.py`의 `SCHEMA_VERSION`을 올린다.
