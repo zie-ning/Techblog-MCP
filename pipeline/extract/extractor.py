@@ -6,7 +6,7 @@
 """
 
 import hashlib
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Protocol, TypeVar
 
@@ -26,8 +26,10 @@ from pipeline.extract.schema import (
     EntryDraft,
     Evidenced,
     Extraction,
+    FailedEvidence,
     Point,
     PostRecord,
+    QuarantineRecord,
     RejectedAlternative,
     Usage,
 )
@@ -97,6 +99,8 @@ class ExtractResult:
     entries: list[Entry]  # id는 저장 시 채운다
     # 검증 전 LLM 출력(분류, 구조화 시도들). 발췌 검증 기준을 LLM 재호출 없이 비교하는 데 쓴다
     raw_outputs: dict
+    # 발췌 검증에 실패한 내용이 있는 항목 (채택한 시도 기준). data/quarantine.jsonl에 보관한다
+    quarantined: list[QuarantineRecord] = field(default_factory=list)
 
 
 def content_hash(post: RawPost) -> str:
@@ -141,12 +145,13 @@ def extract_post(post: RawPost, llm: LLM) -> ExtractResult:
     classification = llm.parse(prompts.CLASSIFY, user_input, Classification, usage, "분류")
     raw_outputs: dict = {"classification": classification.model_dump(), "attempts": []}
 
-    chosen = _Attempt(drafts=[], dropped=[], total=0)
+    chosen = _Attempt(results=[])
+    first: _Attempt | None = None
     if classification.kind == "추출":
         instructions, schema = prompts.structure(), Extraction
         result = llm.parse(instructions, user_input, schema, usage, "구조화")
         raw_outputs["attempts"].append(result.model_dump())
-        chosen = _verify_all(result, source)
+        chosen = first = _verify_all(result, source)
         if chosen.dropped:
             retry_input = [
                 *user_input,
@@ -159,7 +164,9 @@ def extract_post(post: RawPost, llm: LLM) -> ExtractResult:
             # 재시도가 항상 낫지는 않으므로 검증을 통과한 내용이 더 많은 쪽을 쓴다
             if retry.score() > chosen.score():
                 chosen = retry
-    drafts, dropped = chosen.drafts, chosen.dropped
+    dropped = chosen.dropped
+    version = prompt_version.version()
+    extracted_at = datetime.now(UTC).isoformat(timespec="seconds")
 
     record = PostRecord(
         source=post.source,
@@ -173,16 +180,37 @@ def extract_post(post: RawPost, llm: LLM) -> ExtractResult:
         content_hash=content_hash(post),
         model=llm.model,
         reasoning_effort=llm.reasoning_effort,
-        prompt_version=prompt_version.version(),
-        extracted_at=datetime.now(UTC).isoformat(timespec="seconds"),
+        prompt_version=version,
+        extracted_at=extracted_at,
         entry_ids=[],
         dropped_evidence=len(dropped),
         dropped_evidences=dropped,
         evidence_total=chosen.total,
         usage=usage,
+        first_attempt_total=first.total if first else None,
+        first_attempt_dropped=len(first.dropped) if first else None,
     )
+    quarantined = [
+        QuarantineRecord(
+            source=post.source,
+            post_id=post.post_id,
+            post_url=post.url,
+            post_title=post.title,
+            model=llm.model,
+            prompt_version=version,
+            extracted_at=extracted_at,
+            entry_dropped=verified is None,
+            failed=failed,
+            draft=draft,
+        )
+        for draft, verified, failed in chosen.results
+        if failed
+    ]
     return ExtractResult(
-        record=record, entries=[to_entry(d, post) for d in drafts], raw_outputs=raw_outputs
+        record=record,
+        entries=[to_entry(d, post) for d in chosen.drafts],
+        raw_outputs=raw_outputs,
+        quarantined=quarantined,
     )
 
 
@@ -190,9 +218,23 @@ def extract_post(post: RawPost, llm: LLM) -> ExtractResult:
 class _Attempt:
     """구조화 시도 한 번의 검증 결과."""
 
-    drafts: list[EntryDraft]  # 검증을 통과한 항목들
-    dropped: list[str]  # 버린 발췌
-    total: int  # 검증 전 발췌 수
+    # 항목별 (검증 전 항목, 검증을 통과한 항목 또는 버렸으면 None, 실패한 발췌)
+    results: list[tuple[EntryDraft, EntryDraft | None, list[FailedEvidence]]]
+
+    @property
+    def drafts(self) -> list[EntryDraft]:
+        """검증을 통과한 항목들"""
+        return [verified for _, verified, _ in self.results if verified is not None]
+
+    @property
+    def dropped(self) -> list[str]:
+        """버린 발췌"""
+        return [f.evidence for _, _, failed in self.results for f in failed]
+
+    @property
+    def total(self) -> int:
+        """검증 전 발췌 수"""
+        return sum(len(_evidences(draft)) for draft, _, _ in self.results)
 
     def score(self) -> tuple[int, int, int]:
         """남은 항목 수 → 남은 발췌 수 → 버린 발췌가 적은 순으로 비교한다."""
@@ -201,16 +243,7 @@ class _Attempt:
 
 
 def _verify_all(result: Extraction, source: SourceText) -> _Attempt:
-    drafts: list[EntryDraft] = []
-    dropped: list[str] = []
-    total = 0
-    for draft in result.entries:
-        total += len(_evidences(draft))
-        verified, failed = verify_draft(draft, source)
-        dropped += failed
-        if verified is not None:
-            drafts.append(verified)
-    return _Attempt(drafts=drafts, dropped=dropped, total=total)
+    return _Attempt(results=[(d, *verify_draft(d, source)) for d in result.entries])
 
 
 def _evidences(draft: EntryDraft) -> list[str]:
@@ -218,17 +251,19 @@ def _evidences(draft: EntryDraft) -> list[str]:
     return [p.evidence for p in points] + [r.evidence for r in draft.rejected_alternatives]
 
 
-def verify_draft(draft: EntryDraft, source: SourceText) -> tuple[EntryDraft | None, list[str]]:
-    """발췌가 원문에 없는 항목을 버린다. 해결 방법이 비면 None. (결과, 버린 발췌 목록)"""
-    dropped: list[str] = []
+def verify_draft(
+    draft: EntryDraft, source: SourceText
+) -> tuple[EntryDraft | None, list[FailedEvidence]]:
+    """발췌가 원문에 없는 포인트를 버린다. 해결 방법이 비면 None. (결과, 실패한 발췌 목록)"""
+    failed: list[FailedEvidence] = []
 
-    def keep(points: list[Point]) -> list[Point]:
+    def keep(field_name: str, points: list[Point]) -> list[Point]:
         kept = []
         for p in points:
             if source.contains(p.evidence):
                 kept.append(p)
             else:
-                dropped.append(p.evidence)
+                failed.append(FailedEvidence(field=field_name, text=p.text, evidence=p.evidence))
         return kept
 
     rejected = []
@@ -236,17 +271,20 @@ def verify_draft(draft: EntryDraft, source: SourceText) -> tuple[EntryDraft | No
         if source.contains(r.evidence):
             rejected.append(r)
         else:
-            dropped.append(r.evidence)
+            text = f"{r.name}: {r.reason}"
+            failed.append(
+                FailedEvidence(field="rejected_alternatives", text=text, evidence=r.evidence)
+            )
     verified = draft.model_copy(
         update={
-            "problem_situation": keep(draft.problem_situation),
-            "solution": keep(draft.solution),
-            "performance_ops": keep(draft.performance_ops),
+            "problem_situation": keep("problem_situation", draft.problem_situation),
+            "solution": keep("solution", draft.solution),
+            "performance_ops": keep("performance_ops", draft.performance_ops),
             "rejected_alternatives": rejected,
         }
     )
     # 문제 상황은 팁·활용 경험 글에서 비어 있을 수 있어 해결 방법만 필수로 본다
-    return (verified if verified.solution else None), dropped
+    return (verified if verified.solution else None), failed
 
 
 def _dedupe(items: list[str]) -> list[str]:

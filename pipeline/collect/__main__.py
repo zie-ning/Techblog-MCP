@@ -8,21 +8,8 @@ uv run python -m pipeline.collect kakao --refresh # 캐시된 글도 다시 받�
 import argparse
 import sys
 
-import httpx
-
-from pipeline.collect import d2, kakao, kakaopay, kurly, ly, oliveyoung, raw, toss, woowahan
-from pipeline.collect.http import DisallowedByRobots, PoliteClient
-
-COLLECTORS = {
-    d2.SOURCE: d2.collect,
-    kakao.SOURCE: kakao.collect,
-    kakaopay.SOURCE: kakaopay.collect,
-    kurly.SOURCE: kurly.collect,
-    ly.SOURCE: ly.collect,
-    oliveyoung.SOURCE: oliveyoung.collect,
-    toss.SOURCE: toss.collect,
-    woowahan.SOURCE: woowahan.collect,
-}
+from pipeline.collect.http import PoliteClient
+from pipeline.collect.run import COLLECTORS, collect_sources
 
 
 def main() -> None:
@@ -34,29 +21,9 @@ def main() -> None:
     args = parser.parse_args()
     sources = sorted(COLLECTORS) if "all" in args.sources else args.sources
 
-    failed = False
     with PoliteClient() as client:
-        for source in sources:
-            try:
-                result = COLLECTORS[source](client, refresh=args.refresh)
-            except (httpx.HTTPError, DisallowedByRobots, ValueError) as e:
-                # 목록 요청 자체가 막히면 그 블로그만 실패로 두고 나머지는 계속 수집한다
-                failed = True
-                print(f"{source}: 수집 실패 ({type(e).__name__}: {e})", file=sys.stderr)
-                continue
-            oldest = min((p.published_at for p in result.saved), default=None)
-            summary = f"{source}: {len(result.saved)}편 저장"
-            if oldest:
-                summary += f" (가장 오래된 글: {oldest.astimezone(raw.KST):%Y-%m-%d})"
-            if result.skipped:
-                summary += f", 캐시 {result.skipped}편 건너뜀"
-            if result.out_of_period:
-                summary += f", 기간 밖 {result.out_of_period}편"
-            print(summary)
-            for url, reason in result.failures:
-                failed = True
-                print(f"  실패 {url}: {reason}", file=sys.stderr)
-    if failed:
+        report = collect_sources(client, sources, refresh=args.refresh)
+    if report.failed:
         sys.exit(1)
 
 

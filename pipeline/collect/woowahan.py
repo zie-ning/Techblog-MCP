@@ -9,11 +9,12 @@ WordPress 공식 REST API(`/wp-json/wp/v2/posts`)가 발행일과 본문 HTML을
 
 import html
 import json
+from collections.abc import Collection
 from datetime import UTC, datetime
 from pathlib import Path
 
 from pipeline.collect import raw
-from pipeline.collect.common import CollectResult
+from pipeline.collect.common import CollectResult, save_feed_posts
 from pipeline.collect.http import PoliteClient
 
 SOURCE = "woowahan"
@@ -43,9 +44,12 @@ def parse_posts(body: bytes, collected_at: datetime) -> list[raw.RawPost]:
 
 
 def collect(
-    client: PoliteClient, raw_dir: Path = raw.RAW_DIR, refresh: bool = False
+    client: PoliteClient,
+    raw_dir: Path = raw.RAW_DIR,
+    refresh: bool = False,
+    known: Collection[str] = frozenset(),
 ) -> CollectResult:
-    """API 목록을 끝까지 받아 저장한다. 목록에 본문이 있어 항상 덮어쓴다."""
+    """API 목록을 끝까지 받아 저장한다. 목록에 본문이 있어 캐시된 글도 덮어쓴다."""
     collected_at = datetime.now(UTC)
     posts: list[raw.RawPost] = []
     page, total_pages = 1, 1
@@ -55,7 +59,4 @@ def collect(
         posts.extend(parse_posts(response.content, collected_at))
         page += 1
 
-    posts = [p for p in posts if raw.in_collect_period(p.published_at)]
-    for post in posts:
-        raw.save(post, raw_dir)
-    return CollectResult(saved=posts)
+    return save_feed_posts(posts, raw_dir, refresh, known)

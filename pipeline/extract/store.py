@@ -1,6 +1,7 @@
-"""추출 결과 저장소: `data/posts.jsonl`(글별 기록)과 `data/entries.jsonl`(항목).
+"""추출 결과 저장소: `data/posts.jsonl`(글별 기록), `data/entries.jsonl`(항목),
+`data/quarantine.jsonl`(발췌 검증에 실패한 내용이 있는 항목, 검색 DB에는 넣지 않음).
 
-둘 다 git에 커밋한다. 원문 전체는 들어 있지 않다(요약과 짧은 발췌, 원문 링크만).
+모두 git에 커밋한다. 원문 전체는 들어 있지 않다(요약과 짧은 발췌, 원문 링크만).
 평가용 실행은 경로를 바꿔 `eval/runs/{run}/`에 따로 저장하고, 원하면 검증 전 LLM 출력도
 `drafts.jsonl`에 남긴다.
 항목 ID(`case_0001`)는 한 번 붙으면 바뀌지 않는다. 글을 다시 추출하면 그 글의 옛 항목은 지우고
@@ -12,11 +13,12 @@ import re
 from pathlib import Path
 
 from pipeline.extract.extractor import ExtractResult
-from pipeline.extract.schema import Entry, PostRecord
+from pipeline.extract.schema import Entry, PostRecord, QuarantineRecord
 
 DATA_DIR = Path(__file__).resolve().parents[2] / "data"
 POSTS_PATH = DATA_DIR / "posts.jsonl"
 ENTRIES_PATH = DATA_DIR / "entries.jsonl"
+QUARANTINE_PATH = DATA_DIR / "quarantine.jsonl"
 
 _ID_PREFIX = "case_"
 
@@ -27,14 +29,20 @@ class Store:
         posts_path: Path = POSTS_PATH,
         entries_path: Path = ENTRIES_PATH,
         drafts_path: Path | None = None,
+        quarantine_path: Path | None = None,
     ):
         self.posts_path = posts_path
         self.entries_path = entries_path
         self.drafts_path = drafts_path
+        # 따로 주지 않으면 posts.jsonl과 같은 디렉터리에 둔다
+        self.quarantine_path = quarantine_path or posts_path.with_name(QUARANTINE_PATH.name)
         self.posts: dict[str, PostRecord] = {
             p.url: p for p in _read(posts_path, PostRecord.model_validate_json)
         }
         self.entries: list[Entry] = _read(entries_path, Entry.model_validate_json)
+        self.quarantine: list[QuarantineRecord] = _read(
+            self.quarantine_path, QuarantineRecord.model_validate_json
+        )
         # 글 URL → 검증 전 LLM 출력. drafts_path를 준 경우에만 읽고 쓴다
         self.drafts: dict[str, dict] = (
             {d["url"]: d for d in _read(drafts_path, json.loads)} if drafts_path else {}
@@ -42,9 +50,14 @@ class Store:
 
     @classmethod
     def in_dir(cls, out_dir: Path, save_drafts: bool = False) -> "Store":
-        """`out_dir` 아래 posts.jsonl·entries.jsonl(·drafts.jsonl)을 쓰는 저장소."""
+        """`out_dir` 아래 posts·entries·quarantine(·drafts).jsonl을 쓰는 저장소."""
         drafts_path = out_dir / "drafts.jsonl" if save_drafts else None
-        return cls(out_dir / "posts.jsonl", out_dir / "entries.jsonl", drafts_path)
+        return cls(
+            out_dir / "posts.jsonl",
+            out_dir / "entries.jsonl",
+            drafts_path,
+            out_dir / "quarantine.jsonl",
+        )
 
     def record_for(self, url: str) -> PostRecord | None:
         return self.posts.get(url)
@@ -53,6 +66,9 @@ class Store:
         """추출 결과를 반영하고 새 항목 ID를 돌려준다. 파일 저장은 `save()`로 한다."""
         url = result.record.url
         self.entries = [e for e in self.entries if e.post_url != url]
+        # 다시 추출한 글은 격리분도 이번 결과로 바꾼다
+        self.quarantine = [q for q in self.quarantine if q.post_url != url]
+        self.quarantine += result.quarantined
         next_no = self._max_id_no() + 1
         ids = []
         for offset, entry in enumerate(result.entries):
@@ -68,9 +84,14 @@ class Store:
 
     def save(self) -> None:
         posts = sorted(self.posts.values(), key=lambda p: (p.source, p.published_at, p.url))
-        _write(self.posts_path, [p.model_dump_json() for p in posts])
+        # 나중에 추가한 선택 필드(재시도 전 탈락 수)가 없는 옛 기록에 null을 쓰지 않는다
+        _write(self.posts_path, [p.model_dump_json(exclude_none=True) for p in posts])
         entries = sorted(self.entries, key=lambda e: e.id)
         _write(self.entries_path, [e.model_dump_json() for e in entries])
+        # 격리분이 없으면 빈 파일을 만들지 않는다
+        if self.quarantine or self.quarantine_path.exists():
+            quarantine = sorted(self.quarantine, key=lambda q: (q.source, q.post_id))
+            _write(self.quarantine_path, [q.model_dump_json() for q in quarantine])
         if self.drafts_path is not None:
             drafts = sorted(self.drafts.values(), key=lambda d: (d["source"], d["post_id"]))
             _write(self.drafts_path, [json.dumps(d, ensure_ascii=False) for d in drafts])
