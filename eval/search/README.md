@@ -21,6 +21,13 @@ uv run python eval/search_experiments.py e7 e8
 uv run python eval/search_experiments.py e9   # 최종 서버 search 그대로
 ```
 
+M10 검색 개편 실험은 진단(R0)과 리랭커 판정 가능성(R1) 스크립트로 한다. 리랭커는 Cohere·Voyage API(`.env`의 `COHERE_API_KEY`, `VOYAGE_API_KEY`)를 쓰고 점수는 `eval/search/rerank_cache/`(git 제외)에 캐시된다. 설계와 결과는 [../../docs/milestones/M10.md](../../docs/milestones/M10.md).
+
+```bash
+uv run python eval/search_diagnose.py                                   # 현재 search가 정답을 놓치는 이유
+uv run python eval/search_rerank.py                                     # 리랭커 판정 가능성 (--models로 일부만)
+```
+
 `--pool`은 평가 대신 판정용 후보 목록을 만든다. 이미 판정한 항목은 라벨이, 새 후보는 `[미판정]`이 붙는다.
 
 ## 질문 구성 (M5 사용자 결정)
