@@ -1,6 +1,7 @@
 """검색 평가용 항목 임베딩: 계산, 캐시, 코사인 순위.
 
-M5 하이브리드 검색 실험에서만 쓴다. OpenAI 임베딩(.env의 OPENAI_API_KEY)을 쓴다.
+M5 하이브리드 검색 실험과 M10 검색 개편 실험에서 쓴다. OpenAI·Voyage·Cohere 임베딩 API를 쓰고
+키는 .env(OPENAI_API_KEY, VOYAGE_API_KEY, COHERE_API_KEY)에서 읽는다.
 로컬 임베딩 모델(fastembed MiniLM)은 M5에서 재 본 뒤 도입하지 않기로 해 지웠다
 (docs/기획.md "임베딩").
 항목 임베딩은 eval/search/embeddings/(git 제외)에 캐시해 텍스트가 바뀐 항목만 다시 계산한다.
@@ -22,16 +23,19 @@ CACHE_DIR = ROOT / "eval" / "search" / "embeddings"
 @dataclass(frozen=True)
 class ModelSpec:
     key: str  # 캐시 파일·리포트에 쓰는 짧은 이름
-    provider: str  # openai
+    provider: str  # openai / voyage / cohere
     name: str  # 공급자의 모델 이름
 
 
-# 사용자 키로 쓰는 선택 기능 후보 (docs/기획.md "임베딩")
+# 비교 후보 (docs/기획.md "임베딩", docs/milestones/M10.md 3단계)
 MODELS: dict[str, ModelSpec] = {
     spec.key: spec
     for spec in [
         ModelSpec("openai-small", "openai", "text-embedding-3-small"),
         ModelSpec("openai-large", "openai", "text-embedding-3-large"),
+        ModelSpec("voyage-4", "voyage", "voyage-4"),
+        ModelSpec("voyage-4-large", "voyage", "voyage-4-large"),
+        ModelSpec("cohere-embed-v4", "cohere", "embed-v4.0"),
     ]
 }
 
@@ -90,7 +94,96 @@ class OpenAIEmbedder:
     queries = documents  # OpenAI 임베딩은 검색어와 문서를 구분하지 않는다
 
 
+def _post(url: str, key_env: str, body: dict) -> dict:
+    """임베딩 API 호출. 호출 제한(429)·서버 오류·연결 끊김은 기다렸다가 다시 부른다."""
+    import os
+    import time
+
+    import httpx
+    from dotenv import load_dotenv
+
+    load_dotenv(ROOT / ".env")
+    headers = {"Authorization": f"Bearer {os.environ[key_env]}"}
+    for attempt in range(8):
+        try:
+            response = httpx.post(url, headers=headers, json=body, timeout=120)
+        except httpx.TransportError:
+            time.sleep(5 * (attempt + 1))
+            continue
+        if response.status_code == 429 or response.status_code >= 500:
+            time.sleep(10 * (attempt + 1))
+            continue
+        response.raise_for_status()
+        return response.json()
+    raise RuntimeError(f"{url}: 호출 제한·연결 오류로 계속 실패")
+
+
+class VoyageEmbedder:
+    """검색어와 문서를 input_type으로 구분한다."""
+
+    BATCH = 64  # 요청당 토큰 한도 안에 들도록 (항목당 평균 약 535토큰)
+
+    def __init__(self, name: str):
+        self._name = name
+
+    def _embed(self, texts: list[str], input_type: str) -> np.ndarray:
+        vectors = []
+        for start in range(0, len(texts), self.BATCH):
+            data = _post(
+                "https://api.voyageai.com/v1/embeddings",
+                "VOYAGE_API_KEY",
+                {
+                    "model": self._name,
+                    "input": texts[start : start + self.BATCH],
+                    "input_type": input_type,
+                },
+            )
+            vectors.extend(d["embedding"] for d in sorted(data["data"], key=lambda d: d["index"]))
+        return np.array(vectors)
+
+    def documents(self, texts: list[str]) -> np.ndarray:
+        return self._embed(texts, "document")
+
+    def queries(self, texts: list[str]) -> np.ndarray:
+        return self._embed(texts, "query")
+
+
+class CohereEmbedder:
+    """검색어와 문서를 input_type으로 구분한다."""
+
+    BATCH = 96  # Cohere embed 요청당 최대 텍스트 수
+
+    def __init__(self, name: str):
+        self._name = name
+
+    def _embed(self, texts: list[str], input_type: str) -> np.ndarray:
+        vectors = []
+        for start in range(0, len(texts), self.BATCH):
+            data = _post(
+                "https://api.cohere.com/v2/embed",
+                "COHERE_API_KEY",
+                {
+                    "model": self._name,
+                    "texts": texts[start : start + self.BATCH],
+                    "input_type": input_type,
+                    "embedding_types": ["float"],
+                },
+            )
+            vectors.extend(data["embeddings"]["float"])
+        return np.array(vectors)
+
+    def documents(self, texts: list[str]) -> np.ndarray:
+        return self._embed(texts, "search_document")
+
+    def queries(self, texts: list[str]) -> np.ndarray:
+        return self._embed(texts, "search_query")
+
+
 def make_embedder(spec: ModelSpec) -> Embedder:
+    if spec.provider == "voyage":
+        return VoyageEmbedder(spec.name)
+    if spec.provider == "cohere":
+        return CohereEmbedder(spec.name)
     return OpenAIEmbedder(spec.name)
 
 
