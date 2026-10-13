@@ -13,7 +13,9 @@ import argparse
 import dataclasses
 import datetime
 import json
+import shutil
 import subprocess
+import tempfile
 from collections.abc import Callable
 from pathlib import Path
 
@@ -53,26 +55,38 @@ def unique_tag(base: str, exists: Callable[[str], bool] = tag_exists) -> str:
 
 
 def upload(release: db.Release, path: Path) -> None:
+    """DB와 버전 정보 파일을 올리고 최신 Release로 표시한다.
+
+    서버는 `releases/latest/download/db_release.json`으로 최신 버전을 확인한다 (db.py).
+    """
     if path.name != db.ASSET_NAME:
         raise SystemExit(f"Release 파일 이름은 {db.ASSET_NAME}이어야 합니다: {path}")
+    manifest_dir = Path(tempfile.mkdtemp())
+    manifest = manifest_dir / db.MANIFEST_ASSET_NAME
+    write_manifest(release, manifest)
     notes = (
         f"검색 DB (스키마 버전 {release.schema_version})\n\n"
         f"- sha256: `{release.sha256}`\n- 크기: {release.size:,} bytes"
     )
-    subprocess.run(
-        [
-            "gh",
-            "release",
-            "create",
-            release.tag,
-            str(path),
-            "--title",
-            release.tag,
-            "--notes",
-            notes,
-        ],
-        check=True,
-    )
+    try:
+        subprocess.run(
+            [
+                "gh",
+                "release",
+                "create",
+                release.tag,
+                str(path),
+                str(manifest),
+                "--latest",
+                "--title",
+                release.tag,
+                "--notes",
+                notes,
+            ],
+            check=True,
+        )
+    finally:
+        shutil.rmtree(manifest_dir, ignore_errors=True)
 
 
 def main() -> None:

@@ -144,11 +144,20 @@ def _quietly(step: Callable[[], object]) -> None:
         pass  # 실패하면 도구를 호출할 때 다시 시도하며 이유를 결과로 알린다
 
 
+def _connect_then_check_update() -> None:
+    # 지금 쓸 DB를 먼저 연 뒤 새 버전을 받아 둔다. 새 DB는 다음 기동부터 쓴다
+    _connection()
+    db.check_for_update()
+
+
 def _prepare() -> list[threading.Thread]:
-    """첫 도구 호출을 빠르게 하려고 DB(첫 실행이면 다운로드)와 형태소 분석기를 동시에 준비한다."""
+    """첫 도구 호출을 빠르게 하려고 DB(첫 실행이면 다운로드)와 형태소 분석기를 동시에 준비한다.
+
+    DB를 연 뒤에는 하루 한 번 최신 DB가 있는지 확인해 받아 둔다.
+    """
     threads = [
         threading.Thread(target=_quietly, args=(step,), daemon=True)
-        for step in (_connection, analyzer.warm_up)
+        for step in (_connect_then_check_update, analyzer.warm_up)
     ]
     for thread in threads:
         thread.start()
