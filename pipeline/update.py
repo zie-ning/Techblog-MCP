@@ -29,7 +29,7 @@ from dotenv import load_dotenv
 
 from pipeline import expand
 from pipeline.build_index import build
-from pipeline.collect import raw
+from pipeline.collect import COMPANY_NAMES, raw
 from pipeline.collect.http import PoliteClient
 from pipeline.collect.run import COLLECTORS, Collector, CollectReport, collect_sources
 from pipeline.extract import prompt_version, quality
@@ -174,27 +174,35 @@ def update(
     return report
 
 
-def print_summary(report: UpdateReport) -> None:
-    lines = ["== 요약"]
-    for source, error in report.collect.source_failures.items():
-        lines.append(f"수집 실패 {source}: {error}")
-    for source, result in report.collect.results.items():
-        for url, reason in result.failures:
-            lines.append(f"수집 실패 {source} {url}: {reason}")
-    for source, n in report.held.items():
-        lines.append(f"보류 {source}: 추출 대상 {n}편 (상한 초과)")
-    for post, error in report.extract.failures:
-        lines.append(f"추출 실패 {post.source}/{post.post_id}: {error}")
-    if report.expand_error:
-        lines.append(f"확장 실패: {report.expand_error}")
-    for c in report.spikes:
-        lines.append(f"발췌 탈락률 급등: {c} (격리분은 data/quarantine.jsonl)")
-    lines.append(
-        f"추출 {report.extract.done}편, 확장 {report.expanded}개, "
-        + (f"DB 항목 {report.entry_count}개" if report.entry_count is not None else "빌드 안 함")
-    )
-    lines.append("결과: " + ("일부 실패·보류·급등" if report.partial else "정상"))
-    print("\n".join(lines))
+def summary(report: UpdateReport) -> str:
+    """실행 요약 (마크다운). 터미널에 출력하고, 워크플로는 PR 본문과 알림 이슈에 쓴다."""
+    problems = [
+        *(f"수집 실패 {s}: {e}" for s, e in report.collect.source_failures.items()),
+        *(
+            f"수집 실패 {s} {url}: {reason}"
+            for s, r in report.collect.results.items()
+            for url, reason in r.failures
+        ),
+        *(f"보류 {s}: 추출 대상 {n}편이 상한 초과 (--max-new)" for s, n in report.held.items()),
+        *(f"추출 실패 {p.source}/{p.post_id}: {e}" for p, e in report.extract.failures),
+        *([f"확장 실패: {report.expand_error}"] if report.expand_error else []),
+        *(f"발췌 탈락률 급등: {c} (격리분은 data/quarantine.jsonl)" for c in report.spikes),
+    ]
+    built = f"DB 항목 {report.entry_count}개" if report.entry_count is not None else "빌드 안 함"
+    lines = [
+        f"## 자동 갱신 결과: {'일부 실패·보류·급등' if report.partial else '정상'}",
+        "",
+        f"- 추출 {report.extract.done}편, 확장 {report.expanded}개, {built}",
+        *(f"- {c}" for c in report.checks),
+    ]
+    if report.extract.records:
+        lines += ["", "### 새로 반영한 글", ""]
+        for r in sorted(report.extract.records, key=lambda r: (r.source, r.post_id)):
+            result = f"항목 {len(r.entry_ids)}개" if r.kind == "추출" else "제외"
+            lines.append(f"- {COMPANY_NAMES[r.source]} [{r.title}]({r.url}): {result}")
+    if problems:
+        lines += ["", "### 문제", "", *(f"- {p}" for p in problems)]
+    return "\n".join(lines) + "\n"
 
 
 def main() -> None:
@@ -212,6 +220,7 @@ def main() -> None:
     parser.add_argument(
         "--dry-run", action="store_true", help="수집과 추출 대상 확인까지만 한다 (LLM 호출 없음)"
     )
+    parser.add_argument("--summary-file", type=Path, help="실행 요약(마크다운)을 저장할 파일")
     args = parser.parse_args()
     sources = sorted(COLLECTORS) if not args.sources or "all" in args.sources else args.sources
 
@@ -227,7 +236,10 @@ def main() -> None:
 
     with PoliteClient() as client:
         report = update(sources, client, make_llm, None, args.max_new, args.workers, args.dry_run)
-    print_summary(report)
+    text = summary(report)
+    print(text)
+    if args.summary_file:
+        args.summary_file.write_text(text, encoding="utf-8")
     sys.exit(report.exit_code)
 
 

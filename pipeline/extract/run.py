@@ -94,7 +94,7 @@ def extract_all(
             store.save()  # 중간에 멈춰도 진행분을 잃지 않도록 매번 저장
             report.done += 1
             r = result.record
-            report.records.append(r)
+            report.records.append(store.posts[r.url])  # 항목 ID가 채워진 저장본
             report.usage.add(r.usage)
             print(
                 f"{label} {r.kind}/{r.post_type} 항목 {len(ids)}개, "

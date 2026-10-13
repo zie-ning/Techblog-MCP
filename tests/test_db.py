@@ -99,3 +99,9 @@ def test_shipped_manifest_matches_schema():
     release = db.load_release()
     assert release is not None, "pipeline.release_db --upload로 DB를 배포하세요"
     assert release.schema_version == SCHEMA_VERSION
+
+
+def test_unique_tag_adds_suffix_when_released_same_day():
+    existing = {"db-2026.10.12", "db-2026.10.12.2"}
+    assert release_db.unique_tag("db-2026.10.13", existing.__contains__) == "db-2026.10.13"
+    assert release_db.unique_tag("db-2026.10.12", existing.__contains__) == "db-2026.10.12.3"

@@ -201,3 +201,14 @@ def test_evidence_spike_is_reported_but_deployed(paths, monkeypatch):
     assert report.entry_count == 1
     [q] = Store.in_dir(paths.data_dir).quarantine
     assert q.failed[0].evidence == "처리량이 10배 늘었습니다."
+
+
+def test_summary_lists_new_posts_and_problems(paths):
+    olive = FakeBlog("oliveyoung", ["a"])
+    toss = FakeBlog("toss", [])
+    toss.error = httpx.ConnectError("연결 실패")
+    text = update.summary(run([olive, toss], FakeLLM(), paths))
+
+    assert text.startswith("## 자동 갱신 결과: 일부 실패·보류·급등")
+    assert "- 올리브영 [a 제목](https://example.com/oliveyoung/a): 항목 1개" in text
+    assert "- 수집 실패 toss: ConnectError: 연결 실패" in text
