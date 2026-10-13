@@ -2,6 +2,7 @@
 
     uv run python -m pipeline.update                 # 8곳 모두
     uv run python -m pipeline.update kakao toss      # 일부 블로그만
+    uv run python -m pipeline.update --skip woowahan # 일부 블로그 빼고 (GitHub Actions)
     uv run python -m pipeline.update --dry-run       # 수집과 추출 대상 확인까지만 (LLM 호출 없음)
     uv run python -m pipeline.update --max-new 200   # 상한을 넘어 보류된 블로그를 확인한 뒤 풀 때
 
@@ -205,11 +206,24 @@ def summary(report: UpdateReport) -> str:
     return "\n".join(lines) + "\n"
 
 
+def select_sources(requested: list[str], skip: list[str]) -> list[str]:
+    """지정한 블로그(없거나 all이면 전체)에서 skip을 뺀다."""
+    sources = sorted(COLLECTORS) if not requested or "all" in requested else requested
+    return [s for s in sources if s not in skip]
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="새 글만 수집·추출하고 문서 확장과 검색 DB 빌드까지 한 번에 실행한다."
     )
     parser.add_argument("sources", nargs="*", choices=["all", *sorted(COLLECTORS)])
+    parser.add_argument(
+        "--skip",
+        action="append",
+        default=[],
+        choices=sorted(COLLECTORS),
+        help="뺄 블로그 (여러 번 지정 가능, 워크플로는 우아한형제들을 뺀다)",
+    )
     parser.add_argument(
         "--max-new",
         type=int,
@@ -222,7 +236,7 @@ def main() -> None:
     )
     parser.add_argument("--summary-file", type=Path, help="실행 요약(마크다운)을 저장할 파일")
     args = parser.parse_args()
-    sources = sorted(COLLECTORS) if not args.sources or "all" in args.sources else args.sources
+    sources = select_sources(args.sources, args.skip)
 
     load_dotenv()
 
