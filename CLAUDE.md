@@ -39,6 +39,8 @@ uv run techblog-mcp                                                            #
 
 CI(`.github/workflows/ci.yml`)는 Python 3.11과 3.14에서 `uv sync --locked` → ruff check → ruff format --check → pytest를 실행한다. 의존성을 바꾸면 `uv.lock`도 커밋해야 한다.
 
+자동 갱신(`.github/workflows/update.yml`)은 매주 월요일 main에서 `pipeline.update` → 린트·테스트 → Release 배포 → 데이터 PR 생성·병합을 하고, 문제가 있으면 `auto-update` 라벨 이슈를 남긴다. 봇이 만든 PR에서는 CI가 돌지 않으므로 검사는 이 워크플로 안에서 한다.
+
 ## 아키텍처
 
 두 부분으로 나뉘고, 의존성도 분리한다.
