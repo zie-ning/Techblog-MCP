@@ -194,6 +194,46 @@ def score_all(ctx: Context, rerankers: list[Reranker]) -> list[Scored]:
     return scored
 
 
+# ---------- 판정 풀 ----------
+
+POOL_DEPTH = 15  # 판정 풀에 넣는 설정별 상위 건수
+
+
+def judge_pool(ctx: Context, scored: list[Scored]) -> list[dict]:
+    """판정할 후보: 질문마다 BM25·코사인·RRF·리랭커별 상위 POOL_DEPTH건 중 미판정 항목.
+
+    판정하는 사람(Claude)이 읽을 수 있게 항목의 제목과 요약 필드를 함께 담는다.
+    """
+    data = {r[0]: json.loads(r[1]) for r in ctx.conn.execute("SELECT id, data FROM entries")}
+    out = []
+    for s in scored:
+        x = s.query
+        lexical = bm25_ranking(ctx.conn, x.query, x.filters(), FTS_COLUMNS, depth=POOL_DEPTH)
+        lists = [[r.id for r in lexical], s.ids[:POOL_DEPTH]]
+        lists += [[r.id for r in s.ranked(k)[:POOL_DEPTH]] for k in s.scores]
+        found = [i for i in dict.fromkeys(i for ids in lists for i in ids) if x.grade(i) is None]
+        if not found:
+            continue
+        items = []
+        for entry_id in found:
+            e = data[entry_id]
+            items.append(
+                {
+                    "id": entry_id,
+                    "company": e["company"],
+                    "title": e["post_title"],
+                    "problem": [p["text"] for p in e["problem_situation"]],
+                    "solution": [p["text"] for p in e["solution"]],
+                    "ops": [p["text"] for p in e["performance_ops"]],
+                    "technologies": e["technologies"],
+                }
+            )
+        out.append(
+            {"id": x.id, "query": x.query, "source": x.source, "note": x.note, "items": items}
+        )
+    return out
+
+
 # ---------- 분석 ----------
 
 
@@ -402,6 +442,8 @@ def main() -> None:
     parser.add_argument(
         "--models", default=",".join(s.key for s in RERANKERS), help="쉼표로 구분한 리랭커 키"
     )
+    parser.add_argument("--pool", type=Path, help="평가 대신 판정할 후보 풀을 JSON으로 쓴다")
+    parser.add_argument("--report", default="m10-r1-rerank", help="리포트 파일 이름")
     args = parser.parse_args()
     chosen = args.models.split(",")
 
@@ -412,6 +454,11 @@ def main() -> None:
     scored_list = score_all(ctx, rerankers)
     scored = {s.query.id: s for s in scored_list}
     keys = ["cosine", *(r.spec.key for r in rerankers)]
+    if args.pool:
+        pool = judge_pool(ctx, scored_list)
+        args.pool.write_text(json.dumps(pool, ensure_ascii=False, indent=1), encoding="utf-8")
+        print(f"{args.pool}: 질문 {len(pool)}개, 항목 {sum(len(p['items']) for p in pool)}건")
+        return
 
     systems = [server_system(ctx, "server", None, False), rrf_system(scored)]
     systems[0].description = "현재 서버 search (BM25 + IDF 일치 50%)"
@@ -442,7 +489,7 @@ def main() -> None:
     ]
     text += "\n" + "\n\n".join("\n".join(s) for s in sections) + "\n"
     REPORTS.mkdir(parents=True, exist_ok=True)
-    path = REPORTS / "m10-r1-rerank.md"
+    path = REPORTS / f"{args.report}.md"
     path.write_text(text, encoding="utf-8")
     print(path.relative_to(ROOT))
 
