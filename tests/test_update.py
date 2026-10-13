@@ -212,3 +212,9 @@ def test_summary_lists_new_posts_and_problems(paths):
     assert text.startswith("## 자동 갱신 결과: 일부 실패·보류·급등")
     assert "- 올리브영 [a 제목](https://example.com/oliveyoung/a): 항목 1개" in text
     assert "- 수집 실패 toss: ConnectError: 연결 실패" in text
+
+
+def test_select_sources_skips_blogs():
+    assert "woowahan" not in update.select_sources([], ["woowahan"])
+    assert len(update.select_sources(["all"], ["woowahan"])) == 7
+    assert update.select_sources(["kakao", "toss"], ["toss"]) == ["kakao"]

@@ -39,13 +39,13 @@ uv run techblog-mcp                                                            #
 
 CI(`.github/workflows/ci.yml`)는 Python 3.11과 3.14에서 `uv sync --locked` → ruff check → ruff format --check → pytest를 실행한다. 의존성을 바꾸면 `uv.lock`도 커밋해야 한다.
 
-자동 갱신(`.github/workflows/update.yml`)은 매주 월요일 main에서 `pipeline.update` → 린트·테스트 → Release 배포 → 데이터 PR 생성·병합을 하고, 문제가 있으면 `auto-update` 라벨 이슈를 남긴다. 봇이 만든 PR에서는 CI가 돌지 않으므로 검사는 이 워크플로 안에서 한다.
+자동 갱신(`.github/workflows/update.yml`)은 매주 월요일 main에서 `pipeline.update --skip woowahan` → 린트·테스트 → Release 배포 → 데이터 PR 생성·병합을 하고, 문제가 있으면 `auto-update` 라벨 이슈를 남긴다. 봇이 만든 PR에서는 CI가 돌지 않으므로 검사는 이 워크플로 안에서 한다. 우아한형제들은 GitHub Actions IP를 403으로 막아 워크플로에서 빠지므로, 로컬에서 `pipeline.update woowahan` → `pipeline.release_db --upload` → 데이터·`db_release.json`을 브랜치·PR로 반영한다.
 
 ## 아키텍처
 
 두 부분으로 나뉘고, 의존성도 분리한다.
 
-- **`src/techblog_mcp/`** — 사용자가 `uv tool install git+…`로 설치하는 MCP 서버 패키지(PyPI 전환은 M8). 검색에 필요한 의존성만 `[project].dependencies`에 둔다.
+- **`src/techblog_mcp/`** — 사용자가 `uv tool install git+…`로 설치하는 MCP 서버 패키지(PyPI 전환은 M8에서 보류). 검색에 필요한 의존성만 `[project].dependencies`에 둔다.
 - **`pipeline/`** — 수집·추출·색인 빌드. 배포 패키지에 포함되지 않는다. OpenAI SDK, 크롤링 라이브러리 등은 서버 의존성이 아니라 별도 의존성 그룹에 둔다. 테스트에서는 `pythonpath = ["."]` 설정으로 import한다.
 
 데이터 흐름:
