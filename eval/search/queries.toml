@@ -937,6 +937,7 @@ judged = [
     "case_1297", "case_0506", "case_0341", "case_0324", "case_1506", "case_0981",
     "case_0307", "case_1398", "case_0311", "case_1109", "case_1180", "case_0588",
     "case_1022",
+    "case_1606", "case_1608",
 ]
 
 [queries.labels]
@@ -1375,6 +1376,7 @@ judged = [
     "case_0650", "case_0389", "case_0543", "case_1336", "case_0887", "case_1509",
     "case_1480", "case_0472", "case_1453", "case_0634", "case_0481", "case_1029",
     "case_0575", "case_1402", "case_0865", "case_1564", "case_0506",
+    "case_1549",
 ]
 
 [queries.labels]
@@ -1548,6 +1550,7 @@ judged = [
     "case_1223", "case_0325", "case_1473", "case_0545", "case_0942", "case_0289",
     "case_0815", "case_0504", "case_1213", "case_0505", "case_1178", "case_0694",
     "case_0775",
+    "case_1609", "case_1606",
 ]
 
 [queries.labels]
@@ -1566,6 +1569,8 @@ case_0797 = { grade = "관련", reason = "생성형 AI의 유해 요청과 프�
 case_0942 = { grade = "일부 관련", reason = "사내 AI 봇에서 입력·출력 민감정보를 Bedrock Guardrails로 필터링하지만 위험 요청 거절보다 민감정보 차단이 중심이다." }
 case_1178 = { grade = "관련", reason = "프롬프트 공격을 걸러내는 가드레일 모델의 오탐·미탐을 자동 실험으로 찾아 앞단 필터를 고도화했다." }
 case_0775 = { grade = "일부 관련", reason = "LLM 프롬프트로 유해 콘텐츠를 분류하는 구조지만 LLM 앞단 요청 차단이 아니라 플랫폼 콘텐츠 분류가 대상이다." }
+case_1609 = { grade = "관련", reason = "모델 호출 전에 프롬프트 공격과 개인정보를 검사해 차단하는 앞단 필터를 구성했다" }
+case_1606 = { grade = "일부 관련", reason = "LLM이 만든 SQL을 실행 직전에 검증해 차단하는 가드레일로, 사용자 요청 앞단 필터가 아니라 출력 검증이다" }
 
 [[queries]]
 id = "p10"
@@ -1611,6 +1616,7 @@ judged = [
     "case_1030", "case_0544", "case_1285", "case_1144", "case_1331", "case_1274",
     "case_1257", "case_1451", "case_1452", "case_0481", "case_0384", "case_0953",
     "case_0398", "case_0954", "case_1393", "case_0571", "case_0767", "case_0414",
+    "case_1602",
 ]
 
 [queries.labels]
@@ -1691,6 +1697,7 @@ judged = [
     "case_0713", "case_0880", "case_1102", "case_1095", "case_0754", "case_1085",
     "case_0503", "case_1032", "case_1195", "case_0513", "case_0658", "case_1075",
     "case_1097", "case_0331", "case_1198", "case_1252",
+    "case_1607",
 ]
 
 [queries.labels]
@@ -1721,6 +1728,7 @@ judged = [
     "case_0548", "case_1323",
     "case_0843", "case_1042", "case_0872", "case_0868", "case_1032", "case_0343",
     "case_0834", "case_1415", "case_0785", "case_1416",
+    "case_1601",
 ]
 
 [queries.labels]
@@ -1735,6 +1743,7 @@ case_0592 = { grade = "일부 관련", reason = "Java 전환 후 힙 데이터 �
 case_0483 = { grade = "관련", reason = "WebClient 사용 서버의 메모리 증가 원인이 ByteBuf release 누락임을 찾아 고친 사례다." }
 case_0933 = { grade = "일부 관련", reason = "JVM 기반 Pinot에서 Upsert 메타데이터가 계속 늘어 OOM·GC가 발생한 원인을 관리한 사례다." }
 case_0834 = { grade = "일부 관련", reason = "Ingress Nginx Controller(Go)에서 메모리·FD가 계속 늘어난 원인을 고루틴 누적으로 추적한 사례로 JVM은 아니다." }
+case_1601 = { grade = "일부 관련", reason = "Python fork worker의 메모리가 계속 늘어난 원인을 GC 동작에서 찾은 사례로 JVM은 아니다" }
 
 [[queries]]
 id = "p16"
@@ -1904,6 +1913,7 @@ judged = [
     "case_0961", "case_0834", "case_1235", "case_0985", "case_1221", "case_0683",
     "case_0291", "case_1412", "case_1295", "case_0868", "case_0599", "case_1183",
     "case_0517",
+    "case_1608",
 ]
 
 [queries.labels]
@@ -1917,6 +1927,7 @@ case_0690 = { grade = "일부 관련", reason = "배치가 유관부서 트래�
 case_0598 = { grade = "일부 관련", reason = "외부 DB 부하에 맞춰 Kafka 컨슈머 처리량을 pause/resume으로 동적 쓰로틀링했다." }
 case_1221 = { grade = "일부 관련", reason = "푸시 공급자 할당량 초과(429)를 막기 위해 남은 할당량을 계산해 재시도량을 조절했다." }
 case_0517 = { grade = "일부 관련", reason = "AWS API throttle을 adaptive 재시도로 흡수하고 람다 동시 실행을 1로 제한한 부분이 있다." }
+case_1608 = { grade = "일부 관련", reason = "AI Gateway에서 서비스별 사용량 한도를 적용한 부분이 있으나 주제는 공통 플랫폼이다" }
 
 
 # ---------- M10 보강: 근접 주제 (비슷한 글은 있으나 그 주제는 없음) ----------
@@ -2018,6 +2029,7 @@ judged = [
     "case_1195", "case_0328", "case_0373", "case_1582", "case_0670", "case_0506",
     "case_1022", "case_0678", "case_1516", "case_0532", "case_1564", "case_0966",
     "case_0965", "case_0478", "case_0438", "case_0368", "case_1531", "case_1193",
+    "case_0521", "case_0780",
 ]
 
 [queries.labels]
@@ -2064,6 +2076,7 @@ judged = [
     "case_1108", "case_0780", "case_0938", "case_1240", "case_0981", "case_1222",
     "case_0305", "case_0311", "case_0458", "case_0711", "case_0485", "case_0622",
     "case_0849",
+    "case_0712",
 ]
 
 [queries.labels]
