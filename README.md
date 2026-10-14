@@ -169,7 +169,7 @@ uv run python -m pipeline.expand               # 문서 확장 → data/expansio
 uv run python -m pipeline.embed                # 항목 임베딩 → data/embeddings.npz (Voyage API 키 필요)
 uv run python -m pipeline.build_index          # 검색 DB → data/techblog.sqlite
 uv run python -m pipeline.release_db --upload  # 검색 DB를 GitHub Release로 배포 (gh 로그인 필요)
-uv run python -m pipeline.update               # 새 글만 수집→추출→확장→빌드 (매주 GitHub Actions가 실행)
+uv run python -m pipeline.update               # 새 글만 수집→추출→확장→임베딩→빌드 (매주 GitHub Actions가 실행)
 ```
 
 OpenAI·Voyage API 키는 `.env.example`을 `.env`로 복사해 `OPENAI_API_KEY`, `VOYAGE_API_KEY`를 넣거나 환경 변수로 설정합니다. 서버(`techblog-mcp`)는 `.env`를 읽지 않으므로 서버의 키는 클라이언트 등록 때 환경 변수로 넣습니다.
