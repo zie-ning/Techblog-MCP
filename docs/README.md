@@ -8,7 +8,7 @@
 
 - **M10 PR**: 브랜치 `feat/search-redesign`을 `main`에 병합 (사용자 지시 후). 응답 지연 개선은 [이슈 #19](https://github.com/zie-ning/Techblog-MCP/issues/19)
 - **다음 마일스톤**: [M8. 자동 갱신 파이프라인](milestones/M8.md)
-- **미결정**: 검색 API 사용 시 사용자 키 처리(M10에서 보류), M7 결과로 드러난 사례 소개 방식 개선 ([기획.md](기획.md#미결정-사항)). 형태소 분리 문제는 [이슈 #15](https://github.com/zie-ning/Techblog-MCP/issues/15). M6에서 넘어온 검색 잡음 항목은 영향이 작아 고치지 않기로 함 ([M7.md](milestones/M7.md#m6-검색-잡음-항목-분석-2026-10-07))
+- **미결정**: 원격 서버(M9)가 Voyage 키를 보관해 사용자가 키 없이 의미 검색을 쓰게 할지(M10에서 보류), M7 결과로 드러난 사례 소개 방식 개선 ([기획.md](기획.md#미결정-사항)). 형태소 분리 문제는 [이슈 #15](https://github.com/zie-ning/Techblog-MCP/issues/15). M6에서 넘어온 검색 잡음 항목은 영향이 작아 고치지 않기로 함 ([M7.md](milestones/M7.md#m6-검색-잡음-항목-분석-2026-10-07))
 
 ## 마일스톤 현황
 
