@@ -1,7 +1,7 @@
 name: 자동 갱신
 
 # 새 글만 수집·추출해 검색 DB를 GitHub Release로 배포하고, 데이터 변경을 PR로 병합한다.
-# 일부 실패·보류·탈락률 급등(종료 코드 2)은 성공분을 배포한 뒤 이슈로 알린다 (docs/기획.md "자동 갱신").
+# 일부 실패·보류·탈락률 급등·수집 이상(종료 코드 2)은 성공분을 배포한 뒤 이슈로 알린다 (docs/기획.md "자동 갱신").
 # 우아한형제들은 GitHub Actions IP를 막아(403) 빼고, 로컬에서 따로 갱신한다.
 # 필요한 설정: 저장소 시크릿 OPENAI_API_KEY,
 # Settings → Actions → General → "Allow GitHub Actions to create and approve pull requests"
