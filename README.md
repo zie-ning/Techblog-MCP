@@ -24,6 +24,9 @@
 
 ### 같은 질문, 두 에이전트
 
+<p align="center"><img src="docs/assets/sonbae-demo.gif" alt="sonbae를 켠 Claude Code가 선착순 쿠폰 질문에 국내 사례를 찾아 답하는 장면" width="720"></p>
+<p align="center"><sub>아래 sonbae 실행의 실제 기록(질문·도구 호출·결과·답변)을 터미널 화면처럼 다시 그렸습니다. 기다리는 시간은 압축했습니다.</sub></p>
+
 > 선착순 쿠폰 발급 기능을 만들려고 해. 이벤트 시작 순간 수만 명이 몰릴 때 중복 발급과 초과 발급을 막으려면 어떻게 설계해야 할까? 국내 기업들이 실제로 어떻게 풀었는지 사례를 찾아서 참고해 줘.
 
 Claude Code(Sonnet)에 이 질문을 웹 검색만 켜고 한 번, sonbae만 켜고 한 번 물었습니다(2026-10-14, [실행 기록과 전체 답변](eval/reports/readme-demo.md)).
