@@ -14,7 +14,13 @@
 발췌 검증에 실패한 내용은 data/quarantine.jsonl에 격리하고, 이번 실행의 발췌 탈락률이
 급등하면 알린다(pipeline/extract/quality.py). 탈락한 내용은 이미 걸러졌으므로 배포는 막지 않는다.
 
-종료 코드: 0 정상, 2 일부 실패·보류·탈락률 급등(성공한 부분은 반영), 1 실행 불가.
+블로그 형식이 바뀌어 수집기가 오류 없이 빈 결과를 내는 조용한 고장도 알린다.
+- 목록: 이번 목록에서 본 기존 글이 추출 기록보다 크게 적으면 목록 파싱이 깨진 것으로 본다.
+  새 글이 없는 것과 달리 형식 변경은 기존 글도 함께 안 보이게 한다.
+- 본문: 새 글 본문이 너무 짧으면 본문 위치가 바뀌어 엉뚱한 요소를 가져온 것으로 보고 추출하지
+  않고 보류한다. 그대로 추출하면 "제외"로 기록돼 다음 실행에서 다시 받지 않기 때문이다.
+
+종료 코드: 0 정상, 2 일부 실패·보류·탈락률 급등·수집 이상(성공한 부분은 반영), 1 실행 불가.
 OPENAI_API_KEY는 환경 변수나 저장소 루트의 `.env`로 설정한다.
 """
 
@@ -37,11 +43,18 @@ from pipeline.extract import prompt_version, quality
 from pipeline.extract.extractor import LLM
 from pipeline.extract.run import DEFAULT_MODEL, ExtractReport, extract_all, plan, usage_summary
 from pipeline.extract.store import DATA_DIR, Store
+from pipeline.extract.text import html_to_text
 from techblog_mcp import db
 
 # 블로그별 한 번에 추출할 글 수 상한. 평소 8곳 합쳐 주 10편 안팎이다
 DEFAULT_MAX_NEW = 30
 WORKERS = 4
+# 이번 목록에서 본 기존 글이 추출 기록의 이 비율보다 적으면 목록 형식 변경을 의심한다.
+# 블로그가 글 몇 편을 지운 정도는 넘기고, 0편이나 첫 페이지만 보이는 고장은 잡는다
+MIN_LISTED_RATIO = 0.9
+# 본문 평문 길이 하한. 2023-09 이후 1,268편 중 300자 미만은 5편(모두 공지·행사로 제외)이고
+# 추출된 글은 최소 1,201자였다. 본문 위치가 바뀌어 엉뚱한 요소를 가져오면 이보다 짧아진다
+MIN_BODY_CHARS = 300
 
 EXIT_OK = 0
 EXIT_FATAL = 1
@@ -71,6 +84,10 @@ class UpdateReport:
     collect: CollectReport
     planned: dict[str, int] = field(default_factory=dict)  # 블로그 → 추출 대상 수
     held: dict[str, int] = field(default_factory=dict)  # 상한을 넘어 보류한 블로그 → 대상 수
+    # 목록이 줄어든 블로그 → (목록에서 본 기존 글 수, 추출 기록 수)
+    shrunk: dict[str, tuple[int, int]] = field(default_factory=dict)
+    # 본문이 짧아 추출하지 않고 보류한 글과 평문 길이
+    short: list[tuple[raw.RawPost, int]] = field(default_factory=list)
     extract: ExtractReport = field(default_factory=ExtractReport)
     expanded: int = 0  # 새로 만든 확장 수
     expand_error: str | None = None
@@ -82,6 +99,8 @@ class UpdateReport:
         return bool(
             self.collect.failed
             or self.held
+            or self.shrunk
+            or self.short
             or self.extract.failures
             or self.expand_error
             or self.spikes
@@ -104,6 +123,17 @@ def known_post_ids(store: Store) -> dict[str, set[str]]:
     return known
 
 
+def shrunk_listings(
+    collect: CollectReport, known: Mapping[str, set[str]]
+) -> dict[str, tuple[int, int]]:
+    """목록에서 본 기존 글이 추출 기록의 `MIN_LISTED_RATIO`보다 적은 블로그."""
+    return {
+        source: (result.listed_known, len(known[source]))
+        for source, result in collect.results.items()
+        if known.get(source) and result.listed_known < MIN_LISTED_RATIO * len(known[source])
+    }
+
+
 def update(
     sources: list[str],
     client: PoliteClient,
@@ -118,11 +148,17 @@ def update(
     store = Store.in_dir(paths.data_dir)
 
     print("== 수집")
+    known = known_post_ids(store)
     report = UpdateReport(
-        collect_sources(
-            client, sources, paths.raw_dir, known=known_post_ids(store), collectors=collectors
-        )
+        collect_sources(client, sources, paths.raw_dir, known=known, collectors=collectors)
     )
+    report.shrunk = shrunk_listings(report.collect, known)
+    for source, (listed, total) in report.shrunk.items():
+        print(
+            f"{source}: 목록에서 본 기존 글이 {listed}편으로 추출 기록 {total}편보다 크게 "
+            "적습니다. 목록 형식이 바뀌지 않았는지 수집기를 확인하세요.",
+            file=sys.stderr,
+        )
 
     print("== 추출")
     current_version = prompt_version.version()
@@ -137,6 +173,20 @@ def update(
             file=sys.stderr,
         )
     todo = [t for t in todo if t.post.source not in report.held]
+    lengths = {t.post.url: len(html_to_text(t.post.content_html)) for t in todo}
+    report.short = [
+        (t.post, lengths[t.post.url]) for t in todo if lengths[t.post.url] < MIN_BODY_CHARS
+    ]
+    for post, n in report.short:
+        # 캐시가 남으면 수집기를 고쳐도 다음 실행에서 다시 받지 않으므로 지운다
+        raw.raw_path(post.source, post.post_id, paths.raw_dir).unlink(missing_ok=True)
+        print(
+            f"{post.source}/{post.post_id}: 본문이 {n}자로 {MIN_BODY_CHARS}자보다 짧아 보류합니다. "
+            "본문 위치가 바뀌지 않았는지 수집기를 확인하세요. 실제로 짧은 글이면 "
+            "pipeline.collect로 다시 받은 뒤 pipeline.extract로 직접 추출하세요.",
+            file=sys.stderr,
+        )
+    todo = [t for t in todo if lengths[t.post.url] >= MIN_BODY_CHARS]
     for t in todo:
         print(f"  {t.post.source}/{t.post.post_id} ({t.reason}) {t.post.title}")
     print(f"추출 대상 {len(todo)}편")
@@ -185,13 +235,22 @@ def summary(report: UpdateReport) -> str:
             for url, reason in r.failures
         ),
         *(f"보류 {s}: 추출 대상 {n}편이 상한 초과 (--max-new)" for s, n in report.held.items()),
+        *(
+            f"목록 감소 {s}: 목록에서 본 기존 글 {listed}편, 추출 기록 {total}편 "
+            "(목록 형식 변경 의심)"
+            for s, (listed, total) in report.shrunk.items()
+        ),
+        *(
+            f"본문 짧음 {p.source} [{p.title}]({p.url}): {n}자, 추출 보류 (본문 위치 변경 의심)"
+            for p, n in report.short
+        ),
         *(f"추출 실패 {p.source}/{p.post_id}: {e}" for p, e in report.extract.failures),
         *([f"확장 실패: {report.expand_error}"] if report.expand_error else []),
         *(f"발췌 탈락률 급등: {c} (격리분은 data/quarantine.jsonl)" for c in report.spikes),
     ]
     built = f"DB 항목 {report.entry_count}개" if report.entry_count is not None else "빌드 안 함"
     lines = [
-        f"## 자동 갱신 결과: {'일부 실패·보류·급등' if report.partial else '정상'}",
+        f"## 자동 갱신 결과: {'일부 실패·보류·이상' if report.partial else '정상'}",
         "",
         f"- 추출 {report.extract.done}편, 확장 {report.expanded}개, {built}",
         *(f"- {c}" for c in report.checks),

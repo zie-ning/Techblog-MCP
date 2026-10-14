@@ -12,6 +12,8 @@ from pipeline.extract.store import Store
 from techblog_mcp import db
 
 EVIDENCE = "Redis의 원자 연산으로 발급 수량을 관리했습니다."
+# 본문 길이 하한(update.MIN_BODY_CHARS)을 넘기기 위한 문단
+FILLER = "<p>" + "선착순 쿠폰 발급 과정을 정리했습니다. " * 20 + "</p>"
 
 
 def make_post(source: str, post_id: str) -> raw.RawPost:
@@ -21,7 +23,7 @@ def make_post(source: str, post_id: str) -> raw.RawPost:
         url=f"https://example.com/{source}/{post_id}",
         title=f"{post_id} 제목",
         published_at=datetime(2026, 10, 1, tzinfo=UTC),
-        content_html=f"<p>{post_id} 문제가 있었습니다.</p><p>{EVIDENCE}</p>",
+        content_html=f"<p>{post_id} 문제가 있었습니다.</p><p>{EVIDENCE}</p>{FILLER}",
         collected_at=datetime(2026, 10, 2, tzinfo=UTC),
     )
 
@@ -181,6 +183,44 @@ def test_source_over_limit_is_held(paths):
     assert report.extract.done == 3
 
 
+def test_shrunk_listing_is_reported(paths):
+    olive = FakeBlog("oliveyoung", ["a", "b"])
+    run([olive], FakeLLM(), paths)
+
+    # 새 글이 없어도 기존 글이 목록에 그대로 보이면 정상이다
+    report = run([olive], None, paths)
+    assert report.shrunk == {}
+    assert report.exit_code == update.EXIT_OK
+
+    # 목록 형식이 바뀌어 기존 글이 안 보이면 새 글 0편이어도 알린다
+    olive.posts = olive.posts[:1]
+    report = run([olive], None, paths)
+    assert report.shrunk == {"oliveyoung": (1, 2)}
+    assert report.exit_code == update.EXIT_PARTIAL
+    assert "목록 감소 oliveyoung: 목록에서 본 기존 글 1편, 추출 기록 2편" in update.summary(report)
+
+
+def test_short_body_is_held(paths):
+    olive = FakeBlog("oliveyoung", ["a", "b"])
+    olive.posts[1].content_html = "<p>관련 글</p>"
+
+    report = run([olive], FakeLLM(), paths)
+    assert [(p.post_id, n) for p, n in report.short] == [("b", 4)]
+    assert report.extract.done == 1
+    assert report.exit_code == update.EXIT_PARTIAL
+    assert "본문 짧음 oliveyoung [b 제목]" in update.summary(report)
+    # 캐시를 지워 다음 실행에서 원문을 다시 받게 한다
+    assert not raw.exists("oliveyoung", "b", paths.raw_dir)
+    assert raw.exists("oliveyoung", "a", paths.raw_dir)
+
+    # 기록을 남기지 않아 수집기를 고친 뒤 다음 실행에서 추출한다
+    olive.posts[1] = make_post("oliveyoung", "b")
+    report = run([olive], FakeLLM(), paths)
+    assert report.short == []
+    assert report.extract.done == 1
+    assert report.exit_code == update.EXIT_OK
+
+
 def test_dry_run_does_not_call_llm_or_build(paths):
     olive = FakeBlog("oliveyoung", ["a"])
     report = run([olive], None, paths, dry_run=True)
@@ -209,7 +249,7 @@ def test_summary_lists_new_posts_and_problems(paths):
     toss.error = httpx.ConnectError("연결 실패")
     text = update.summary(run([olive, toss], FakeLLM(), paths))
 
-    assert text.startswith("## 자동 갱신 결과: 일부 실패·보류·급등")
+    assert text.startswith("## 자동 갱신 결과: 일부 실패·보류·이상")
     assert "- 올리브영 [a 제목](https://example.com/oliveyoung/a): 항목 1개" in text
     assert "- 수집 실패 toss: ConnectError: 연결 실패" in text
 
