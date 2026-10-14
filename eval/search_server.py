@@ -162,7 +162,7 @@ def main() -> None:
             "",
             f"- 평균 {statistics.mean(live_times):.2f}, 중앙값 {statistics.median(live_times):.2f},"
             f" 최대 {max(live_times):.2f} (질문 {len(live_times)}개)",
-            f"- API 대기 한도 {semantic.TIMEOUT:g}초. 대체 경로를 탄 질문:"
+            f"- 검색 한 번의 API 한도 {semantic.DEADLINE:g}초. 대체 경로를 탄 질문:"
             f" {', '.join(live_fallbacks) or '없음'}",
         ]
     path = REPORTS / "m10-r5-server.md"

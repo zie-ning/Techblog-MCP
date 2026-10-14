@@ -16,15 +16,15 @@
 
 ## 실험과 결과 목록이 다른 질문: 서버 (실제 API)
 
-- m02: 실험 ['case_1466', 'case_0597', 'case_1539', 'case_1100', 'case_0477', 'case_1015', 'case_1590', 'case_1444', 'case_0476', 'case_1532'] / 서버 ['case_1466', 'case_0597', 'case_1539', 'case_1100', 'case_0477', 'case_1015', 'case_1444', 'case_1590', 'case_0476', 'case_1532']
 - m06: 실험 ['case_1466', 'case_0597', 'case_0643', 'case_1590', 'case_1465', 'case_1444', 'case_1591', 'case_1440', 'case_1504', 'case_0478'] / 서버 ['case_1466', 'case_0597', 'case_0643', 'case_1590', 'case_1465', 'case_1444', 'case_1591', 'case_1504', 'case_1440', 'case_0478']
+- m09: 실험 ['case_0606', 'case_0649', 'case_0720', 'case_0374', 'case_1371', 'case_0546', 'case_1130', 'case_1445', 'case_1525', 'case_1404'] / 서버 ['case_0606', 'case_0649', 'case_0720', 'case_0374', 'case_1371', 'case_0546', 'case_1130', 'case_1525', 'case_1445', 'case_1404']
 - p02: 실험 ['case_1482', 'case_0507', 'case_1102', 'case_0972', 'case_0305', 'case_0671', 'case_1344', 'case_0521', 'case_0297', 'case_1275'] / 서버 ['case_1482', 'case_0507', 'case_1102', 'case_0972', 'case_0305', 'case_0671', 'case_0521', 'case_0297', 'case_1344', 'case_1275']
-- p09: 실험 ['case_1228', 'case_0758', 'case_0757', 'case_1224', 'case_0797', 'case_1225', 'case_0555', 'case_1046', 'case_0759', 'case_0513'] / 서버 ['case_1228', 'case_0758', 'case_0757', 'case_0797', 'case_1224', 'case_1225', 'case_0555', 'case_1046', 'case_0759', 'case_0513']
 - p12: 실험 ['case_0409', 'case_0396', 'case_0639', 'case_1001', 'case_1569', 'case_0395', 'case_0671', 'case_0602', 'case_1023'] / 서버 ['case_0409', 'case_0639', 'case_0396', 'case_1001', 'case_1569', 'case_0395', 'case_0671', 'case_0602', 'case_1023']
+- p16: 실험 ['case_0950', 'case_0976', 'case_1456', 'case_0607', 'case_0533', 'case_0780', 'case_1532', 'case_0437', 'case_0476', 'case_0660'] / 서버 ['case_0950', 'case_0976', 'case_1456', 'case_0533', 'case_0607', 'case_0780', 'case_1532', 'case_0437', 'case_0476', 'case_0660']
 
 ## 서버 search 응답 시간 (실제 API)
 
 검색어 임베딩 + BM25 + 코사인 + 리랭커 + DB 조회를 합친 q.search 한 번의 시간(초).
 
-- 평균 1.56, 중앙값 1.51, 최대 2.10 (질문 62개)
-- API 대기 한도 8초. 대체 경로를 탄 질문: 없음
+- 평균 1.59, 중앙값 1.52, 최대 2.16 (질문 62개)
+- 검색 한 번의 API 한도 8초. 대체 경로를 탄 질문: 없음
