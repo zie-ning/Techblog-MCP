@@ -25,6 +25,9 @@ class CollectResult:
     skipped: int = 0  # 이미 캐시됐거나 추출 기록이 있어 요청하지 않은 글
     out_of_period: int = 0  # 받아 보니 수집 기간 밖이라 저장하지 않은 글
     failures: list[tuple[str, str]] = field(default_factory=list)  # (URL, 이유)
+    # 목록에서 본 글 중 `known`(추출 기록)에 있는 글 수. 목록 형식이 바뀌어 파싱이 깨지면
+    # 기존 글도 함께 안 보여 이 값이 줄어든다 (pipeline/update.py가 판단)
+    listed_known: int = 0
 
 
 @dataclass
@@ -61,7 +64,7 @@ def collect_each(
     이어받고, 원문 캐시가 없는 환경에서도 새 글만 받는다. `refresh`면 둘 다 무시한다.
     한 편이 실패해도 멈추지 않고 실패 목록에 모아 돌려준다.
     """
-    result = CollectResult()
+    result = CollectResult(listed_known=len({post_id for post_id, _ in targets} & set(known)))
     for i, (post_id, url) in enumerate(targets, 1):
         if i % 20 == 0:
             print(f"  {source}: {i}/{len(targets)}", file=sys.stderr)
@@ -92,10 +95,9 @@ def save_feed_posts(
     본문을 이미 받았으므로 캐시와 관계없이 덮어쓰되, `known`(이미 추출한 글)은
     `collect_each`와 같은 기준으로 건너뛴다.
     """
-    result = CollectResult()
-    for post in posts:
-        if not raw.in_collect_period(post.published_at):
-            continue
+    in_period = [p for p in posts if raw.in_collect_period(p.published_at)]
+    result = CollectResult(listed_known=len({p.post_id for p in in_period} & set(known)))
+    for post in in_period:
         if not refresh and post.post_id in known:
             result.skipped += 1
             continue

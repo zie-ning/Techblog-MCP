@@ -92,10 +92,16 @@ def test_collect_each_skips_known_without_cache(tmp_path):
     result = collect_each("test", targets, fetch_one, tmp_path, known={"known"})
     assert requested == ["new"]
     assert result.skipped == 1
+    # 목록에 없는 추출 기록("gone")은 세지 않는다
+    assert (
+        collect_each("test", targets, fetch_one, tmp_path, known={"known", "gone"}).listed_known
+        == 1
+    )
 
     requested.clear()
-    collect_each("test", targets, fetch_one, tmp_path, refresh=True, known={"known"})
+    result = collect_each("test", targets, fetch_one, tmp_path, refresh=True, known={"known"})
     assert requested == ["known", "new"]
+    assert result.listed_known == 1
 
 
 def test_save_feed_posts_skips_known_and_out_of_period(tmp_path):
@@ -104,7 +110,8 @@ def test_save_feed_posts_skips_known_and_out_of_period(tmp_path):
         _post("new", datetime(2024, 1, 2, tzinfo=UTC)),
         _post("old", datetime(2023, 8, 1, tzinfo=UTC)),
     ]
-    result = save_feed_posts(posts, tmp_path, known={"known"})
+    result = save_feed_posts(posts, tmp_path, known={"known", "old", "gone"})
     assert [p.post_id for p in result.saved] == ["new"]
     assert result.skipped == 1
+    assert result.listed_known == 1  # 기간 밖 글과 목록에 없는 글은 세지 않는다
     assert not raw.exists("test", "known", tmp_path)
