@@ -9,7 +9,7 @@ from eval.search_experiments import (
     idf_coverage,
     multi_query_system,
 )
-from techblog_mcp import db
+from sonbae import db
 
 
 class FakeGenerate:

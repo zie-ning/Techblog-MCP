@@ -1,11 +1,11 @@
 """기술 사전 기반 기술명 정규화.
 
-정규화 규칙 자체는 서버와 공유하는 `techblog_mcp.taxonomy`에 있다.
+정규화 규칙 자체는 서버와 공유하는 `sonbae.taxonomy`에 있다.
 여기서는 저장된 항목을 현재 사전으로 다시 정규화한다.
 """
 
 from pipeline.extract.schema import Entry, RejectedAlternative
-from techblog_mcp import taxonomy
+from sonbae import taxonomy
 
 
 def rejected_alternative_name(name_raw: str, technologies: list[str]) -> str:

@@ -1,6 +1,6 @@
 """도구 결과를 에이전트가 읽기 쉬운 텍스트로 만든다 (JSON보다 토큰이 적고 인용하기 쉽다)."""
 
-from techblog_mcp.search.query import (
+from sonbae.search.query import (
     AggregateResult,
     Detail,
     Filters,

@@ -36,9 +36,9 @@ from eval.search_eval import (  # noqa: E402
 )
 from eval.search_experiments import Context, run_rows  # noqa: E402
 from eval.search_rerank import RERANKERS, Reranker, _fmt, _load_env, score_all  # noqa: E402
-from techblog_mcp import db  # noqa: E402
-from techblog_mcp.search import query as q  # noqa: E402
-from techblog_mcp.search import semantic  # noqa: E402
+from sonbae import db  # noqa: E402
+from sonbae.search import query as q  # noqa: E402
+from sonbae.search import semantic  # noqa: E402
 
 EMBEDDING = "voyage-4-large"
 RERANKER = "voyage-3"

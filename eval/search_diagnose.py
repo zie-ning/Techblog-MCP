@@ -23,9 +23,9 @@ if str(ROOT) not in sys.path:
 
 from eval.search_embed import MODELS, EmbeddingIndex  # noqa: E402
 from eval.search_eval import REPORTS, filtered_ids, load_queries  # noqa: E402
-from techblog_mcp import db  # noqa: E402
-from techblog_mcp.search import query as q  # noqa: E402
-from techblog_mcp.search.schema import FTS_COLUMNS  # noqa: E402
+from sonbae import db  # noqa: E402
+from sonbae.search import query as q  # noqa: E402
+from sonbae.search.schema import FTS_COLUMNS  # noqa: E402
 
 REASONS = {
     "A": "검색어 토큰이 하나도 없음",

@@ -9,9 +9,9 @@ import pytest
 from conftest import SAMPLE_ENTRIES
 
 from pipeline.build_index import build
-from techblog_mcp import db, render
-from techblog_mcp.search import query as q
-from techblog_mcp.search import semantic
+from sonbae import db, render
+from sonbae.search import query as q
+from sonbae.search import semantic
 
 # 항목 임베딩: 0001·0002는 쿠폰 쪽, 0003은 정산, 0004는 AI
 VECTORS = {

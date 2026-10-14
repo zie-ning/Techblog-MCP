@@ -5,8 +5,8 @@ from conftest import SAMPLE_ENTRIES, ev
 
 from pipeline import embed
 from pipeline.build_index import build
-from techblog_mcp import db
-from techblog_mcp.search import semantic
+from sonbae import db
+from sonbae.search import semantic
 
 
 class FakeDocuments:

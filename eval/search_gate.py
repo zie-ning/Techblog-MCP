@@ -43,7 +43,7 @@ from eval.search_rerank import (  # noqa: E402
     score_all,
     tag_of,
 )
-from techblog_mcp import db  # noqa: E402
+from sonbae import db  # noqa: E402
 
 EMBEDDING = "voyage-4-large"
 RERANKER = "voyage-3"

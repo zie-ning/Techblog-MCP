@@ -7,10 +7,10 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Literal
 
-from techblog_mcp import taxonomy
-from techblog_mcp.search import semantic
-from techblog_mcp.search.analyzer import tokenize
-from techblog_mcp.search.schema import FTS_COLUMNS
+from sonbae import taxonomy
+from sonbae.search import semantic
+from sonbae.search.analyzer import tokenize
+from sonbae.search.schema import FTS_COLUMNS
 
 GroupBy = Literal["technology", "problem_type", "domain", "company", "rejected_alternative"]
 

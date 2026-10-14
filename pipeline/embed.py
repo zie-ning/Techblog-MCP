@@ -4,7 +4,7 @@
     uv run python -m pipeline.embed --dry-run
 
 결과는 data/embeddings.npz(커밋)에 두고, build_index가 검색 DB의 entry_embeddings 테이블에 넣는다.
-입력은 서버 리랭커와 같은 텍스트(techblog_mcp.search.semantic.entry_text)다. 저장소에 두는 이유는
+입력은 서버 리랭커와 같은 텍스트(sonbae.search.semantic.entry_text)다. 저장소에 두는 이유는
 키 없이도 같은 검색 DB를 빌드하고, 바뀐 항목만 다시 계산하기 위함이다(M10 사용자 결정).
 VOYAGE_API_KEY는 환경 변수나 저장소 루트의 `.env`로 설정한다.
 """
@@ -22,7 +22,7 @@ from dotenv import load_dotenv
 
 from pipeline.extract.schema import Entry
 from pipeline.extract.store import DATA_DIR, ENTRIES_PATH, Store
-from techblog_mcp.search import semantic
+from sonbae.search import semantic
 
 EMBEDDINGS_PATH = DATA_DIR / "embeddings.npz"
 BATCH = 64  # 요청당 토큰 한도 안에 들도록 (항목당 평균 약 535토큰)

@@ -47,10 +47,10 @@ from eval.search_eval import (  # noqa: E402
 from pipeline import expand  # noqa: E402
 from pipeline.build_index import build, fts_fields  # noqa: E402
 from pipeline.extract.schema import Entry  # noqa: E402
-from techblog_mcp import db  # noqa: E402
-from techblog_mcp.search import analyzer  # noqa: E402
-from techblog_mcp.search import query as q  # noqa: E402
-from techblog_mcp.search.schema import FTS_COLUMNS  # noqa: E402
+from sonbae import db  # noqa: E402
+from sonbae.search import analyzer  # noqa: E402
+from sonbae.search import query as q  # noqa: E402
+from sonbae.search.schema import FTS_COLUMNS  # noqa: E402
 
 ALL = 100_000  # 걸린 항목 전체를 보려고 쓰는 깊이
 RRF_K = 60

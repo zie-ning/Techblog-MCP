@@ -16,9 +16,9 @@ from eval.search_eval import (
     run,
     summarize,
 )
-from techblog_mcp import db
-from techblog_mcp.search import query as q
-from techblog_mcp.search.schema import FTS_COLUMNS
+from sonbae import db
+from sonbae.search import query as q
+from sonbae.search.schema import FTS_COLUMNS
 
 
 @pytest.fixture

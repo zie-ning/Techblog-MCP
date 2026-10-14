@@ -3,7 +3,7 @@
     uv run python -m pipeline.build_index [--out 경로]
 
 항목 텍스트와 문서 확장(data/expansions.jsonl, pipeline/expand.py)을 서버와 같은 형태소
-분석기(techblog_mcp.search.analyzer)로 분석해 색인하고, 항목 임베딩(data/embeddings.npz,
+분석기(sonbae.search.analyzer)로 분석해 색인하고, 항목 임베딩(data/embeddings.npz,
 pipeline/embed.py)을 의미 검색용 테이블에 넣는다.
 DB는 빌드 산출물이라 git에 넣지 않는다.
 """
@@ -19,9 +19,9 @@ import numpy as np
 from pipeline import embed, expand
 from pipeline.extract.schema import Entry
 from pipeline.extract.store import ENTRIES_PATH, Store
-from techblog_mcp import db
-from techblog_mcp.search import schema, semantic
-from techblog_mcp.search.analyzer import analyze
+from sonbae import db
+from sonbae.search import schema, semantic
+from sonbae.search.analyzer import analyze
 
 
 def has_metrics(entry: Entry) -> bool:

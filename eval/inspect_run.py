@@ -22,7 +22,7 @@ from pipeline.extract.schema import Entry, PostRecord, Usage  # noqa: E402
 from pipeline.extract.store import Store  # noqa: E402
 from pipeline.extract.text import html_to_text  # noqa: E402
 from pipeline.normalize import renormalize  # noqa: E402
-from techblog_mcp import taxonomy  # noqa: E402
+from sonbae import taxonomy  # noqa: E402
 
 PRICING = ROOT / "eval" / "pricing.toml"
 REPORTS = ROOT / "eval" / "reports"

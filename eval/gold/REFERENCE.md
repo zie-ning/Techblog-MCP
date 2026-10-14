@@ -1,6 +1,6 @@
 # 정답셋 검수 참고표
 
-`uv run python eval/gold.py reference`로 생성한다. 문제 유형·도메인·기술 사전은 `src/techblog_mcp/taxonomy/`, 글 유형·구조화 유형은 추출 스키마와 프롬프트가 기준이다. 분류 목록이 바뀌면 다시 생성한다. 라벨링 기준은 [README.md](README.md).
+`uv run python eval/gold.py reference`로 생성한다. 문제 유형·도메인·기술 사전은 `src/sonbae/taxonomy/`, 글 유형·구조화 유형은 추출 스키마와 프롬프트가 기준이다. 분류 목록이 바뀌면 다시 생성한다. 라벨링 기준은 [README.md](README.md).
 
 정답의 "(허용: …)"는 추출 결과가 그 값이어도 맞다고 보는 다른 답이다. 문제 유형·도메인은 앞의 값이 꼭 들어가야 할 값(재현율 기준), 허용 값은 들어가도 틀리지 않은 값(정밀도 기준)이다.
 

@@ -20,12 +20,12 @@ from typing import Literal
 from pydantic import BaseModel, model_validator
 
 ROOT = Path(__file__).resolve().parents[1]
-if str(ROOT) not in sys.path:  # 스크립트로 실행할 때도 techblog_mcp를 import할 수 있게 한다
+if str(ROOT) not in sys.path:  # 스크립트로 실행할 때도 sonbae를 import할 수 있게 한다
     sys.path.insert(0, str(ROOT))
 
-from techblog_mcp import db  # noqa: E402
-from techblog_mcp.search import query as q  # noqa: E402
-from techblog_mcp.search.schema import FTS_COLUMNS  # noqa: E402
+from sonbae import db  # noqa: E402
+from sonbae.search import query as q  # noqa: E402
+from sonbae.search.schema import FTS_COLUMNS  # noqa: E402
 
 QUERIES_PATH = ROOT / "eval" / "search" / "queries.toml"
 REPORTS = ROOT / "eval" / "reports"
