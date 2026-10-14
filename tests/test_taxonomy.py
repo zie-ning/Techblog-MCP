@@ -1,6 +1,6 @@
 import pytest
 
-from techblog_mcp import taxonomy
+from sonbae import taxonomy
 
 
 def test_category_counts():
@@ -45,7 +45,7 @@ def test_server_enums_match_taxonomy():
     import typing
 
     from pipeline.extract import schema
-    from techblog_mcp import server
+    from sonbae import server
 
     assert typing.get_args(server.ProblemType) == taxonomy.problem_type_names()
     assert typing.get_args(schema.ProblemType) == taxonomy.problem_type_names()

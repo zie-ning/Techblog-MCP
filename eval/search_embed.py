@@ -16,7 +16,7 @@ from typing import Protocol
 
 import numpy as np
 
-from techblog_mcp.search import semantic
+from sonbae.search import semantic
 
 ROOT = Path(__file__).resolve().parents[1]
 CACHE_DIR = ROOT / "eval" / "search" / "embeddings"

@@ -6,8 +6,8 @@ from pathlib import Path
 import pytest
 
 from pipeline import release_db
-from techblog_mcp import db
-from techblog_mcp.search.schema import SCHEMA_VERSION
+from sonbae import db
+from sonbae.search.schema import SCHEMA_VERSION
 
 
 @pytest.fixture

@@ -10,7 +10,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, model_validator
 
-from techblog_mcp import taxonomy
+from sonbae import taxonomy
 
 ProblemType = Literal[taxonomy.problem_type_names()]  # type: ignore[valid-type]
 Domain = Literal[taxonomy.domain_names()]  # type: ignore[valid-type]

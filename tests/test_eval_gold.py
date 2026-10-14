@@ -2,7 +2,7 @@ import pytest
 from pydantic import ValidationError
 
 from eval.gold import GOLD_DIR, GoldEntry, GoldPost, load_gold, render_reference
-from techblog_mcp import taxonomy
+from sonbae import taxonomy
 
 
 def _post(**overrides) -> dict:

@@ -46,8 +46,8 @@ from pipeline.extract.extractor import LLM
 from pipeline.extract.run import DEFAULT_MODEL, ExtractReport, extract_all, plan, usage_summary
 from pipeline.extract.store import DATA_DIR, Store
 from pipeline.extract.text import html_to_text
-from techblog_mcp import db
-from techblog_mcp.search import semantic
+from sonbae import db
+from sonbae.search import semantic
 
 # 블로그별 한 번에 추출할 글 수 상한. 평소 8곳 합쳐 주 10편 안팎이다
 DEFAULT_MAX_NEW = 30

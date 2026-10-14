@@ -10,8 +10,8 @@ from pipeline.collect.common import save_feed_posts
 from pipeline.extract import quality
 from pipeline.extract.schema import Classification, EntryDraft, Extraction, Point
 from pipeline.extract.store import Store
-from techblog_mcp import db
-from techblog_mcp.search import semantic
+from sonbae import db
+from sonbae.search import semantic
 
 EVIDENCE = "Redis의 원자 연산으로 발급 수량을 관리했습니다."
 # 본문 길이 하한(update.MIN_BODY_CHARS)을 넘기기 위한 문단

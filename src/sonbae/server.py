@@ -1,4 +1,4 @@
-"""MCP 서버 진입점: 도구 search, get_details, aggregate와 prompt techblog.
+"""MCP 서버 진입점: 도구 search, get_details, aggregate와 prompt sonbae.
 
 도구 입력 스키마의 문제 유형·도메인 enum은 taxonomy에서 만들어 추출에 쓴 값과 항상 같다.
 """
@@ -14,9 +14,9 @@ from mcp.server.mcpserver.exceptions import ToolError
 from mcp.types import ToolAnnotations
 from pydantic import Field
 
-from techblog_mcp import db, render, taxonomy
-from techblog_mcp.search import analyzer, semantic
-from techblog_mcp.search import query as q
+from sonbae import db, render, taxonomy
+from sonbae.search import analyzer, semantic
+from sonbae.search import query as q
 
 ProblemType = Literal[taxonomy.problem_type_names()]  # type: ignore[valid-type]
 Domain = Literal[taxonomy.domain_names()]  # type: ignore[valid-type]
@@ -98,7 +98,7 @@ AGGREGATE_DESCRIPTION = f"""\
 (예: Amazon MSK는 Kafka 계열). 기술 필터도 같은 기준이라 "Kafka"로 거르면 계열 전체가 포함된다.
 예시 ID는 get_details로 이어서 볼 수 있다. 결과에 없는 수치를 지어내지 말 것."""
 
-server = MCPServer(name="techblog", instructions=INSTRUCTIONS)
+server = MCPServer(name="sonbae", instructions=INSTRUCTIONS)
 
 QueryArg = Annotated[
     str,
@@ -223,13 +223,13 @@ def aggregate(
 
 
 @server.prompt(
-    name="techblog",
+    name="sonbae",
     description="주제에 대한 국내 기업 사례를 참고 자료로 소개하고, 현재 작업에 맞는 선택지를 "
     "따로 제안한다.",
 )
-def techblog(topic: Annotated[str, Field(description="찾아볼 설계 주제나 현재 작업")]) -> str:
+def sonbae(topic: Annotated[str, Field(description="찾아볼 설계 주제나 현재 작업")]) -> str:
     return f"""\
-다음 주제에 대해 techblog MCP 도구로 국내 기업 사례를 찾아 참고 자료로 소개해 줘: {topic}
+다음 주제에 대해 sonbae MCP 도구로 국내 기업 사례를 찾아 참고 자료로 소개해 줘: {topic}
 
 1. search로 관련 사례를 찾는다. 주제가 여러 하위 주제로 나뉘면 하위 주제별로 나눠 검색하고,
    결과가 적으면 검색어를 바꾸거나 필터를 빼서 한 번 더 찾는다.

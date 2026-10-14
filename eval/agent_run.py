@@ -101,9 +101,9 @@ def mcp_config(with_server: bool) -> dict:
     server = {
         "type": "stdio",
         "command": "uv",
-        "args": ["run", "--directory", str(ROOT), "techblog-mcp"],
+        "args": ["run", "--directory", str(ROOT), "sonbae"],
         # 저장소 DB로 고정한다. 사용자 캐시의 다른 버전 DB를 쓰지 않게 한다
-        "env": {"TECHBLOG_MCP_DB": str(DB_PATH)},
+        "env": {"SONBAE_DB": str(DB_PATH)},
     }
     return {"mcpServers": {"techblog": server}}
 

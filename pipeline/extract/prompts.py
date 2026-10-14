@@ -7,7 +7,7 @@ M3 파일럿(eval/reports/baseline-gpt-5-mini-medium.md)에서 확인한 문제�
 쪼개지 않는 규칙은 구조화 프롬프트로 옮겼다.
 """
 
-from techblog_mcp import taxonomy
+from sonbae import taxonomy
 
 
 def _category_list(categories: tuple[taxonomy.Category, ...]) -> str:

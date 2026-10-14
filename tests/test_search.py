@@ -2,9 +2,9 @@ import pytest
 from conftest import ev, make_entry
 
 from pipeline.build_index import build, has_metrics
-from techblog_mcp import db
-from techblog_mcp.search import analyzer
-from techblog_mcp.search import query as q
+from sonbae import db
+from sonbae.search import analyzer
+from sonbae.search import query as q
 
 
 @pytest.fixture

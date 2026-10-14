@@ -32,7 +32,7 @@ from eval.judge import (  # noqa: E402
 )
 from eval.judge import prompt_version as judge_prompt_version  # noqa: E402
 from pipeline.extract.schema import Entry, PostRecord, Usage  # noqa: E402
-from techblog_mcp import taxonomy  # noqa: E402
+from sonbae import taxonomy  # noqa: E402
 
 
 def tech_key(name: str) -> str:

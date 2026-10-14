@@ -19,8 +19,8 @@ import tempfile
 from collections.abc import Callable
 from pathlib import Path
 
-from techblog_mcp import db
-from techblog_mcp.search.schema import SCHEMA_VERSION
+from sonbae import db
+from sonbae.search.schema import SCHEMA_VERSION
 
 
 def make_release(path: Path, tag: str) -> db.Release:

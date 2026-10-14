@@ -5,7 +5,7 @@ import asyncio
 import pytest
 from mcp.server.mcpserver.exceptions import ToolError
 
-from techblog_mcp import db, server
+from sonbae import db, server
 
 
 @pytest.fixture(autouse=True)
@@ -27,7 +27,7 @@ def test_tools_and_prompt_registered():
     tools = asyncio.run(server.server.list_tools())
     assert {t.name for t in tools} == {"search", "get_details", "aggregate"}
     prompts = asyncio.run(server.server.list_prompts())
-    assert [p.name for p in prompts] == ["techblog"]
+    assert [p.name for p in prompts] == ["sonbae"]
 
 
 def test_search_card_format():
@@ -125,14 +125,14 @@ def test_descriptions_ask_to_open_every_cited_case():
 
 
 def test_prompt():
-    result = asyncio.run(server.server.get_prompt("techblog", {"topic": "선착순 쿠폰"}))
+    result = asyncio.run(server.server.get_prompt("sonbae", {"topic": "선착순 쿠폰"}))
     text = result.messages[0].content.text
     assert "선착순 쿠폰" in text and "get_details" in text
 
 
 def test_reference_principle_is_communicated():
     # 사례는 참고 자료라는 원칙이 서버 안내·search 설명·결과·prompt에 모두 들어 있어야 한다
-    from techblog_mcp import render
+    from sonbae import render
 
     assert render.REFERENCE_PRINCIPLE in server.INSTRUCTIONS
     tools = {t.name: t for t in asyncio.run(server.server.list_tools())}
@@ -142,7 +142,7 @@ def test_reference_principle_is_communicated():
     assert render.REFERENCE_RULE in call("search", query="선착순 쿠폰")
     assert render.REFERENCE_RULE in call("get_details", ids=["case_0001"])
 
-    prompt = asyncio.run(server.server.get_prompt("techblog", {"topic": "쿠폰"}))
+    prompt = asyncio.run(server.server.get_prompt("sonbae", {"topic": "쿠폰"}))
     text = prompt.messages[0].content.text
     assert '"참고 사례"와 "제안"을 나눠서' in text
     assert "그대로 적용하라고 권하지 않는다" in text

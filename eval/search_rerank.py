@@ -51,8 +51,8 @@ from eval.search_experiments import (  # noqa: E402
     run_rows,
     server_system,
 )
-from techblog_mcp import db  # noqa: E402
-from techblog_mcp.search.schema import FTS_COLUMNS  # noqa: E402
+from sonbae import db  # noqa: E402
+from sonbae.search.schema import FTS_COLUMNS  # noqa: E402
 
 CANDIDATES = 50  # 리랭커에 넘기는 후보 수 (BM25·임베딩 각 50건을 RRF로 합친 상위)
 CACHE_DIR = ROOT / "eval" / "search" / "rerank_cache"

@@ -3,7 +3,7 @@
     uv run python -m pipeline.normalize          # 리포트만
     uv run python -m pipeline.normalize --apply  # 현재 사전으로 entries.jsonl 다시 정규화
 
-기술 사전(`src/techblog_mcp/taxonomy/technologies.toml`)을 보강한 뒤 --apply로 반영하면
+기술 사전(`src/sonbae/taxonomy/technologies.toml`)을 보강한 뒤 --apply로 반영하면
 LLM을 다시 호출하지 않고 정규화 결과를 갱신할 수 있다.
 """
 

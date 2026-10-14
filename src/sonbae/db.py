@@ -1,7 +1,7 @@
 """검색 DB 경로 로딩. DB 위치를 아는 곳은 여기 하나뿐이다.
 
 DB는 다음 순서로 찾는다.
-1. 환경 변수 `TECHBLOG_MCP_DB`로 지정한 경로
+1. 환경 변수 `SONBAE_DB`로 지정한 경로
 2. 저장소의 `data/techblog.sqlite` (개발용, pipeline.build_index로 생성)
 3. GitHub Release에서 내려받아 사용자 캐시 폴더에 둔 DB (git 주소로 설치한 사용자)
 
@@ -26,14 +26,14 @@ from collections.abc import Iterable
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-from techblog_mcp.search.schema import SCHEMA_VERSION
+from sonbae.search.schema import SCHEMA_VERSION
 
-DB_PATH_ENV = "TECHBLOG_MCP_DB"
-CACHE_DIR_ENV = "TECHBLOG_MCP_CACHE_DIR"
+DB_PATH_ENV = "SONBAE_DB"
+CACHE_DIR_ENV = "SONBAE_CACHE_DIR"
 DEFAULT_DB_PATH = Path(__file__).resolve().parents[2] / "data" / "techblog.sqlite"
 RELEASE_MANIFEST_PATH = Path(__file__).with_name("db_release.json")
 
-REPO_URL = "https://github.com/zie-ning/Techblog-MCP"
+REPO_URL = "https://github.com/zie-ning/sonbae"
 ASSET_NAME = "techblog.sqlite"
 MANIFEST_ASSET_NAME = RELEASE_MANIFEST_PATH.name  # Release에 함께 올리는 버전 정보 파일
 STATE_FILE_NAME = "state.json"  # 캐시 폴더에 두는 마지막 확인 시각과 받아 둔 최신 버전
@@ -80,7 +80,7 @@ def cache_dir() -> Path:
         base = Path.home() / "Library" / "Caches"
     else:
         base = Path(os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache")
-    return base / "techblog-mcp"
+    return base / "sonbae"
 
 
 def db_path() -> Path:

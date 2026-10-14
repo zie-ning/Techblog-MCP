@@ -109,7 +109,7 @@ def test_build_command_allows_only_condition_tools(tmp_path: Path):
 
 def test_mcp_config_pins_repository_db():
     server = mcp_config(True)["mcpServers"]["techblog"]
-    assert server["env"]["TECHBLOG_MCP_DB"].endswith("techblog.sqlite")
+    assert server["env"]["SONBAE_DB"].endswith("techblog.sqlite")
     assert mcp_config(False) == {"mcpServers": {}}
 
 

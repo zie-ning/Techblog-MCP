@@ -2,8 +2,8 @@ from conftest import SAMPLE_ENTRIES, ev, make_entry
 
 from pipeline import expand
 from pipeline.build_index import build
-from techblog_mcp import db
-from techblog_mcp.search import query as q
+from sonbae import db
+from sonbae.search import query as q
 
 
 class FakeLLM:

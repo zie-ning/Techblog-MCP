@@ -13,7 +13,7 @@ from eval.search_experiments import (
     relative,
     rrf,
 )
-from techblog_mcp import db
+from sonbae import db
 
 
 @pytest.fixture

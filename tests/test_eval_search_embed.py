@@ -3,7 +3,7 @@ import pytest
 
 from eval.search_embed import MODELS, EmbeddingIndex, embedding_text
 from eval.search_eval import EvalQuery, candidate_pool, embedding_system, pool_report, pool_systems
-from techblog_mcp import db
+from sonbae import db
 
 
 class FakeEmbedder:
