@@ -209,6 +209,9 @@ def test_short_body_is_held(paths):
     assert report.extract.done == 1
     assert report.exit_code == update.EXIT_PARTIAL
     assert "본문 짧음 oliveyoung [b 제목]" in update.summary(report)
+    # 캐시를 지워 다음 실행에서 원문을 다시 받게 한다
+    assert not raw.exists("oliveyoung", "b", paths.raw_dir)
+    assert raw.exists("oliveyoung", "a", paths.raw_dir)
 
     # 기록을 남기지 않아 수집기를 고친 뒤 다음 실행에서 추출한다
     olive.posts[1] = make_post("oliveyoung", "b")

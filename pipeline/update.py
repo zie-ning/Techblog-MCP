@@ -178,10 +178,12 @@ def update(
         (t.post, lengths[t.post.url]) for t in todo if lengths[t.post.url] < MIN_BODY_CHARS
     ]
     for post, n in report.short:
+        # 캐시가 남으면 수집기를 고쳐도 다음 실행에서 다시 받지 않으므로 지운다
+        raw.raw_path(post.source, post.post_id, paths.raw_dir).unlink(missing_ok=True)
         print(
             f"{post.source}/{post.post_id}: 본문이 {n}자로 {MIN_BODY_CHARS}자보다 짧아 보류합니다. "
             "본문 위치가 바뀌지 않았는지 수집기를 확인하세요. 실제로 짧은 글이면 "
-            "pipeline.extract로 직접 추출하세요.",
+            "pipeline.collect로 다시 받은 뒤 pipeline.extract로 직접 추출하세요.",
             file=sys.stderr,
         )
     todo = [t for t in todo if lengths[t.post.url] >= MIN_BODY_CHARS]
