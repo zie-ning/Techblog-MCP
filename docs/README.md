@@ -6,7 +6,7 @@
 
 ## 지금 할 일
 
-- **진행 중**: [M10. 검색 개편](milestones/M10.md) 5단계 서버 구현·검증 완료(서버 search가 실험 수치 Recall@5 0.746을 그대로 재현). 새 검색 DB Release 배포(사용자 지시 후) 뒤 PR
+- **M10 PR**: 브랜치 `feat/search-redesign`을 `main`에 병합 (사용자 지시 후). 응답 지연 개선은 [이슈 #19](https://github.com/zie-ning/Techblog-MCP/issues/19)
 - **다음 마일스톤**: [M8. 자동 갱신 파이프라인](milestones/M8.md)
 - **미결정**: 검색 API 사용 시 사용자 키 처리(M10에서 보류), M7 결과로 드러난 사례 소개 방식 개선 ([기획.md](기획.md#미결정-사항)). 형태소 분리 문제는 [이슈 #15](https://github.com/zie-ning/Techblog-MCP/issues/15). M6에서 넘어온 검색 잡음 항목은 영향이 작아 고치지 않기로 함 ([M7.md](milestones/M7.md#m6-검색-잡음-항목-분석-2026-10-07))
 
@@ -24,7 +24,7 @@
 | M7. 에이전트 A/B 평가 (확장) | ✅ 완료 | 네 조건(mcp·none·web·web-ask) 429회 실행, 답변 품질 비교 315쌍. MCP는 도구 없음에 6승 80패(사례에 분량을 써 설계 내용이 줄어듦), 웹 검색 지시 조건에는 61승 24패 | [M7.md](milestones/M7.md) |
 | M8. 자동 갱신 파이프라인 (확장) | ⏳ 대기 | | [M8.md](milestones/M8.md) |
 | M9. 원격 HTTP 서버 (확장) | ⏳ 대기 | | [M9.md](milestones/M9.md) |
-| M10. 검색 개편 (확장) | 🔄 진행 중 | BM25 + 임베딩 후보, 리랭커 판정으로 개편(API 사용). 진단: 정답의 34%가 IDF 기준에 잘림. 평가셋 62개(근접 주제 12개 추가)에서 현재 서버 Recall@5 0.549·근접 주제 결과 없음 33%. voyage-4-large 후보 + Cohere v4 pro 2단 판정이 Recall@5 0.792·결과 없음 94% | [M10.md](milestones/M10.md) |
+| M10. 검색 개편 (확장) | ✅ 완료 | BM25 + voyage-4-large 후보를 Voyage rerank-3로 2단 판정(키가 없으면 BM25로 대체). 평가셋 62개(근접 주제·표현 차이 추가)에서 Recall@5 0.549 → 0.746, 없는 주제 결과 없음 53% → 94%, 무관 카드 44% → 22%. 검색 DB Release db-2026.10.14 | [M10.md](milestones/M10.md) |
 
 ## 문서 목록
 
