@@ -148,38 +148,54 @@ def test_render_mentions_fallback_only_when_it_happened(vconn):
     assert "단어 일치 검색으로 찾았습니다" in fallback_text
 
 
-def test_voyage_client_errors_become_unavailable(monkeypatch):
-    client = semantic.VoyageClient("key")
+def mock_client(handler) -> semantic.VoyageClient:
+    return semantic.VoyageClient("key", transport=httpx.MockTransport(handler))
 
-    def refused(*args, **kwargs):
+
+def test_voyage_client_errors_become_unavailable():
+    def refused(request):
         raise httpx.ConnectError("refused")
 
-    monkeypatch.setattr(httpx, "post", refused)
     with pytest.raises(semantic.SemanticUnavailable, match="연결하지 못했습니다"):
-        client.embed_query("쿠폰")
+        mock_client(refused).embed_query("쿠폰")
 
-    request = httpx.Request("POST", semantic.API_URL)
-    monkeypatch.setattr(httpx, "post", lambda *a, **k: httpx.Response(401, request=request))
     with pytest.raises(semantic.SemanticUnavailable, match="HTTP 401"):
-        client.rerank("쿠폰", ["문서"])
+        mock_client(lambda request: httpx.Response(401)).rerank("쿠폰", ["문서"])
 
 
-def test_voyage_client_parses_responses(monkeypatch):
-    request = httpx.Request("POST", semantic.API_URL)
+def test_voyage_client_parses_responses():
     replies = {
         "embeddings": {"data": [{"index": 0, "embedding": [3.0, 4.0]}]},
         "rerank": {
             "data": [{"index": 1, "relevance_score": 0.8}, {"index": 0, "relevance_score": 0.2}]
         },
     }
+    requests: list[httpx.Request] = []
 
-    def post(url, **kwargs):
-        return httpx.Response(200, json=replies[url.rsplit("/", 1)[1]], request=request)
+    def handler(request):
+        requests.append(request)
+        return httpx.Response(200, json=replies[request.url.path.rsplit("/", 1)[1]])
 
-    monkeypatch.setattr(httpx, "post", post)
-    client = semantic.VoyageClient("key")
+    client = mock_client(handler)
     assert np.allclose(client.embed_query("쿠폰"), [0.6, 0.8])
     assert client.rerank("쿠폰", ["a", "b"]) == [0.2, 0.8]
+    assert [str(r.url) for r in requests] == [
+        f"{semantic.API_URL}/embeddings",
+        f"{semantic.API_URL}/rerank",
+    ]
+    assert all(r.headers["Authorization"] == "Bearer key" for r in requests)
+
+
+def test_client_from_env_reuses_one_client_per_key(monkeypatch):
+    # 검색마다 클라이언트를 새로 만들면 SSL 설정에 호출당 약 0.4초가 든다(이슈 #19)
+    monkeypatch.setattr(semantic, "_clients", {})
+    assert semantic.client_from_env() is None
+    monkeypatch.setenv(semantic.API_KEY_ENV, "key-a")
+    first = semantic.client_from_env()
+    assert first is not None
+    assert semantic.client_from_env() is first
+    monkeypatch.setenv(semantic.API_KEY_ENV, "key-b")
+    assert semantic.client_from_env() is not first
 
 
 class SlowClient(FakeClient):
