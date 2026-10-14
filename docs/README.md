@@ -6,7 +6,7 @@
 
 ## 지금 할 일
 
-- **진행 중**: [M10. 검색 개편](milestones/M10.md) 4단계까지 완료(모델 Voyage voyage-4-large + rerank-3, 2단 판정 기준선 0.654·0.50, API를 못 쓰면 BM25로 대체). 다음은 5단계 서버 구현
+- **진행 중**: [M10. 검색 개편](milestones/M10.md) 5단계 서버 구현·검증 완료(서버 search가 실험 수치 Recall@5 0.746을 그대로 재현). 새 검색 DB Release 배포(사용자 지시 후) 뒤 PR
 - **다음 마일스톤**: [M8. 자동 갱신 파이프라인](milestones/M8.md)
 - **미결정**: 검색 API 사용 시 사용자 키 처리(M10에서 보류), M7 결과로 드러난 사례 소개 방식 개선 ([기획.md](기획.md#미결정-사항)). 형태소 분리 문제는 [이슈 #15](https://github.com/zie-ning/Techblog-MCP/issues/15). M6에서 넘어온 검색 잡음 항목은 영향이 작아 고치지 않기로 함 ([M7.md](milestones/M7.md#m6-검색-잡음-항목-분석-2026-10-07))
 
