@@ -1,5 +1,8 @@
 """의미 검색(M10) 테스트: 가짜 임베딩·리랭커 클라이언트로 2단 판정, 필터, 대체 경로를 본다."""
 
+import logging
+import time
+
 import httpx
 import numpy as np
 import pytest
@@ -177,3 +180,32 @@ def test_voyage_client_parses_responses(monkeypatch):
     client = semantic.VoyageClient("key")
     assert np.allclose(client.embed_query("쿠폰"), [0.6, 0.8])
     assert client.rerank("쿠폰", ["a", "b"]) == [0.2, 0.8]
+
+
+class SlowClient(FakeClient):
+    def __init__(self, scores: dict[str, float], delay: float):
+        super().__init__(scores)
+        self.delay = delay
+
+    def rerank(self, query: str, documents: list[str]) -> list[float]:
+        time.sleep(self.delay)
+        return super().rerank(query, documents)
+
+
+def test_falls_back_when_api_exceeds_search_deadline(vconn, monkeypatch):
+    # httpx 한도는 단계별이라 합계가 길어질 수 있어, 검색 한 번 전체에 한도를 둔다
+    monkeypatch.setattr(semantic, "DEADLINE", 0.2)
+    start = time.monotonic()
+    result = q.search(vconn, "선착순 쿠폰 동시성", q.Filters(), SlowClient({"원자 연산": 0.9}, 1.0))
+    assert time.monotonic() - start < 0.9  # 느린 호출이 끝날 때까지 기다리지 않는다
+    assert not result.semantic
+    assert result.fallback == "Voyage API 응답이 0.2초 안에 오지 않았습니다"
+    assert ids(result)[0] == "case_0001"
+
+
+def test_slow_call_is_logged(vconn, monkeypatch, caplog):
+    monkeypatch.setattr(semantic, "SLOW_CALL", 0.05)
+    with caplog.at_level(logging.WARNING, logger=semantic.__name__):
+        result = q.search(vconn, "쿠폰", q.Filters(), SlowClient({"원자 연산": 0.9}, 0.1))
+    assert result.semantic
+    assert "느린 Voyage 리랭커 호출" in caplog.text

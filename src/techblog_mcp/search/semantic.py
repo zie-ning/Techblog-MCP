@@ -10,12 +10,16 @@ API 키(VOYAGE_API_KEY)가 없거나 호출이 실패하면 SemanticUnavailable�
 호출한 쪽(query.search)이 단어 일치 검색으로 대체한다.
 """
 
+import logging
 import os
 import sqlite3
 import threading
+import time
 from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import TimeoutError as FutureTimeout
 from dataclasses import dataclass
-from typing import Protocol
+from typing import Protocol, TypeVar
 
 import httpx
 import numpy as np
@@ -31,9 +35,17 @@ RRF_K = 60
 # ITEM_MIN은 결과가 있을 때 무관한 꼬리만 자르는 값이라 낮다 (정답 항목의 48%가 GATE 미만)
 GATE = 0.654
 ITEM_MIN = 0.50
-# 초. 호출 하나가 이보다 늦으면 단어 일치 검색으로 대체한다. 정상 응답은 1~2초인데 드물게
-# 수십 초 멈추는 호출이 있었다(M10 R5 최대 33초)
-TIMEOUT = 8.0
+# 초. 검색 한 번의 API 호출(검색어 임베딩 + 리랭커)이 모두 이 안에 끝나지 않으면 단어 일치
+# 검색으로 대체한다. 정상 응답은 합쳐 1~2초인데, 호출 하나가 33초 걸린 적이 있다(M10 R5).
+# httpx의 timeout은 연결·읽기 단계별 한도라 합계를 막지 못해 전체 한도를 따로 둔다
+DEADLINE = 8.0
+TIMEOUT = DEADLINE  # 호출 하나의 httpx 단계별 한도. 한도를 넘겨 버린 호출도 이 안에 끝난다
+SLOW_CALL = 2.0  # 초. 이보다 오래 걸린 호출은 단계와 시간을 경고 로그로 남긴다
+
+log = logging.getLogger(__name__)
+# 한도를 넘겨 버린 호출이 끝날 때까지 다음 검색을 막지 않도록 일꾼을 여유 있게 둔다
+_executor = ThreadPoolExecutor(max_workers=4, thread_name_prefix="voyage")
+T = TypeVar("T")
 
 
 class SemanticUnavailable(Exception):
@@ -163,6 +175,24 @@ class Ranked:
     top_score: float  # 1위 리랭커 점수 (결과 없음 판정 근거)
 
 
+def _within(step: str, call: Callable[[], T], deadline: float) -> T:
+    """API 호출을 남은 시간 안에서만 기다린다. 넘으면 결과를 버리고 대체 경로로 보낸다.
+
+    DB 조회는 호출한 스레드에 남기고 API 호출만 일꾼 스레드에서 돌린다.
+    """
+    start = time.monotonic()
+    future = _executor.submit(call)
+    try:
+        result = future.result(timeout=max(0.0, deadline - start))
+    except FutureTimeout as e:
+        log.warning("Voyage %s 호출이 검색 한도 %.0f초를 넘겨 대체했다", step, DEADLINE)
+        raise SemanticUnavailable(f"Voyage API 응답이 {DEADLINE:g}초 안에 오지 않았습니다") from e
+    elapsed = time.monotonic() - start
+    if elapsed > SLOW_CALL:
+        log.warning("느린 Voyage %s 호출: %.2f초", step, elapsed)
+    return result
+
+
 def rank(
     query: str,
     vectors: EntryVectors,
@@ -172,7 +202,8 @@ def rank(
     client: Client,
 ) -> Ranked:
     """lexical: 필터를 건 BM25 상위 rowid. allowed: 필터에 맞는 rowid (필터가 없으면 None)."""
-    scores = vectors.matrix @ client.embed_query(query)
+    deadline = time.monotonic() + DEADLINE
+    scores = vectors.matrix @ _within("임베딩", lambda: client.embed_query(query), deadline)
     order = np.argsort(-scores, kind="stable")
     semantic = []
     for n in order:
@@ -184,7 +215,8 @@ def rank(
     candidates = _rrf([lexical[:CANDIDATES], semantic])[:CANDIDATES]
     if not candidates:
         return Ranked([], 0.0)
-    relevance = client.rerank(query, texts_of(candidates))
+    documents = texts_of(candidates)
+    relevance = _within("리랭커", lambda: client.rerank(query, documents), deadline)
     ranked = sorted(zip(candidates, relevance, strict=True), key=lambda p: -p[1])
     top = ranked[0][1]
     if top < GATE:
