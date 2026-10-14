@@ -21,19 +21,16 @@ import argparse
 import os
 import sys
 from collections.abc import Iterable
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 from dotenv import load_dotenv
 
 from pipeline.collect import COMPANY_NAMES, raw
 from pipeline.extract import prompt_version, tracing
-from pipeline.extract.extractor import OpenAILLM, extract_post, extraction_reason
-from pipeline.extract.schema import Usage
+from pipeline.extract.extractor import OpenAILLM
+from pipeline.extract.run import DEFAULT_MODEL, extract_all, plan, usage_summary
 from pipeline.extract.store import DATA_DIR, Store
 
-# M3 모델 비교로 확정 (docs/기획.md "추출 LLM"). effort 기본값 medium
-DEFAULT_MODEL = "gpt-5.6-luna"
 ALL = "all"
 
 
@@ -129,56 +126,11 @@ def main() -> None:
     current_version = prompt_version.save_snapshot()
     print(f"프롬프트 버전: {current_version}, 저장 위치: {args.out_dir}")
 
-    todo = []
-    for post in posts:
-        if args.limit is not None and len(todo) >= args.limit:
-            break
-        previous = store.record_for(post.url)
-        reason = extraction_reason(previous, post, llm.model, current_version, args.outdated)
-        if args.force and reason is None:
-            reason = "강제"
-        if reason is not None:
-            todo.append((post, reason))
-
-    done = 0
-    total_usage = Usage()
-    with ThreadPoolExecutor(max_workers=max(1, args.workers)) as pool:
-        futures = {
-            pool.submit(
-                extract_post,
-                post,
-                llm,
-                langsmith_extra=tracing.post_extra(
-                    post, args.out_dir.name, llm.model, llm.reasoning_effort, current_version
-                ),
-            ): (post, reason)
-            for post, reason in todo
-        }
-        # 저장은 메인 스레드에서만 한다
-        for n, future in enumerate(as_completed(futures), 1):
-            post, reason = futures[future]
-            label = f"[{n}/{len(todo)}] {post.source}/{post.post_id} ({reason})"
-            try:
-                result = future.result()
-            except Exception as e:  # 한 편이 실패해도 나머지는 계속한다
-                print(f"{label} 실패: {e}")
-                continue
-            ids = store.add(result)
-            store.save()  # 중간에 멈춰도 진행분을 잃지 않도록 매번 저장
-            done += 1
-            r = result.record
-            total_usage.add(r.usage)
-            print(
-                f"{label} {r.kind}/{r.post_type} 항목 {len(ids)}개, "
-                f"발췌 탈락 {r.dropped_evidence}/{r.evidence_total}개"
-            )
-
-    u = total_usage
-    print(
-        f"완료: {done}/{len(todo)}편 추출. 호출 {u.calls}회, 입력 {u.input_tokens:,}"
-        f"(캐시 {u.cached_input_tokens:,}) / 출력 {u.output_tokens:,}"
-        f"(reasoning {u.reasoning_tokens:,}) 토큰"
+    todo = plan(posts, store, llm.model, current_version, args.outdated, args.force, args.limit)
+    report = extract_all(
+        todo, store, llm, current_version, args.workers, run_name=args.out_dir.name
     )
+    print(f"완료: {report.done}/{len(todo)}편 추출. {usage_summary(report.usage)}")
 
 
 if __name__ == "__main__":

@@ -323,3 +323,61 @@ def test_parse_post_ids():
     assert parse_post_ids(["d2/0004394"], "all") == [("d2", "0004394")]
     with pytest.raises(ValueError):
         parse_post_ids(["599"], "all")
+
+
+def test_failed_evidence_is_quarantined_with_context():
+    bad = case(solution=[Point(text="지어냄", evidence="원문에 없는 해결 방법입니다.")])
+    good = case()  # 성능·운영 포인트 1개만 탈락
+    llm = FakeLLM(
+        [CLASSIFIED_CASE, Extraction(entries=[bad, good]), Extraction(entries=[bad, good])]
+    )
+    result = extract_post(POST, llm)
+
+    # 해결 방법이 모두 탈락한 항목은 통째로, 일부만 탈락한 항목은 실패한 포인트를 보관한다
+    dropped, partial = result.quarantined
+    assert dropped.entry_dropped and not partial.entry_dropped
+    assert dropped.draft == bad
+    assert [(f.field, f.text) for f in dropped.failed] == [
+        ("solution", "지어냄"),
+        ("performance_ops", "지어낸 수치"),
+    ]
+    assert [(f.field, f.evidence) for f in partial.failed] == [
+        ("performance_ops", "처리량이 10배 늘었습니다.")
+    ]
+    assert dropped.prompt_version == result.record.prompt_version
+    # 재시도 전 탈락 수도 기록한다 (첫 시도 발췌 5 + 5개 중 3개 탈락)
+    assert (result.record.first_attempt_total, result.record.first_attempt_dropped) == (10, 3)
+
+
+def test_quarantine_is_replaced_when_post_is_reextracted(tmp_path):
+    store = Store.in_dir(tmp_path)
+    llm = FakeLLM([CLASSIFIED_CASE, Extraction(entries=[case()]), Extraction(entries=[case()])])
+    store.add(extract_post(POST, llm))
+    store.save()
+    assert len(Store.in_dir(tmp_path).quarantine) == 1
+
+    # 다시 추출해 탈락이 없으면 그 글의 격리분도 사라진다
+    reloaded = Store.in_dir(tmp_path)
+    reloaded.add(_result(1))
+    reloaded.save()
+    assert Store.in_dir(tmp_path).quarantine == []
+
+
+def test_no_quarantine_file_without_failures(tmp_path):
+    store = Store.in_dir(tmp_path)
+    store.add(_result(1))
+    store.save()
+    assert not (tmp_path / "quarantine.jsonl").exists()
+    assert store.record_for(POST.url).first_attempt_dropped == 0
+
+
+def test_old_post_record_is_saved_unchanged(tmp_path):
+    store = Store.in_dir(tmp_path)
+    store.add(_result(1))
+    old = store.record_for(POST.url).model_copy(
+        update={"first_attempt_total": None, "first_attempt_dropped": None}
+    )
+    store.posts[POST.url] = old
+    store.save()
+    line = (tmp_path / "posts.jsonl").read_text(encoding="utf-8")
+    assert "first_attempt" not in line

@@ -1,6 +1,6 @@
 {
-  "tag": "db-2026.10.14",
-  "sha256": "c2d65941ff8e4a2ed727287fb173d3b32b3b4b33ac74932ccecaf6cce942164e",
-  "size": 15409152,
-  "schema_version": "7"
+  "tag": "db-2026.10.13",
+  "sha256": "6006fbeb60ce83fb0cfcbc78818da9804a50ca3255c6283f98d36cdbd4a6a19e",
+  "size": 9441280,
+  "schema_version": "6"
 }

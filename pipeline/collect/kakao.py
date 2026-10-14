@@ -7,6 +7,7 @@
 
 import json
 import re
+from collections.abc import Collection
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -73,7 +74,10 @@ def parse_post(html: str, url: str, collected_at: datetime) -> raw.RawPost:
 
 
 def collect(
-    client: PoliteClient, raw_dir: Path = raw.RAW_DIR, refresh: bool = False
+    client: PoliteClient,
+    raw_dir: Path = raw.RAW_DIR,
+    refresh: bool = False,
+    known: Collection[str] = frozenset(),
 ) -> CollectResult:
     targets = parse_targets(client.get(SITEMAP_URL).content)
     collected_at = datetime.now(UTC)
@@ -83,4 +87,5 @@ def collect(
         lambda post_id, url: parse_post(client.get(url).text, url, collected_at),
         raw_dir,
         refresh,
+        known,
     )

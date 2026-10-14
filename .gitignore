@@ -42,3 +42,6 @@ eval/runs/agent/*/mcp_*.json
 
 # M10 리랭커 점수 캐시 (eval/search_rerank.py)
 eval/search/rerank_cache/
+
+# 발표 자료 (개인 보관용, 커밋하지 않음)
+docs/발표*

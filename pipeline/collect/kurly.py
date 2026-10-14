@@ -5,6 +5,7 @@ RSS 피드(`/rss.xml`)에 2019년부터의 전체 글 목록과 발행일이 있
 """
 
 import xml.etree.ElementTree as ET
+from collections.abc import Collection
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from email.utils import parsedate_to_datetime
@@ -59,7 +60,10 @@ def parse_article(html: str) -> str:
 
 
 def collect(
-    client: PoliteClient, raw_dir: Path = raw.RAW_DIR, refresh: bool = False
+    client: PoliteClient,
+    raw_dir: Path = raw.RAW_DIR,
+    refresh: bool = False,
+    known: Collection[str] = frozenset(),
 ) -> CollectResult:
     items = parse_feed(client.get(FEED_URL).content)
     targets = {i.post_id: i for i in items if raw.in_collect_period(i.published_at)}
@@ -78,5 +82,5 @@ def collect(
         )
 
     return collect_each(
-        SOURCE, [(i.post_id, i.url) for i in targets.values()], fetch_one, raw_dir, refresh
+        SOURCE, [(i.post_id, i.url) for i in targets.values()], fetch_one, raw_dir, refresh, known
     )

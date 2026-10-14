@@ -4,13 +4,14 @@ RSS 피드(`/rss.xml`)에 2020년부터의 전체 글이 본문과 함께 들어
 """
 
 import xml.etree.ElementTree as ET
+from collections.abc import Collection
 from datetime import UTC, datetime
 from email.utils import parsedate_to_datetime
 from pathlib import Path
 from urllib.parse import urlsplit
 
 from pipeline.collect import raw
-from pipeline.collect.common import CollectResult
+from pipeline.collect.common import CollectResult, save_feed_posts
 from pipeline.collect.http import PoliteClient
 
 SOURCE = "oliveyoung"
@@ -46,15 +47,12 @@ def parse_feed(xml: bytes, collected_at: datetime) -> list[raw.RawPost]:
 
 
 def collect(
-    client: PoliteClient, raw_dir: Path = raw.RAW_DIR, refresh: bool = False
+    client: PoliteClient,
+    raw_dir: Path = raw.RAW_DIR,
+    refresh: bool = False,
+    known: Collection[str] = frozenset(),
 ) -> CollectResult:
-    """피드를 받아 수집 기간 안의 글을 저장한다.
-
-    피드에 본문이 있어 `refresh`와 관계없이 항상 덮어쓴다.
-    """
+    """피드를 받아 수집 기간 안의 글을 저장한다. 피드에 본문이 있어 캐시된 글도 덮어쓴다."""
     response = client.get(FEED_URL)
     posts = parse_feed(response.content, collected_at=datetime.now(UTC))
-    posts = [p for p in posts if raw.in_collect_period(p.published_at)]
-    for post in posts:
-        raw.save(post, raw_dir)
-    return CollectResult(saved=posts)
+    return save_feed_posts(posts, raw_dir, refresh, known)

@@ -30,6 +30,7 @@ uv run python -m pipeline.normalize [--apply]                                  #
 uv run python -m pipeline.expand                                               # 문서 확장 (새·바뀐 항목만, OPENAI_API_KEY 필요)
 uv run python -m pipeline.embed                                                # 항목 임베딩 (새·바뀐 항목만, VOYAGE_API_KEY 필요)
 uv run python -m pipeline.build_index                                          # 검색 DB 빌드
+uv run python -m pipeline.update [--dry-run]                                   # 자동 갱신: 새 글만 수집→추출→확장→빌드 (종료 코드 0/2/1)
 uv run python -m pipeline.release_db [--upload]                                # 검색 DB를 GitHub Release로 배포 (gh 로그인 필요)
 uv run python -m pipeline.view                                                 # jsonl을 보기 좋은 json으로 변환 (data/.view/, git 제외)
 uv run techblog-mcp                                                            # MCP 서버 (stdio)
@@ -39,11 +40,13 @@ uv run techblog-mcp                                                            #
 
 CI(`.github/workflows/ci.yml`)는 Python 3.11과 3.14에서 `uv sync --locked` → ruff check → ruff format --check → pytest를 실행한다. 의존성을 바꾸면 `uv.lock`도 커밋해야 한다.
 
+자동 갱신(`.github/workflows/update.yml`)은 매주 월요일 main에서 `pipeline.update --skip woowahan` → 린트·테스트 → Release 배포 → 데이터 PR 생성·병합을 하고, 문제가 있으면 `auto-update` 라벨 이슈를 남긴다. 봇이 만든 PR에서는 CI가 돌지 않으므로 검사는 이 워크플로 안에서 한다. 우아한형제들은 GitHub Actions IP를 403으로 막아 워크플로에서 빠지므로, 로컬에서 `pipeline.update woowahan` → `pipeline.release_db --upload` → 데이터·`db_release.json`을 브랜치·PR로 반영한다.
+
 ## 아키텍처
 
 두 부분으로 나뉘고, 의존성도 분리한다.
 
-- **`src/techblog_mcp/`** — 사용자가 `uv tool install git+…`로 설치하는 MCP 서버 패키지(PyPI 전환은 M8). 검색에 필요한 의존성만 `[project].dependencies`에 둔다.
+- **`src/techblog_mcp/`** — 사용자가 `uv tool install git+…`로 설치하는 MCP 서버 패키지(PyPI 전환은 M8에서 보류). 검색에 필요한 의존성만 `[project].dependencies`에 둔다.
 - **`pipeline/`** — 수집·추출·색인 빌드. 배포 패키지에 포함되지 않는다. OpenAI SDK, 크롤링 라이브러리 등은 서버 의존성이 아니라 별도 의존성 그룹에 둔다. 테스트에서는 `pythonpath = ["."]` 설정으로 import한다.
 
 데이터 흐름:
@@ -57,17 +60,19 @@ CI(`.github/workflows/ci.yml`)는 Python 3.11과 3.14에서 `uv sync --locked` �
        → src/techblog_mcp (MCP 도구가 검색 DB 조회, search는 Voyage API로 검색어 임베딩·리랭크)
 ```
 
+`pipeline/update.py`는 위 단계를 새 글만 대상으로 한 번에 실행한다. 새 글 판단은 원문 캐시가 아니라 `data/posts.jsonl`의 추출 기록 기준이다(캐시가 없는 CI에서도 증분). 수집·추출 반복문은 `pipeline/collect/run.py`, `pipeline/extract/run.py`에 두고 개별 명령과 함께 쓴다.
+
 ### 여러 파일에 걸친 규칙
 
 - **항목 구조는 하나**: 글은 추출/제외만 분류하고, 항목은 문제 상황 / 해결 방법 / 성능·운영 포인트 + 글에 명시된 경우에만 버린 대안 (1글 = N개, 팁 모음·도구 활용 경험 글은 1개). 해결 방법만 필수. M3에서 사례·인사이트 구분을 없앴다(이전 기록은 `pipeline/extract/schema.py`가 읽을 때 변환). 모든 항목 필드는 `{text, evidence}` 형태로 원문 발췌를 함께 가진다.
-- **발췌 검증**: 추출된 `evidence`는 원문에 실제로 존재하는지 코드로 검사한다. LLM이 지어낸 내용을 거르는 핵심 장치이므로 우회하지 않는다.
+- **발췌 검증**: 추출된 `evidence`는 원문에 실제로 존재하는지 코드로 검사한다. LLM이 지어낸 내용을 거르는 핵심 장치이므로 우회하지 않는다. 실패한 포인트는 버리되 `data/quarantine.jsonl`에 격리 보관하고(검색 DB에는 넣지 않음), 최종·재시도 전 탈락률 급등은 `pipeline/extract/quality.py`가 판단한다.
 - **프롬프트 버전**: 추출 프롬프트·출력 스키마를 고치면 `pipeline/extract/prompt_version.py`의 해시가 자동으로 바뀐다. `data/prompt_versions/`의 스냅샷은 자동 생성물이라 직접 고치지 않는다.
 - **`src/techblog_mcp/taxonomy/`는 추출과 서버가 공유**한다 (설치 패키지에 포함돼야 해서 패키지 안에 둠). 문제 유형·도메인 정의에서 MCP 도구 입력 스키마의 `enum`을 자동 생성하므로 두 곳의 값이 항상 같아야 한다. 기술명은 기술 사전(표준 이름 + 별칭)으로 정규화한다.
 - **형태소 분석은 색인과 검색에서 같은 방식**을 써야 한다 (kiwipiepy, `techblog_mcp.search.analyzer`, 사용자 사전 `USER_WORDS` 포함). 한쪽만 바꾸면 검색이 깨진다. DB 스키마나 사용자 사전을 바꾸면 `search/schema.py`의 `SCHEMA_VERSION`을 올린다.
 - **문서 확장**(`pipeline/expand.py`)은 추출과 별도 단계다. 항목을 재추출하거나 추가하면 `pipeline.expand`로 확장을, `pipeline.embed`로 항목 임베딩을 만든 뒤 색인을 빌드한다. 확장은 검색 보조 정보라 발췌 검증 대상이 아니고 카드·상세에 보여 주지 않는다.
 - **의미 검색 텍스트는 한 곳**(`techblog_mcp.search.semantic.entry_text`)에서 만든다. 항목 임베딩(`pipeline.embed`), 서버 리랭커 입력, 검색 실험(`eval/search_embed.py`)이 같은 텍스트를 봐야 한다. 이 함수나 임베딩 모델(`semantic.EMBEDDING_MODEL`)을 바꾸면 `pipeline.embed`가 모든 항목을 다시 계산하고, 판정 기준선(`semantic.GATE`, `ITEM_MIN`)은 평가셋으로 다시 정한다(`eval/search_gate.py`).
 - **MCP SDK는 2.x**다. `FastMCP`가 아니라 `mcp.server.mcpserver.MCPServer`를 쓴다.
-- **DB 경로 로딩은 `src/techblog_mcp/db.py` 한 곳**에 둔다. 환경 변수 → 저장소 `data/techblog.sqlite` → GitHub Release 다운로드(사용자 캐시) 순으로 찾는다. 받을 Release는 `db_release.json`(태그·sha256)에 고정하며 `pipeline.release_db --upload`가 갱신한다. DB 스키마를 바꾸면 새 Release를 올려야 `test_shipped_manifest_matches_schema`가 통과한다.
+- **DB 경로 로딩은 `src/techblog_mcp/db.py` 한 곳**에 둔다. 환경 변수 → 저장소 `data/techblog.sqlite` → GitHub Release 다운로드(사용자 캐시) 순으로 찾는다. 캐시 DB는 최신 Release를 따라간다: 서버가 하루 한 번 `releases/latest/download/db_release.json`을 확인해 스키마가 맞는 새 DB를 받아 두고 다음 기동부터 쓴다(`db.check_for_update`). 패키지의 `db_release.json`(태그·sha256)은 받아 둔 DB가 없고 최신 확인도 실패할 때 받는 고정 버전이며 `pipeline.release_db --upload`가 갱신한다(Release에 같은 파일도 올림). DB 스키마를 바꾸면 새 Release를 올려야 `test_shipped_manifest_matches_schema`가 통과한다.
 
 ### MCP 도구 계약
 

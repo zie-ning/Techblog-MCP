@@ -3,7 +3,7 @@ from datetime import UTC, date, datetime
 import httpx
 
 from pipeline.collect import raw
-from pipeline.collect.common import ParseError, collect_each, parse_sitemap
+from pipeline.collect.common import ParseError, collect_each, parse_sitemap, save_feed_posts
 
 SITEMAP = b"""<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -78,3 +78,40 @@ def test_collect_period_is_judged_in_kst():
     # 한국 시간 2023-09-01 00:00 = UTC 2023-08-31 15:00
     assert raw.in_collect_period(datetime(2023, 8, 31, 15, 0, tzinfo=UTC))
     assert not raw.in_collect_period(datetime(2023, 8, 31, 14, 59, tzinfo=UTC))
+
+
+def test_collect_each_skips_known_without_cache(tmp_path):
+    # 원문 캐시가 없는 환경에서도 추출 기록이 있는 글은 다시 받지 않는다
+    requested = []
+
+    def fetch_one(post_id, url):
+        requested.append(post_id)
+        return _post(post_id, datetime(2024, 5, 1, tzinfo=UTC))
+
+    targets = [(pid, f"https://example.com/{pid}") for pid in ["known", "new"]]
+    result = collect_each("test", targets, fetch_one, tmp_path, known={"known"})
+    assert requested == ["new"]
+    assert result.skipped == 1
+    # 목록에 없는 추출 기록("gone")은 세지 않는다
+    assert (
+        collect_each("test", targets, fetch_one, tmp_path, known={"known", "gone"}).listed_known
+        == 1
+    )
+
+    requested.clear()
+    result = collect_each("test", targets, fetch_one, tmp_path, refresh=True, known={"known"})
+    assert requested == ["known", "new"]
+    assert result.listed_known == 1
+
+
+def test_save_feed_posts_skips_known_and_out_of_period(tmp_path):
+    posts = [
+        _post("known", datetime(2024, 1, 1, tzinfo=UTC)),
+        _post("new", datetime(2024, 1, 2, tzinfo=UTC)),
+        _post("old", datetime(2023, 8, 1, tzinfo=UTC)),
+    ]
+    result = save_feed_posts(posts, tmp_path, known={"known", "old", "gone"})
+    assert [p.post_id for p in result.saved] == ["new"]
+    assert result.skipped == 1
+    assert result.listed_known == 1  # 기간 밖 글과 목록에 없는 글은 세지 않는다
+    assert not raw.exists("test", "known", tmp_path)
