@@ -25,7 +25,10 @@ M10 검색 개편 실험은 진단(R0)과 리랭커 판정 가능성(R1) 스크�
 
 ```bash
 uv run python eval/search_diagnose.py                                   # 현재 search가 정답을 놓치는 이유
-uv run python eval/search_rerank.py                                     # 리랭커 판정 가능성 (--models로 일부만)
+uv run python eval/search_rerank.py                                     # R2 리랭커 비교 (--models로 일부만)
+uv run python eval/search_rerank.py --embeddings                        # R3 임베딩 비교
+uv run python eval/search_gate.py                                       # R4 판정 기준선 (voyage-4-large + rerank-3)
+uv run python eval/search_server.py [--live]                            # R5 서버 search 재현 확인 (검색 변경 평가는 이것)
 ```
 
 `--pool`은 평가 대신 판정용 후보 목록을 만든다. 이미 판정한 항목은 라벨이, 새 후보는 `[미판정]`이 붙는다.
