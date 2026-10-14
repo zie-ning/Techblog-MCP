@@ -81,6 +81,13 @@ FEW_RESULTS = 3
 
 def search_result(query: str, filters: Filters, result: SearchResult, notes: list[str]) -> str:
     lines = [f"조건: {_condition(query, filters)}", *notes]
+    if result.fallback:
+        # 의미 검색을 못 쓰면 같은 뜻의 다른 표현으로 쓴 사례가 빠질 수 있다 (M10 결정)
+        lines.append(
+            f"※ 의미 검색을 쓰지 못해({result.fallback}) 단어 일치 검색으로 찾았습니다."
+            " 같은 뜻을 다른 표현으로 쓴 사례는 빠질 수 있으니, 결과가 없거나 적으면"
+            " 다른 표현(한국어/영어 표기 등)으로 다시 검색하세요."
+        )
     if not result.entries:
         lines.append(
             "\n결과 없음: 이 조건에 맞는 국내 기업 사례가 DB에 없습니다. "

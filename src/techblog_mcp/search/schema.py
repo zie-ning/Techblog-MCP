@@ -1,6 +1,6 @@
 """검색 DB 스키마. 색인 빌드(pipeline/build_index.py)가 만들고 서버가 읽는다."""
 
-SCHEMA_VERSION = "6"
+SCHEMA_VERSION = "7"
 
 # FTS5 열과 bm25() 가중치. 순서가 곧 bm25() 인자 순서다. 가중치는 M5 검색 평가(E2·E7)로 정했다.
 FTS_COLUMNS: dict[str, float] = {
@@ -43,6 +43,10 @@ CREATE TABLE entry_rejected_alternatives (
     name TEXT NOT NULL,
     kind TEXT NOT NULL
 );
+
+-- 항목 임베딩 (M10 의미 검색): float32 벡터를 이어 붙인 BLOB, 길이 1로 정규화.
+-- 모델 이름은 meta의 embedding_model이고 서버의 검색어 임베딩 모델과 같아야 쓴다
+CREATE TABLE entry_embeddings (rowid INTEGER PRIMARY KEY, vector BLOB NOT NULL);
 
 -- 형태소 분석한 텍스트만 색인하고 원문은 entries.data에서 읽으므로 내용 없는(contentless) 테이블
 CREATE VIRTUAL TABLE entries_fts USING fts5(

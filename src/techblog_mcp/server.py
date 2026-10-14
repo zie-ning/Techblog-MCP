@@ -15,7 +15,7 @@ from mcp.types import ToolAnnotations
 from pydantic import Field
 
 from techblog_mcp import db, render, taxonomy
-from techblog_mcp.search import analyzer
+from techblog_mcp.search import analyzer, semantic
 from techblog_mcp.search import query as q
 
 ProblemType = Literal[taxonomy.problem_type_names()]  # type: ignore[valid-type]
@@ -25,10 +25,14 @@ Domain = Literal[taxonomy.domain_names()]  # type: ignore[valid-type]
 # (M5 사용자 결정: search가 최대 10건을 돌려줘도 5건 유지)
 MAX_DETAIL_IDS = 5
 
-# 세 도구 모두 검색 DB를 읽기만 하고 외부와 통신하지 않는다
+# 세 도구 모두 검색 DB를 읽기만 한다
 # (첫 실행 때 고정된 DB 파일을 내려받는 것은 서버 준비 과정이라 도구 동작으로 보지 않는다)
 READ_ONLY = ToolAnnotations(
     read_only_hint=True, destructive_hint=False, idempotent_hint=True, open_world_hint=False
+)
+# search는 검색어를 외부 API(Voyage 임베딩·리랭커)로 보낸다 (M10 의미 검색)
+SEARCH_ANNOTATIONS = ToolAnnotations(
+    read_only_hint=True, destructive_hint=False, idempotent_hint=True, open_world_hint=True
 )
 
 COMPANIES = "토스, 우아한형제들, 카카오, 카카오페이, 네이버, LY, 컬리, 올리브영"
@@ -48,12 +52,13 @@ SEARCH_DESCRIPTION = f"""\
 선택지가 있는 설계를 시작하기 전에 호출해 국내 기업이 비슷한 문제를
 어떻게 풀었는지 확인할 것. 단순 CRUD, 버그 수정, 리팩터링에는 호출하지 않는다.
 
-검색어는 단어로 맞춰 찾는다(뜻으로 찾지 않음). 한 가지 주제를 담은 짧은 명사구로 쓰고,
+검색어는 뜻으로 찾는다(같은 뜻의 다른 표현, 한국어/영어 표기도 찾음).
+한 가지 주제를 담은 짧은 명사구로 쓰고,
 여러 하위 주제를 묶은 요구는 하위 주제별로 나눠 여러 번 검색할 것
 (예: "Kafka 주문 이벤트 중복 유실 멱등성" → "Kafka 메시지 중복 처리", "주문 이벤트 유실 방지").
 필터로 지정한 조건은 검색어에 다시 쓰지 말고, 그 안에서 찾을 구체적인 주제만 쓸 것
 (예: problem_type="트래픽 급증 대응"이면 query="이벤트 대기열").
-결과가 없으면 다른 표현(한국어/영어 표기 등)으로 한 번 더 찾아볼 것.
+결과가 없으면 검색어를 나누거나 다른 표현으로 한 번 더 찾아볼 것.
 
 결과는 관련도 기준을 넘은 항목만 관련도 순으로 최대 {q.MAX_RESULTS}건이고,
 근거 발췌는 get_details로 본다.
@@ -144,11 +149,16 @@ def _quietly(step: Callable[[], object]) -> None:
         pass  # 실패하면 도구를 호출할 때 다시 시도하며 이유를 결과로 알린다
 
 
+def _load_vectors() -> None:
+    semantic.load_vectors(_connection())
+
+
 def _prepare() -> list[threading.Thread]:
-    """첫 도구 호출을 빠르게 하려고 DB(첫 실행이면 다운로드)와 형태소 분석기를 동시에 준비한다."""
+    """첫 도구 호출을 빠르게 하려고 DB(첫 실행이면 다운로드)·항목 임베딩과 형태소 분석기를
+    동시에 준비한다."""
     threads = [
         threading.Thread(target=_quietly, args=(step,), daemon=True)
-        for step in (_connection, analyzer.warm_up)
+        for step in (_load_vectors, analyzer.warm_up)
     ]
     for thread in threads:
         thread.start()
@@ -167,7 +177,9 @@ def _filters(
     return filters, render.unknown_technologies(resolution)
 
 
-@server.tool(description=SEARCH_DESCRIPTION, structured_output=False, annotations=READ_ONLY)
+@server.tool(
+    description=SEARCH_DESCRIPTION, structured_output=False, annotations=SEARCH_ANNOTATIONS
+)
 def search(
     query: QueryArg,
     problem_type: ProblemTypeArg = None,

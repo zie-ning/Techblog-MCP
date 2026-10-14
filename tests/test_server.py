@@ -107,6 +107,14 @@ def test_tools_are_marked_read_only():
     for tool in asyncio.run(server.server.list_tools()):
         assert tool.annotations.read_only_hint is True
         assert tool.annotations.destructive_hint is False
+        # search만 검색어를 외부 API(Voyage)로 보낸다
+        assert tool.annotations.open_world_hint is (tool.name == "search")
+
+
+def test_search_without_key_says_it_fell_back():
+    text = call("search", query="선착순 쿠폰 동시성")
+    assert "VOYAGE_API_KEY가 설정되지 않았습니다" in text
+    assert "단어 일치 검색으로 찾았습니다" in text
 
 
 def test_descriptions_ask_to_open_every_cited_case():

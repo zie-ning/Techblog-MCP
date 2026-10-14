@@ -8,16 +8,19 @@ from dataclasses import dataclass, field
 from typing import Literal
 
 from techblog_mcp import taxonomy
+from techblog_mcp.search import semantic
 from techblog_mcp.search.analyzer import tokenize
 from techblog_mcp.search.schema import FTS_COLUMNS
 
 GroupBy = Literal["technology", "problem_type", "domain", "company", "rejected_alternative"]
 
 MAX_RESULTS = 10
-# 관련도 기준 (M5 실험 E5·E7): 검색어 토큰의 IDF 합 중 항목에 있는 토큰의 IDF 합이 이 비율 이상인
-# 항목만 돌려준다. 드문 단어(주제를 정하는 단어)가 빠지고 흔한 단어만 맞은 항목을 거르고,
-# DB에 없는 주제에는 0건을 돌려주기 위함이다
+# 단어 일치 검색의 관련도 기준 (M5 실험 E5·E7): 검색어 토큰의 IDF 합 중 항목에 있는 토큰의 IDF 합이
+# 이 비율 이상인 항목만 돌려준다. 드문 단어(주제를 정하는 단어)가 빠지고 흔한 단어만 맞은 항목을
+# 거르고, DB에 없는 주제에는 0건을 돌려주기 위함이다. M10부터는 의미 검색(semantic)을 쓸 수 없을
+# 때의 대체 경로에서만 쓴다
 MIN_IDF_COVERAGE = 0.5
+_FROM_ENV = object()  # search의 client 기본값: 환경 변수 VOYAGE_API_KEY로 만든다
 EXAMPLES_PER_GROUP = 2
 
 
@@ -130,38 +133,114 @@ def _phrase(token: str) -> str:
 class SearchResult:
     entries: list[dict]  # 관련도 순 최대 MAX_RESULTS건
     total: int  # 관련도 기준을 넘은 건수 (검색어가 없으면 필터에 맞는 건수)
+    semantic: bool = False  # 의미 검색(임베딩 + 리랭커)으로 찾았는지
+    fallback: str | None = None  # 의미 검색을 쓰지 못해 단어 일치 검색으로 대체한 이유
 
 
-def search(conn: sqlite3.Connection, query: str, filters: Filters) -> SearchResult:
+def search(
+    conn: sqlite3.Connection, query: str, filters: Filters, client=_FROM_ENV
+) -> SearchResult:
+    """의미 검색을 먼저 쓰고, 쓸 수 없으면 단어 일치 검색(BM25 + IDF 기준)으로 대체한다.
+
+    client: 임베딩·리랭커 API (semantic.Client). 기본은 환경 변수 VOYAGE_API_KEY로 만들고,
+    None이면 의미 검색을 쓰지 않는다. 테스트·평가에서 가짜나 캐시 클라이언트를 넣는다.
+    """
     where, params = filters.sql()
     units = query_units(query)
     tokens = list(dict.fromkeys(t for unit in units for t in unit))
-    if not tokens:
-        # 검색어에서 뽑을 토큰이 없으면 필터만으로 최신순
-        base = f"FROM entries e WHERE {where}"
-        total = conn.execute(f"SELECT COUNT(*) {base}", params).fetchone()[0]
-        rows = conn.execute(
-            f"SELECT e.data {base} ORDER BY e.published_at DESC LIMIT ?", [*params, MAX_RESULTS]
-        ).fetchall()
-        return SearchResult([_entry(r) for r in rows], total)
+    if not query.strip():
+        return _latest(conn, where, params)
 
-    # 검색어 토큰이 하나라도 걸린 항목을 BM25 순으로 모은 뒤 관련도 기준으로 거른다
-    weights = ", ".join(str(w) for w in FTS_COLUMNS.values())
-    ranked = conn.execute(
-        "SELECT e.rowid FROM entries_fts f JOIN entries e ON e.rowid = f.rowid"
-        f" WHERE entries_fts MATCH ? AND {where} ORDER BY bm25(entries_fts, {weights})",
-        [" OR ".join(map(_phrase, tokens)), *params],
+    client = semantic.client_from_env() if client is _FROM_ENV else client
+    vectors = semantic.load_vectors(conn)
+    if client is None:
+        fallback = f"{semantic.API_KEY_ENV}가 설정되지 않았습니다"
+    elif vectors is None:
+        fallback = "검색 DB에 항목 임베딩이 없습니다"
+    else:
+        try:
+            return _semantic(conn, query, tokens, filters, vectors, client)
+        except semantic.SemanticUnavailable as e:
+            fallback = str(e)
+
+    if not tokens:
+        result = _latest(conn, where, params)
+    else:
+        result = _lexical(conn, units, tokens, filters)
+    result.fallback = fallback
+    return result
+
+
+def _latest(conn: sqlite3.Connection, where: str, params: list) -> SearchResult:
+    """검색어에서 뽑을 토큰이 없으면 필터만으로 최신순."""
+    base = f"FROM entries e WHERE {where}"
+    total = conn.execute(f"SELECT COUNT(*) {base}", params).fetchone()[0]
+    rows = conn.execute(
+        f"SELECT e.data {base} ORDER BY e.published_at DESC LIMIT ?", [*params, MAX_RESULTS]
     ).fetchall()
-    coverage = _idf_coverage(conn, _without_filter_terms(units, filters))
-    passed = [r[0] for r in ranked if coverage(r[0]) >= MIN_IDF_COVERAGE]
-    shown = passed[:MAX_RESULTS]
-    data = dict(
-        conn.execute(
-            f"SELECT rowid, data FROM entries WHERE rowid IN ({', '.join('?' * len(shown))})",
-            shown,
-        ).fetchall()
+    return SearchResult([_entry(r) for r in rows], total)
+
+
+def _bm25_rowids(
+    conn: sqlite3.Connection, tokens: list[str], filters: Filters, limit: int | None = None
+) -> list[int]:
+    """검색어 토큰이 하나라도 걸린 항목의 rowid, BM25 순."""
+    if not tokens:
+        return []
+    where, params = filters.sql()
+    weights = ", ".join(str(w) for w in FTS_COLUMNS.values())
+    sql = (
+        "SELECT e.rowid FROM entries_fts f JOIN entries e ON e.rowid = f.rowid"
+        f" WHERE entries_fts MATCH ? AND {where} ORDER BY bm25(entries_fts, {weights})"
     )
-    return SearchResult([json.loads(data[i]) for i in shown], len(passed))
+    args = [" OR ".join(map(_phrase, tokens)), *params]
+    if limit is not None:
+        sql += " LIMIT ?"
+        args.append(limit)
+    return [r[0] for r in conn.execute(sql, args)]
+
+
+def _rows(conn: sqlite3.Connection, rowids: list[int]) -> dict[int, dict]:
+    marks = ", ".join("?" * len(rowids))
+    rows = conn.execute(f"SELECT rowid, data FROM entries WHERE rowid IN ({marks})", rowids)
+    return {r[0]: json.loads(r[1]) for r in rows}
+
+
+def _semantic(
+    conn: sqlite3.Connection,
+    query: str,
+    tokens: list[str],
+    filters: Filters,
+    vectors: semantic.EntryVectors,
+    client,
+) -> SearchResult:
+    allowed = None
+    if filters.describe():
+        where, params = filters.sql()
+        rows = conn.execute(f"SELECT e.rowid FROM entries e WHERE {where}", params)
+        allowed = {r[0] for r in rows}
+    lexical = _bm25_rowids(conn, tokens, filters, semantic.CANDIDATES)
+
+    def texts_of(rowids: list[int]) -> list[str]:
+        data = _rows(conn, rowids)
+        return [semantic.entry_text(data[r]) for r in rowids]
+
+    ranked = semantic.rank(query, vectors, lexical, allowed, texts_of, client)
+    shown = ranked.rowids[:MAX_RESULTS]
+    data = _rows(conn, shown)
+    return SearchResult([data[r] for r in shown], len(ranked.rowids), semantic=True)
+
+
+def _lexical(
+    conn: sqlite3.Connection, units: list[tuple[str, ...]], tokens: list[str], filters: Filters
+) -> SearchResult:
+    """BM25 순으로 모은 뒤 관련도 기준(IDF 일치 비율)으로 거른다 (M5 방식)."""
+    ranked = _bm25_rowids(conn, tokens, filters)
+    coverage = _idf_coverage(conn, _without_filter_terms(units, filters))
+    passed = [r for r in ranked if coverage(r) >= MIN_IDF_COVERAGE]
+    shown = passed[:MAX_RESULTS]
+    data = _rows(conn, shown)
+    return SearchResult([data[i] for i in shown], len(passed))
 
 
 def _without_filter_terms(units: list[tuple[str, ...]], filters: Filters) -> list[tuple[str, ...]]:

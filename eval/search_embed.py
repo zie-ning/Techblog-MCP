@@ -16,6 +16,8 @@ from typing import Protocol
 
 import numpy as np
 
+from techblog_mcp.search import semantic
+
 ROOT = Path(__file__).resolve().parents[1]
 CACHE_DIR = ROOT / "eval" / "search" / "embeddings"
 
@@ -43,21 +45,9 @@ MODELS: dict[str, ModelSpec] = {
 def embedding_text(entry: dict) -> str:
     """항목에서 임베딩할 텍스트: 제목 + 요약 필드 + 기술 (M5 사용자 결정).
 
-    발췌(evidence)는 요약과 뜻이 같고 작은 모델의 입력 길이 제한(512 토큰)을 넘기기 쉬워 뺀다.
+    서버 의미 검색과 같은 함수를 써서 실험과 서버가 같은 텍스트를 본다 (M10).
     """
-
-    def texts(points: list[dict]) -> str:
-        return " ".join(p["text"] for p in points)
-
-    parts = [entry["post_title"]]
-    if entry["problem_situation"]:
-        parts.append(f"문제: {texts(entry['problem_situation'])}")
-    parts.append(f"해결: {texts(entry['solution'])}")
-    if entry["performance_ops"]:
-        parts.append(f"성능·운영: {texts(entry['performance_ops'])}")
-    if entry["technologies"]:
-        parts.append(f"기술: {', '.join(entry['technologies'])}")
-    return "\n".join(parts)
+    return semantic.entry_text(entry)
 
 
 def _hash(text: str) -> str:

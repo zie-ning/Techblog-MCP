@@ -11,8 +11,10 @@ authors = [
 requires-python = ">=3.11"
 # MCP 서버 실행에 필요한 의존성만 둔다 (수집·추출용은 pipeline 그룹)
 dependencies = [
+    "httpx",  # 의미 검색 API(Voyage) 호출
     "kiwipiepy",
     "mcp",
+    "numpy",  # 항목 임베딩 코사인 계산
 ]
 
 [project.scripts]
