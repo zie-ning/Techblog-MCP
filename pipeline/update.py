@@ -1,4 +1,4 @@
-"""자동 갱신: 새 글만 수집 → 추출 → 문서 확장 → 검색 DB 빌드를 한 번에 실행한다.
+"""자동 갱신: 새 글만 수집 → 추출 → 문서 확장 → 항목 임베딩 → 검색 DB 빌드를 한 번에 실행한다.
 
     uv run python -m pipeline.update                 # 8곳 모두
     uv run python -m pipeline.update kakao toss      # 일부 블로그만
@@ -21,7 +21,9 @@
   않고 보류한다. 그대로 추출하면 "제외"로 기록돼 다음 실행에서 다시 받지 않기 때문이다.
 
 종료 코드: 0 정상, 2 일부 실패·보류·탈락률 급등·수집 이상(성공한 부분은 반영), 1 실행 불가.
-OPENAI_API_KEY는 환경 변수나 저장소 루트의 `.env`로 설정한다.
+OPENAI_API_KEY(추출·확장)와 VOYAGE_API_KEY(항목 임베딩, M10)는 환경 변수나 저장소 루트의
+`.env`로 설정한다. 임베딩이 실패하면 그 항목은 의미 검색의 임베딩 후보에서만 빠지므로 빌드는
+하고 일부 실패로 알린다(다음 실행에서 다시 만든다).
 """
 
 import argparse
@@ -34,7 +36,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from pipeline import expand
+from pipeline import embed, expand
 from pipeline.build_index import build
 from pipeline.collect import COMPANY_NAMES, raw
 from pipeline.collect.http import PoliteClient
@@ -45,6 +47,7 @@ from pipeline.extract.run import DEFAULT_MODEL, ExtractReport, extract_all, plan
 from pipeline.extract.store import DATA_DIR, Store
 from pipeline.extract.text import html_to_text
 from techblog_mcp import db
+from techblog_mcp.search import semantic
 
 # 블로그별 한 번에 추출할 글 수 상한. 평소 8곳 합쳐 주 10편 안팎이다
 DEFAULT_MAX_NEW = 30
@@ -61,6 +64,9 @@ EXIT_FATAL = 1
 EXIT_PARTIAL = 2
 
 MakeLLM = Callable[[str, str], LLM]  # (모델, 추론 강도) → LLM
+MakeEmbedder = Callable[
+    [], object
+]  # 항목 임베딩 클라이언트 (semantic.VoyageClient처럼 embed를 가짐)
 
 
 @dataclass
@@ -73,6 +79,10 @@ class Paths:
     @property
     def expansions(self) -> Path:
         return self.data_dir / expand.EXPANSIONS_PATH.name
+
+    @property
+    def embeddings(self) -> Path:
+        return self.data_dir / embed.EMBEDDINGS_PATH.name
 
     @property
     def prompt_versions(self) -> Path:
@@ -91,6 +101,8 @@ class UpdateReport:
     extract: ExtractReport = field(default_factory=ExtractReport)
     expanded: int = 0  # 새로 만든 확장 수
     expand_error: str | None = None
+    embedded: int = 0  # 새로 만든 항목 임베딩 수
+    embed_error: str | None = None
     checks: list[quality.Check] = field(default_factory=list)  # 발췌 탈락률 판단
     entry_count: int | None = None  # 빌드한 DB의 항목 수. 빌드하지 않았으면 None
 
@@ -103,6 +115,7 @@ class UpdateReport:
             or self.short
             or self.extract.failures
             or self.expand_error
+            or self.embed_error
             or self.spikes
         )
 
@@ -143,7 +156,9 @@ def update(
     workers: int = WORKERS,
     dry_run: bool = False,
     collectors: Mapping[str, Collector] = COLLECTORS,
+    make_embedder: MakeEmbedder | None = None,
 ) -> UpdateReport:
+    """make_embedder가 없으면 항목 임베딩을 새로 만들지 않고 저장된 것만 색인에 넣는다."""
     paths = paths or Paths()
     store = Store.in_dir(paths.data_dir)
 
@@ -216,10 +231,24 @@ def update(
     finally:
         expand.save(records, paths.expansions)
 
+    print("== 항목 임베딩")
+    stored = embed.load(paths.embeddings)
+    embed_todo = embed.outdated(store.entries, stored)
+    print(f"임베딩을 새로 만들 항목 {len(embed_todo)}개")
+    if make_embedder is not None:
+        try:  # 임베딩이 없어도 빌드는 한다. 그 항목은 BM25 후보로만 찾힌다
+            client = make_embedder() if embed_todo else None
+            report.embedded = embed.run(store.entries, stored, client)
+        except Exception as e:
+            report.embed_error = f"{type(e).__name__}: {e}"
+            print(f"임베딩 실패: {report.embed_error}", file=sys.stderr)
+        finally:
+            embed.save(stored, paths.embeddings)
+
     print("== 검색 DB 빌드")
     texts = {i: expand.expansion_text(r) for i, r in records.items()}
     paths.db.parent.mkdir(parents=True, exist_ok=True)
-    build(store.entries, paths.db, texts)
+    build(store.entries, paths.db, texts, embed.current(store.entries, stored))
     report.entry_count = len(store.entries)
     print(f"{report.entry_count}개 항목으로 {paths.db}를 만들었습니다.")
     return report
@@ -246,13 +275,15 @@ def summary(report: UpdateReport) -> str:
         ),
         *(f"추출 실패 {p.source}/{p.post_id}: {e}" for p, e in report.extract.failures),
         *([f"확장 실패: {report.expand_error}"] if report.expand_error else []),
+        *([f"임베딩 실패: {report.embed_error}"] if report.embed_error else []),
         *(f"발췌 탈락률 급등: {c} (격리분은 data/quarantine.jsonl)" for c in report.spikes),
     ]
     built = f"DB 항목 {report.entry_count}개" if report.entry_count is not None else "빌드 안 함"
     lines = [
         f"## 자동 갱신 결과: {'일부 실패·보류·이상' if report.partial else '정상'}",
         "",
-        f"- 추출 {report.extract.done}편, 확장 {report.expanded}개, {built}",
+        f"- 추출 {report.extract.done}편, 확장 {report.expanded}개,"
+        f" 임베딩 {report.embedded}개, {built}",
         *(f"- {c}" for c in report.checks),
     ]
     if report.extract.records:
@@ -273,7 +304,7 @@ def select_sources(requested: list[str], skip: list[str]) -> list[str]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="새 글만 수집·추출하고 문서 확장과 검색 DB 빌드까지 한 번에 실행한다."
+        description="새 글만 수집·추출하고 문서 확장, 항목 임베딩, 검색 DB 빌드까지 실행한다."
     )
     parser.add_argument("sources", nargs="*", choices=["all", *sorted(COLLECTORS)])
     parser.add_argument(
@@ -307,8 +338,24 @@ def main() -> None:
 
         return OpenAILLM(model, reasoning_effort)
 
+    def make_embedder() -> semantic.VoyageClient:
+        key = os.environ.get(semantic.API_KEY_ENV, "").strip()
+        if not key:
+            raise RuntimeError(f"{semantic.API_KEY_ENV}가 없습니다. 환경 변수나 .env에 설정하세요.")
+        # 문서 64개 묶음은 검색어 하나보다 오래 걸려 대기 시간을 넉넉히 둔다
+        return semantic.VoyageClient(key, timeout=120)
+
     with PoliteClient() as client:
-        report = update(sources, client, make_llm, None, args.max_new, args.workers, args.dry_run)
+        report = update(
+            sources,
+            client,
+            make_llm,
+            None,
+            args.max_new,
+            args.workers,
+            args.dry_run,
+            make_embedder=make_embedder,
+        )
     text = summary(report)
     print(text)
     if args.summary_file:

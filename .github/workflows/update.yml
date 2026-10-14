@@ -3,7 +3,7 @@ name: 자동 갱신
 # 새 글만 수집·추출해 검색 DB를 GitHub Release로 배포하고, 데이터 변경을 PR로 병합한다.
 # 일부 실패·보류·탈락률 급등·수집 이상(종료 코드 2)은 성공분을 배포한 뒤 이슈로 알린다 (docs/기획.md "자동 갱신").
 # 우아한형제들은 GitHub Actions IP를 막아(403) 빼고, 로컬에서 따로 갱신한다.
-# 필요한 설정: 저장소 시크릿 OPENAI_API_KEY,
+# 필요한 설정: 저장소 시크릿 OPENAI_API_KEY, VOYAGE_API_KEY(항목 임베딩, 없으면 임베딩 실패로 이슈 알림),
 # Settings → Actions → General → "Allow GitHub Actions to create and approve pull requests"
 on:
   schedule:
@@ -38,10 +38,11 @@ jobs:
           python-version: "3.14"
       - run: uv sync --locked
 
-      - name: 새 글 수집·추출·확장·빌드
+      - name: 새 글 수집·추출·확장·임베딩·빌드
         id: update
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          VOYAGE_API_KEY: ${{ secrets.VOYAGE_API_KEY }}
           MAX_NEW: ${{ inputs.max_new || '30' }}
         run: |
           set +e

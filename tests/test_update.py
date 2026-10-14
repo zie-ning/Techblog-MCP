@@ -1,6 +1,7 @@
 from datetime import UTC, datetime
 
 import httpx
+import numpy as np
 import pytest
 
 from pipeline import expand, update
@@ -10,6 +11,7 @@ from pipeline.extract import quality
 from pipeline.extract.schema import Classification, EntryDraft, Extraction, Point
 from pipeline.extract.store import Store
 from techblog_mcp import db
+from techblog_mcp.search import semantic
 
 EVIDENCE = "Redis의 원자 연산으로 발급 수량을 관리했습니다."
 # 본문 길이 하한(update.MIN_BODY_CHARS)을 넘기기 위한 문단
@@ -258,3 +260,41 @@ def test_select_sources_skips_blogs():
     assert "woowahan" not in update.select_sources([], ["woowahan"])
     assert len(update.select_sources(["all"], ["woowahan"])) == 7
     assert update.select_sources(["kakao", "toss"], ["toss"]) == ["kakao"]
+
+
+class FakeEmbedder:
+    def __init__(self):
+        self.texts: list[str] = []
+
+    def embed(self, texts, input_type):
+        self.texts += texts
+        return np.ones((len(texts), 4), dtype=np.float32) / 2
+
+
+def test_update_embeds_new_entries_for_semantic_search(paths):
+    embedder = FakeEmbedder()
+    blog = FakeBlog("oliveyoung", ["a", "b"])
+    report = run([blog], FakeLLM(), paths, make_embedder=lambda: embedder)
+    assert report.embedded == 2 and report.embed_error is None
+    assert report.exit_code == update.EXIT_OK
+    conn = db.connect(paths.db)
+    assert semantic.load_vectors(conn).matrix.shape == (2, 4)
+    conn.close()
+
+    # 다시 실행하면 바뀐 항목이 없어 임베딩 클라이언트를 만들지 않는다
+    def must_not_embed():
+        raise AssertionError("임베딩을 다시 만들면 안 됩니다")
+
+    report = run([FakeBlog("oliveyoung", ["a", "b"])], None, paths, make_embedder=must_not_embed)
+    assert report.embedded == 0 and report.exit_code == update.EXIT_OK
+
+
+def test_update_reports_embedding_failure_but_builds(paths):
+    def no_key():
+        raise RuntimeError("VOYAGE_API_KEY가 없습니다")
+
+    report = run([FakeBlog("oliveyoung", ["a"])], FakeLLM(), paths, make_embedder=no_key)
+    assert report.embed_error == "RuntimeError: VOYAGE_API_KEY가 없습니다"
+    assert report.exit_code == update.EXIT_PARTIAL
+    assert report.entry_count == 1  # 임베딩 없이도 빌드한다
+    assert "임베딩 실패: RuntimeError: VOYAGE_API_KEY가 없습니다" in update.summary(report)
