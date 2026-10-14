@@ -1429,8 +1429,11 @@ name = "techblog-mcp"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "httpx" },
     { name = "kiwipiepy" },
     { name = "mcp" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "numpy", version = "2.5.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
 ]
 
 [package.dev-dependencies]
@@ -1448,8 +1451,10 @@ pipeline = [
 
 [package.metadata]
 requires-dist = [
+    { name = "httpx" },
     { name = "kiwipiepy" },
     { name = "mcp" },
+    { name = "numpy" },
 ]
 
 [package.metadata.requires-dev]

@@ -6,7 +6,7 @@
 
 - **대상**: 토스, 우아한형제들, 카카오, 카카오페이, 네이버 D2, LY, 컬리, 올리브영 기술 블로그의 2023-09 이후 글 1,262편 (2026-09-30 수집)
 - **데이터**: 글마다 문제 상황 / 해결 방법 / 성능·운영 포인트 / 버린 대안을 LLM으로 뽑은 항목 1,315개. 필드마다 원문 근거 발췌가 붙어 있고, 발췌가 원문에 실제로 있는지 코드로 검증했습니다.
-- **방식**: 로컬에서 실행되는 stdio MCP 서버입니다. API 키가 필요 없고, 검색은 내려받은 DB로 PC 안에서 합니다.
+- **방식**: 로컬에서 실행되는 stdio MCP 서버입니다. 검색 DB는 PC에 내려받아 씁니다. [Voyage AI](https://www.voyageai.com/) API 키를 설정하면 검색어를 Voyage로 보내 **뜻으로** 찾고(같은 뜻의 다른 표현도 찾음), 키가 없으면 PC 안에서 **단어로** 찾습니다.
 
 ## 제공하는 도구
 
@@ -60,12 +60,40 @@ claude mcp add --scope user techblog -- techblog-mcp
 
 **다른 MCP 클라이언트**: stdio 서버를 지원하면 `techblog-mcp` 명령을 등록하면 됩니다. 클라이언트가 명령을 찾지 못하면 `uv tool dir --bin`이 알려 주는 폴더의 전체 경로(Windows는 `techblog-mcp.exe`)를 쓰세요.
 
+### 3. Voyage API 키 설정 (권장)
+
+키가 있으면 검색어와 뜻이 같은 사례를 찾고, DB에 없는 주제는 "결과 없음"으로 더 잘 거릅니다(평가셋 기준 상위 5건 안 정답 비율 0.55 → 0.75). 키가 없어도 단어로 찾는 검색은 그대로 됩니다.
+
+1. [Voyage AI 대시보드](https://dashboard.voyageai.com/)에서 가입하고 API keys에서 키를 만듭니다. 계정마다 무료 토큰(2억)이 있고, 검색 한 번에 약 3만 토큰(무료 한도를 넘으면 약 $0.0015)을 씁니다. 결제 수단을 등록하지 않으면 분당 호출이 제한돼 검색이 키 없는 방식으로 대체될 수 있습니다.
+2. 클라이언트에 등록할 때 `VOYAGE_API_KEY` 환경 변수로 넣습니다.
+
+**Claude Code** (1단계의 등록 명령 대신)
+
+```bash
+claude mcp add --scope user techblog -e VOYAGE_API_KEY=<키> -- techblog-mcp
+```
+
+**Cursor**
+
+```json
+{
+  "mcpServers": {
+    "techblog": {
+      "command": "techblog-mcp",
+      "env": { "VOYAGE_API_KEY": "<키>" }
+    }
+  }
+}
+```
+
+> 키를 설정하면 `search`의 검색어와 후보 항목 요약(DB에 있는 요약문)이 Voyage API로 전송됩니다. 대화 내용이나 작업 중인 코드는 보내지 않습니다. 검색 한 번은 1~2초 걸리고, Voyage 호출이 실패하거나 8초 넘게 걸리면 단어로 찾는 방식으로 대신 검색하고 결과에 그 사실을 표시합니다.
+
 > 설치해 두고 실행하므로 서버를 켤 때 인터넷이 필요 없습니다(검색 DB를 처음 받을 때만 필요). `uvx --from git+…`로 등록하는 방법도 있지만, 켤 때마다 GitHub를 확인해 기동이 2~3초 느리고 오프라인에서는 켜지지 않아 권하지 않습니다.
 
 ## 처음 쓸 때 알아 둘 것
 
-- **첫 실행은 조금 걸립니다.** 검색 DB(약 9MB)를 내려받느라 첫 질문의 답이 10초 정도 늦을 수 있습니다. 한 번만 그렇고, 이후에는 서버가 켜진 뒤 2~3초 안에 검색 준비가 끝납니다.
-- **도구 호출 허용**: 도구를 쓸 때마다 허용 여부를 묻습니다. 세 도구 모두 검색 DB를 읽기만 하므로 "항상 허용"을 골라도 됩니다.
+- **첫 실행은 조금 걸립니다.** 검색 DB(약 15MB)를 내려받느라 첫 질문의 답이 10초 정도 늦을 수 있습니다. 한 번만 그렇고, 이후에는 서버가 켜진 뒤 2~3초 안에 검색 준비가 끝납니다.
+- **도구 호출 허용**: 도구를 쓸 때마다 허용 여부를 묻습니다. 세 도구 모두 검색 DB를 읽기만 하므로 "항상 허용"을 골라도 됩니다(`search`는 Voyage 키가 있으면 검색어를 Voyage API로 보냅니다).
   - Claude Code에서는 허용 창에서 "Yes, and don't ask again"을 고르거나, `settings.json`의 `permissions.allow`에 `"mcp__techblog"`를 넣으면 이 서버의 도구를 모두 허용합니다.
 - **`/techblog` prompt**는 MCP prompt를 지원하는 클라이언트에서만 쓸 수 있습니다. Claude Code CLI와 Cursor는 지원하고, Claude 데스크톱 앱의 Code 탭에서는 실행되지 않습니다. 이 경우에는 그냥 질문하면 됩니다.
 
@@ -84,8 +112,8 @@ techblog MCP의 search 도구로 국내 기업 사례를 먼저 확인한다.
 
 ## 검색의 한계
 
-- **단어로 찾고 뜻으로 찾지 않습니다.** 같은 내용이라도 글에 쓰인 표현과 검색어가 다르면 안 찾힐 수 있습니다. 항목마다 예상 검색어와 다른 표기를 미리 넣어 두었지만, 결과가 없으면 검색어를 나누거나 다른 표현(한국어/영어 표기 등)으로 다시 찾게 하세요.
-- **결과 수는 관련도 기준으로 정합니다.** 검색어의 핵심 단어가 충분히 맞는 항목만 돌려주므로, DB에 없는 주제면 "결과 없음"이 나옵니다. 에이전트는 이때 사례를 지어내지 말고 없다고 답하도록 안내받습니다.
+- **결과 수는 관련도 기준으로 정합니다.** Voyage 키가 있으면 리랭커가 검색어에 답이 되는 정도를 점수로 매겨, 가장 관련 있는 항목도 기준에 못 미치면 "결과 없음"을 돌려줍니다. 비슷하지만 다른 주제(예: "스마트 TV 앱 성능"에 모바일 앱 성능 글)가 가끔 결과로 나오고, 반대로 사례가 있는데 결과 없음이 되는 경우도 있습니다. 에이전트는 결과가 없으면 사례를 지어내지 말고 없다고 답하도록 안내받습니다.
+- **키가 없으면 단어로 찾습니다.** 같은 내용이라도 글에 쓰인 표현과 검색어가 다르면 안 찾힐 수 있습니다. 항목마다 예상 검색어와 다른 표기를 미리 넣어 두었지만, 결과가 없으면 검색어를 나누거나 다른 표현(한국어/영어 표기 등)으로 다시 찾게 하세요.
 - **집계는 블로그에 쓴 사례 수입니다.** 회사의 실제 기술 도입 현황이나 업계 전체를 대표하지 않습니다.
 - **매주 월요일 새 글을 반영한 DB를 배포합니다.** 서버가 하루 한 번 새 DB가 있는지 확인해 받아 두고 다음 실행부터 씁니다. 코드를 업데이트하지 않아도 새 데이터를 받습니다.
 
@@ -138,12 +166,13 @@ uv run python -m pipeline.collect all          # 원문 수집 → data/raw/ (�
 uv run python -m pipeline.extract <블로그>     # 구조화 → data/entries.jsonl (OpenAI API 키 필요)
 uv run python -m pipeline.normalize            # 기술 사전에 없는 이름 리포트
 uv run python -m pipeline.expand               # 문서 확장 → data/expansions.jsonl (OpenAI API 키 필요)
+uv run python -m pipeline.embed                # 항목 임베딩 → data/embeddings.npz (Voyage API 키 필요)
 uv run python -m pipeline.build_index          # 검색 DB → data/techblog.sqlite
 uv run python -m pipeline.release_db --upload  # 검색 DB를 GitHub Release로 배포 (gh 로그인 필요)
-uv run python -m pipeline.update               # 새 글만 수집→추출→확장→빌드 (매주 GitHub Actions가 실행)
+uv run python -m pipeline.update               # 새 글만 수집→추출→확장→임베딩→빌드 (매주 GitHub Actions가 실행)
 ```
 
-OpenAI API 키는 `.env.example`을 `.env`로 복사해 `OPENAI_API_KEY`를 넣거나 환경 변수로 설정합니다.
+OpenAI·Voyage API 키는 `.env.example`을 `.env`로 복사해 `OPENAI_API_KEY`, `VOYAGE_API_KEY`를 넣거나 환경 변수로 설정합니다. 서버(`techblog-mcp`)는 `.env`를 읽지 않으므로 서버의 키는 클라이언트 등록 때 환경 변수로 넣습니다.
 
 저장소의 코드로 서버를 실행하려면(저장소의 `data/techblog.sqlite`를 씁니다):
 

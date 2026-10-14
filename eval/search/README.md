@@ -21,6 +21,16 @@ uv run python eval/search_experiments.py e7 e8
 uv run python eval/search_experiments.py e9   # 최종 서버 search 그대로
 ```
 
+M10 검색 개편 실험은 진단(R0)과 리랭커 판정 가능성(R1) 스크립트로 한다. 리랭커는 Cohere·Voyage API(`.env`의 `COHERE_API_KEY`, `VOYAGE_API_KEY`)를 쓰고 점수는 `eval/search/rerank_cache/`(git 제외)에 캐시된다. 설계와 결과는 [../../docs/milestones/M10.md](../../docs/milestones/M10.md).
+
+```bash
+uv run python eval/search_diagnose.py                                   # 현재 search가 정답을 놓치는 이유
+uv run python eval/search_rerank.py                                     # R2 리랭커 비교 (--models로 일부만)
+uv run python eval/search_rerank.py --embeddings                        # R3 임베딩 비교
+uv run python eval/search_gate.py                                       # R4 판정 기준선 (voyage-4-large + rerank-3)
+uv run python eval/search_server.py [--live]                            # R5 서버 search 재현 확인 (검색 변경 평가는 이것)
+```
+
 `--pool`은 평가 대신 판정용 후보 목록을 만든다. 이미 판정한 항목은 라벨이, 새 후보는 `[미판정]`이 붙는다.
 
 ## 질문 구성 (M5 사용자 결정)
@@ -30,6 +40,14 @@ uv run python eval/search_experiments.py e9   # 최종 서버 search 그대로
 | `M1` | 약 10 | M1 실사용 시나리오와 M5 관찰 기록의 검색어. 에이전트가 실제로 넣은 형태(긴 검색어, 필터 포함)를 그대로 쓴다 |
 | `데이터` | 약 15 | 1,315개 항목의 분포에서 뽑은 주제. 문제 유형 21개가 고르게 들어가게 하고, 짧은 검색어·긴 검색어·필터 사용을 섞는다 |
 | `없는 주제` | 약 5 | DB에 사례가 없는 주제. "결과 없음"을 제대로 판정하는지 본다. `관련` 라벨이 있으면 안 된다 |
+
+M10에서 질문 32개를 더했다(총 62개). 질문 성격은 `tags`에 적는다.
+
+| 태그 (`tags`) | 수 | 출처 | 내용 |
+| --- | --- | --- | --- |
+| `표현 차이` | 16 | `데이터` | DB에 있는 주제를 글과 다른 말로 묻는다(예: 아웃박스 패턴 → "DB 저장과 메시지 발행 중 하나만 성공하는 문제"). 동의어·약어·풀어 쓴 설명으로 찾는지 본다 |
+| `짧은 검색어` | 4 | `데이터` | 에이전트가 자주 쓰는 한두 단어 검색어(멱등성, 샤딩 등) |
+| `근접 주제` | 12 | `없는 주제` | 비슷한 글은 있지만 그 주제는 없는 질문(예: C++→Java 전환은 있고 PHP→Go 전환은 없음). 일부 조건만 맞는 글을 "결과 없음"으로 거르는지 본다 |
 
 질문은 코딩 에이전트가 설계를 시작하기 전에 `search`에 넣을 법한 문장으로 쓴다.
 

@@ -49,6 +49,8 @@ class EvalQuery(BaseModel):
     query: str
     source: Source
     note: str = ""
+    # 질문 성격 (M10 보강): 표현 차이 / 근접 주제 / 짧은 검색어. 리포트에서 묶어 볼 때 쓴다
+    tags: list[str] = []
     problem_type: str | None = None
     domain: str | None = None
     technologies: list[str] = []

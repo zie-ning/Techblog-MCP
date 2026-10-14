@@ -107,6 +107,13 @@ SAMPLE_ENTRIES = [
 ]
 
 
+@pytest.fixture(autouse=True)
+def no_voyage_key(monkeypatch):
+    # 개발자 환경에 키가 있어도 테스트가 실제 API를 부르지 않게 한다
+    # (의미 검색은 가짜 클라이언트로 시험)
+    monkeypatch.delenv("VOYAGE_API_KEY", raising=False)
+
+
 @pytest.fixture(scope="session")
 def sample_db(tmp_path_factory) -> Path:
     path = tmp_path_factory.mktemp("db") / "techblog.sqlite"

@@ -3,7 +3,8 @@
     uv run python -m pipeline.build_index [--out 경로]
 
 항목 텍스트와 문서 확장(data/expansions.jsonl, pipeline/expand.py)을 서버와 같은 형태소
-분석기(techblog_mcp.search.analyzer)로 분석해 색인한다.
+분석기(techblog_mcp.search.analyzer)로 분석해 색인하고, 항목 임베딩(data/embeddings.npz,
+pipeline/embed.py)을 의미 검색용 테이블에 넣는다.
 DB는 빌드 산출물이라 git에 넣지 않는다.
 """
 
@@ -13,11 +14,13 @@ import sqlite3
 from datetime import UTC, datetime
 from pathlib import Path
 
-from pipeline import expand
+import numpy as np
+
+from pipeline import embed, expand
 from pipeline.extract.schema import Entry
 from pipeline.extract.store import ENTRIES_PATH, Store
 from techblog_mcp import db
-from techblog_mcp.search import schema
+from techblog_mcp.search import schema, semantic
 from techblog_mcp.search.analyzer import analyze
 
 
@@ -63,9 +66,18 @@ def fts_fields(entry: Entry, expansion: str = "") -> dict[str, str]:
     return fields
 
 
-def build(entries: list[Entry], out: Path, expansions: dict[str, str] | None = None) -> None:
-    """expansions: 항목 ID → 문서 확장 텍스트. 없는 항목은 확장 열이 빈다."""
+def build(
+    entries: list[Entry],
+    out: Path,
+    expansions: dict[str, str] | None = None,
+    embeddings: dict[str, np.ndarray] | None = None,
+) -> None:
+    """expansions: 항목 ID → 문서 확장 텍스트. 없는 항목은 확장 열이 빈다.
+
+    embeddings: 항목 ID → 임베딩(semantic.EMBEDDING_MODEL). 없으면 의미 검색을 쓸 수 없는 DB가 된다.
+    """
     expansions = expansions or {}
+    embeddings = embeddings or {}
     tmp = out.with_name(out.name + ".tmp")
     tmp.unlink(missing_ok=True)
     conn = sqlite3.connect(tmp)
@@ -76,9 +88,16 @@ def build(entries: list[Entry], out: Path, expansions: dict[str, str] | None = N
             "built_at": datetime.now(UTC).isoformat(timespec="seconds"),
             "entry_count": str(len(entries)),
         }
+        if embeddings:
+            meta["embedding_model"] = semantic.EMBEDDING_MODEL
         conn.executemany("INSERT INTO meta VALUES (?, ?)", meta.items())
         for rowid, entry in enumerate(entries, start=1):
             _insert(conn, rowid, entry, expansions.get(entry.id, ""))
+            if entry.id in embeddings:
+                vector = semantic.normalize(np.asarray(embeddings[entry.id], dtype=np.float32))
+                conn.execute(
+                    "INSERT INTO entry_embeddings VALUES (?, ?)", (rowid, vector.tobytes())
+                )
         conn.commit()
     finally:
         conn.close()
@@ -123,6 +142,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="entries.jsonl로 검색 DB를 만든다.")
     parser.add_argument("--entries", type=Path, default=ENTRIES_PATH)
     parser.add_argument("--expansions", type=Path, default=expand.EXPANSIONS_PATH)
+    parser.add_argument("--embeddings", type=Path, default=embed.EMBEDDINGS_PATH)
     parser.add_argument("--out", type=Path, default=db.DEFAULT_DB_PATH)
     args = parser.parse_args()
 
@@ -133,8 +153,16 @@ def main() -> None:
         # 확장이 없거나 오래돼도 빌드는 한다. 그 항목은 다른 표현으로 찾히기 어려울 뿐이다
         print(f"경고: 확장이 없거나 오래된 항목 {len(missing)}개. pipeline.expand를 실행하세요.")
     texts = {i: expand.expansion_text(r) for i, r in records.items()}
+    stored = embed.load(args.embeddings)
+    vectors = embed.current(entries, stored)
+    if len(vectors) < len(entries):
+        # 임베딩이 빠진 항목은 의미 검색 후보에 오르지 못한다(BM25 후보로는 오른다)
+        print(
+            f"경고: 임베딩이 없거나 오래된 항목 {len(entries) - len(vectors)}개."
+            " pipeline.embed를 실행하세요."
+        )
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    build(entries, args.out, texts)
+    build(entries, args.out, texts, vectors)
     print(f"{len(entries)}개 항목으로 {args.out}를 만들었습니다.")
 
 
