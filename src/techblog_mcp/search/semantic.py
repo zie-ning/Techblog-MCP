@@ -84,15 +84,30 @@ def normalize(vectors: np.ndarray) -> np.ndarray:
 
 
 class VoyageClient:
-    def __init__(self, api_key: str, timeout: float = TIMEOUT):
-        self._headers = {"Authorization": f"Bearer {api_key}"}
-        self._timeout = timeout
+    """Voyage API 클라이언트. HTTP 클라이언트 하나를 만들어 모든 호출에 재사용한다.
+
+    httpx 클라이언트를 새로 만들 때마다 SSL 설정(인증서 묶음 파일 읽기)에 약 0.4초가 들어,
+    호출마다 만들면 검색 한 번이 0.7~0.8초 느려진다(이슈 #19). httpx.Client는 여러 스레드가
+    함께 써도 안전해, 검색 한도를 넘겨 버린 호출이 일꾼 스레드에 남아 있어도 된다.
+    transport는 테스트에서 가짜 응답을 넣을 때 쓴다.
+    """
+
+    def __init__(
+        self,
+        api_key: str,
+        timeout: float = TIMEOUT,
+        transport: httpx.BaseTransport | None = None,
+    ):
+        self._http = httpx.Client(
+            base_url=API_URL,
+            headers={"Authorization": f"Bearer {api_key}"},
+            timeout=timeout,
+            transport=transport,
+        )
 
     def _post(self, path: str, body: dict) -> dict:
         try:
-            response = httpx.post(
-                f"{API_URL}/{path}", headers=self._headers, json=body, timeout=self._timeout
-            )
+            response = self._http.post(path, json=body)
         except httpx.HTTPError as e:
             reason = f"Voyage API에 연결하지 못했습니다({type(e).__name__})"
             raise SemanticUnavailable(reason) from e
@@ -120,9 +135,19 @@ class VoyageClient:
         return scores
 
 
+_clients: dict[str, VoyageClient] = {}
+_clients_lock = threading.Lock()
+
+
 def client_from_env() -> VoyageClient | None:
+    """VOYAGE_API_KEY의 클라이언트. 검색마다 부르므로 키별로 하나만 만들어 계속 쓴다."""
     key = os.environ.get(API_KEY_ENV, "").strip()
-    return VoyageClient(key) if key else None
+    if not key:
+        return None
+    with _clients_lock:
+        if key not in _clients:
+            _clients[key] = VoyageClient(key)
+        return _clients[key]
 
 
 @dataclass(frozen=True)
