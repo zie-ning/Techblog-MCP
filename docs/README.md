@@ -6,6 +6,7 @@
 
 ## 지금 할 일
 
+- **버그**: 에이전트가 `search`를 병렬로 부르면 공유 SQLite 연결 때문에 한쪽이 실패한다 [이슈 #22](https://github.com/zie-ning/sonbae/issues/22). README 데모를 만들다 발견
 - **검색 후속 작업**: 형태소 분리 [이슈 #15](https://github.com/zie-ning/sonbae/issues/15). 응답 지연 개선 [이슈 #19](https://github.com/zie-ning/sonbae/issues/19)는 HTTP 클라이언트 재사용으로 검색 평균 1.4~1.6초 → 0.6초 ([M10.md](milestones/M10.md#후속-http-클라이언트-재사용-2026-10-14-이슈-19))
 - **다음 마일스톤**: [M9. 원격 HTTP 서버](milestones/M9.md). 호스팅 방식과 비용은 착수 시 결정
 - **운영**: 우아한형제들은 자동 갱신에서 빠지므로 로컬에서 주기적으로 갱신 (`pipeline.update woowahan` → `release_db --upload` → PR, [기획.md](기획.md#자동-갱신-m8)). 자동 갱신은 저장소 시크릿 `OPENAI_API_KEY`, `VOYAGE_API_KEY`를 쓴다(M10, 등록됨)
