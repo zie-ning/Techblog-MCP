@@ -1,6 +1,8 @@
 """검색 DB 찾기와 GitHub Release 다운로드 테스트. 다운로드는 file:// 주소로 흉내 낸다."""
 
+import os
 import shutil
+import time
 from pathlib import Path
 
 import pytest
@@ -58,12 +60,35 @@ def test_schema_mismatch_not_downloaded(published, tmp_path):
     assert not (tmp_path / "cache").exists()
 
 
+def old_version(cache: Path, name: str, days_ago: int) -> Path:
+    path = cache / f"techblog-{name}.sqlite"
+    path.write_bytes(b"old")
+    downloaded_at = time.time() - days_ago * 24 * 60 * 60
+    os.utime(path, (downloaded_at, downloaded_at))
+    return path
+
+
 def test_old_versions_removed(published, tmp_path):
+    # 최근에 받은 버전 몇 개(KEEP_RECENT_VERSIONS)만 남기고 오래된 것부터 지운다
     cache = tmp_path / "cache"
     cache.mkdir()
-    (cache / "techblog-0123456789abcdef.sqlite").write_bytes(b"old")
+    v1 = old_version(cache, "v1", days_ago=21)
+    v2 = old_version(cache, "v2", days_ago=14)
+    v3 = old_version(cache, "v3", days_ago=7)
     path = db.ensure_downloaded(published, cache)
-    assert list(cache.iterdir()) == [path]
+    assert sorted(cache.iterdir()) == sorted([v2, v3, path])
+    assert not v1.exists()
+
+
+def test_previous_version_kept_for_running_server(published, tmp_path):
+    # 먼저 기동한 서버는 받아 둔 최신(v2)보다 이전 버전(v1)을 쓰고 있을 수 있다 (이슈 #22).
+    # 다른 서버가 기동하며 새 버전을 받아도 v1을 지우지 않는다
+    cache = tmp_path / "cache"
+    cache.mkdir()
+    v1 = old_version(cache, "v1", days_ago=14)
+    v2 = old_version(cache, "v2", days_ago=7)
+    db.ensure_downloaded(published, cache, keep={v2})
+    assert v1.exists()
 
 
 def test_corrupt_cache_downloaded_again(published, tmp_path):
