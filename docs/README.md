@@ -6,7 +6,7 @@
 
 ## 지금 할 일
 
-- **버그 수정 중**: 에이전트가 `search`를 병렬로 부르면 공유 SQLite 연결 때문에 한쪽이 실패한다 [이슈 #22](https://github.com/zie-ning/sonbae/issues/22). 도구 호출마다 연결을 열고 닫고, 쓰던 DB 파일이 없어지는 경우도 대응한다 (`fix/search-concurrent-connection`, [기획.md](기획.md#자동-갱신-m8))
+- **버그 수정 완료**: `search` 병렬 호출 시 공유 SQLite 연결 때문에 한쪽이 실패하던 문제 [이슈 #22](https://github.com/zie-ning/sonbae/issues/22)를 도구 호출마다 연결을 열고 닫도록 고쳤다 ([PR #24](https://github.com/zie-ning/sonbae/pull/24), [기획.md](기획.md#자동-갱신-m8)). 동시 검색이 몰릴 때 Voyage 호출 일꾼 4개가 병목이 되는 문제는 M9 때 검토한다 [이슈 #25](https://github.com/zie-ning/sonbae/issues/25)
 - **검색 후속 작업**: 형태소 분리 [이슈 #15](https://github.com/zie-ning/sonbae/issues/15). 응답 지연 개선 [이슈 #19](https://github.com/zie-ning/sonbae/issues/19)는 HTTP 클라이언트 재사용으로 검색 평균 1.4~1.6초 → 0.6초 ([M10.md](milestones/M10.md#후속-http-클라이언트-재사용-2026-10-14-이슈-19))
 - **다음 마일스톤**: [M9. 원격 HTTP 서버](milestones/M9.md). 호스팅 방식과 비용은 착수 시 결정
 - **운영**: 우아한형제들은 자동 갱신에서 빠지므로 로컬에서 주기적으로 갱신 (`pipeline.update woowahan` → `release_db --upload` → PR, [기획.md](기획.md#자동-갱신-m8)). 자동 갱신은 저장소 시크릿 `OPENAI_API_KEY`, `VOYAGE_API_KEY`를 쓴다(M10, 등록됨)
