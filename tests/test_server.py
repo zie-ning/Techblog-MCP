@@ -1,6 +1,8 @@
 """MCP 도구 응답 형식 테스트. 실제 MCP 호출 경로(call_tool)로 부른다."""
 
 import asyncio
+import shutil
+import sqlite3
 
 import pytest
 from mcp.server.mcpserver.exceptions import ToolError
@@ -11,9 +13,9 @@ from sonbae import db, server
 @pytest.fixture(autouse=True)
 def use_sample_db(sample_db, monkeypatch):
     monkeypatch.setenv(db.DB_PATH_ENV, str(sample_db))
-    server._open_connection.cache_clear()
+    server._database_path.cache_clear()
     yield
-    server._open_connection.cache_clear()
+    server._database_path.cache_clear()
 
 
 def call(name: str, **arguments) -> str:
@@ -163,7 +165,7 @@ def family_db(tmp_path, monkeypatch):
         path,
     )
     monkeypatch.setenv(db.DB_PATH_ENV, str(path))
-    server._open_connection.cache_clear()
+    server._database_path.cache_clear()
 
 
 def test_aggregate_technology_shows_family_members(family_db):
@@ -184,8 +186,74 @@ def test_technology_filter_expands_family(family_db):
 def test_prepare_survives_missing_db(tmp_path, monkeypatch):
     # 기동 때 백그라운드 준비가 실패해도 서버가 죽지 않고, 도구 호출에서 이유를 알린다
     monkeypatch.setenv(db.DB_PATH_ENV, str(tmp_path / "none.sqlite"))
-    server._open_connection.cache_clear()
+    server._database_path.cache_clear()
     for thread in server._prepare():
         thread.join()
     with pytest.raises(ToolError, match="검색 DB가 없습니다"):
         asyncio.run(server.server.call_tool("search", {"query": "쿠폰"}))
+
+
+# ---- 동시 호출과 연결 (이슈 #22) ----
+
+CONCURRENT_CALLS = [
+    ("search", {"query": "선착순 쿠폰 동시성"}),
+    ("search", {"query": "정산 배치"}),
+    ("get_details", {"ids": ["case_0001", "case_0003"]}),
+    ("aggregate", {"group_by": "company"}),
+    ("aggregate", {"group_by": "problem_type"}),
+]
+
+
+async def call_all(calls: list[tuple[str, dict]]) -> list[str]:
+    # MCP SDK가 동기 도구를 작업 스레드에서 실행하므로 실제 서버처럼 동시에 돈다
+    results = await asyncio.gather(*(server.server.call_tool(n, a) for n, a in calls))
+    return [r.content[0].text for r in results]
+
+
+def test_concurrent_calls_do_not_interfere():
+    # 연결 하나를 나눠 쓰면 오류가 나거나 다른 호출의 결과가 섞인다
+    calls = CONCURRENT_CALLS * 4
+    expected = [call(name, **arguments) for name, arguments in calls]
+    threads = server._prepare()  # 기동 직후 백그라운드 준비와도 겹치게 한다
+    for _ in range(20):
+        assert asyncio.run(call_all(calls)) == expected
+    for thread in threads:
+        thread.join()
+
+
+class TrackedConnection(sqlite3.Connection):
+    closed = False
+
+    def close(self):
+        self.closed = True
+        super().close()
+
+
+def test_each_call_opens_and_closes_own_connection(monkeypatch):
+    opened: list[TrackedConnection] = []
+    connect = sqlite3.connect
+
+    def tracked(*args, **kwargs):
+        conn = connect(*args, factory=TrackedConnection, **kwargs)
+        opened.append(conn)
+        return conn
+
+    monkeypatch.setattr(db.sqlite3, "connect", tracked)
+    asyncio.run(call_all(CONCURRENT_CALLS))
+    assert len(set(map(id, opened))) == len(CONCURRENT_CALLS)
+    assert all(conn.closed for conn in opened)
+
+
+def test_deleted_db_is_found_again(sample_db, tmp_path, monkeypatch):
+    # 다른 sonbae 프로세스가 옛 버전을 정리해 쓰던 파일이 없어져도 다음 호출이 실패하지 않는다
+    old, new = tmp_path / "old.sqlite", tmp_path / "new.sqlite"
+    shutil.copy(sample_db, old)
+    shutil.copy(sample_db, new)
+    paths = iter([old, new])
+    monkeypatch.setattr(db, "db_path", lambda: next(paths))
+    server._database_path.cache_clear()
+
+    first = call("search", query="선착순 쿠폰")
+    old.unlink()  # 호출이 끝나면 연결을 닫으므로 Windows에서도 지울 수 있다
+    assert call("search", query="선착순 쿠폰") == first
+    assert server._database_path() == new

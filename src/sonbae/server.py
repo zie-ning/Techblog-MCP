@@ -5,8 +5,10 @@
 
 import sqlite3
 import threading
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from functools import cache
+from pathlib import Path
 from typing import Annotated, Literal
 
 from mcp.server.mcpserver import MCPServer
@@ -124,22 +126,43 @@ TechnologiesArg = Annotated[
 ]
 
 
-_connection_lock = threading.Lock()
+_path_lock = threading.Lock()
 
 
 @cache
-def _open_connection() -> sqlite3.Connection:
-    return db.connect()
+def _database_path() -> Path:
+    # 쓸 DB는 처음 한 번 정하고 계속 쓴다. 새로 받은 DB는 다음 기동부터 쓴다
+    return db.db_path()
 
 
-def _connection() -> sqlite3.Connection:
+def _resolve_path() -> Path:
     # 기동 때 시작한 DB 준비(첫 실행이면 다운로드)와 도구 호출이 겹치면 도구 호출이 끝나길 기다린다
-    with _connection_lock:
-        try:
-            return _open_connection()
-        except db.DatabaseNotFound as e:
-            # 예상한 실패라 ToolError로 바꿔 이유와 해결 방법만 도구 결과로 돌려준다
-            raise ToolError(str(e)) from e
+    with _path_lock:
+        path = _database_path()
+        if not path.exists():
+            # 다른 sonbae 프로세스가 옛 버전을 정리했거나 캐시를 비운 경우. 실패하는 대신 경로를
+            # 다시 찾아 그때 쓸 수 있는 DB로 넘어간다
+            _database_path.cache_clear()
+            path = _database_path()
+        return path
+
+
+@contextmanager
+def _connection() -> Iterator[sqlite3.Connection]:
+    """도구 호출 하나가 혼자 쓰는 연결. 호출마다 열고 닫는다 (이슈 #22).
+
+    MCP SDK는 동기 도구를 작업 스레드에서 실행해 호출이 동시에 돌 수 있다. 연결 하나를 나눠
+    쓰면 질의 결과가 섞여, 연결은 호출 범위 밖으로 내보내지 않는다. 여는 비용은 약 1ms다.
+    """
+    try:
+        conn = db.connect(_resolve_path())
+    except db.DatabaseNotFound as e:
+        # 예상한 실패라 ToolError로 바꿔 이유와 해결 방법만 도구 결과로 돌려준다
+        raise ToolError(str(e)) from e
+    try:
+        yield conn
+    finally:
+        conn.close()
 
 
 def _quietly(step: Callable[[], object]) -> None:
@@ -152,7 +175,8 @@ def _quietly(step: Callable[[], object]) -> None:
 def _connect_then_check_update() -> None:
     # 지금 쓸 DB와 항목 임베딩(의미 검색)을 먼저 준비한 뒤 새 버전을 받아 둔다.
     # 새 DB는 다음 기동부터 쓴다
-    semantic.load_vectors(_connection())
+    with _connection() as conn:
+        semantic.load_vectors(conn)
     db.check_for_update()
 
 
@@ -193,7 +217,8 @@ def search(
     technologies: TechnologiesArg = None,
 ) -> str:
     filters, notes = _filters(problem_type, domain, technologies)
-    result = q.search(_connection(), query, filters)
+    with _connection() as conn:
+        result = q.search(conn, query, filters)
     return render.search_result(query, filters, result, notes)
 
 
@@ -205,7 +230,8 @@ def get_details(
 ) -> str:
     ids = list(dict.fromkeys(i.strip() for i in ids if i.strip()))
     wanted, dropped = ids[:MAX_DETAIL_IDS], ids[MAX_DETAIL_IDS:]
-    details, missing = q.get_details(_connection(), wanted)
+    with _connection() as conn:
+        details, missing = q.get_details(conn, wanted)
     return render.details_result(details, missing, dropped, MAX_DETAIL_IDS)
 
 
@@ -218,7 +244,8 @@ def aggregate(
     top_n: Annotated[int, Field(ge=1, le=50, description="상위 몇 개까지 보여 줄지")] = 10,
 ) -> str:
     filters, notes = _filters(problem_type, domain, technologies)
-    result = q.aggregate(_connection(), group_by, filters, top_n)
+    with _connection() as conn:
+        result = q.aggregate(conn, group_by, filters, top_n)
     return render.aggregate_result(group_by, filters, result, notes)
 
 

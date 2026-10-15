@@ -297,8 +297,10 @@ def connect(path: Path | None = None) -> sqlite3.Connection:
             "저장소 루트에서 `uv run python -m pipeline.build_index`로 만들거나 "
             f"{DB_PATH_ENV} 환경 변수로 경로를 지정하세요."
         )
-    # 서버는 읽기만 한다
-    conn = sqlite3.connect(f"{path.resolve().as_uri()}?mode=ro", uri=True, check_same_thread=False)
+    # 서버는 읽기만 한다. 연결은 스레드끼리 나눠 쓰지 않는다: 한 연결을 동시에 쓰면 질의 결과가
+    # 섞이거나 사라진다(이슈 #22). 기본값(check_same_thread)대로 두어 다른 스레드에서 쓰면 바로
+    # 오류가 나게 한다
+    conn = sqlite3.connect(f"{path.resolve().as_uri()}?mode=ro", uri=True)
     conn.row_factory = sqlite3.Row
     version = conn.execute("SELECT value FROM meta WHERE key = 'schema_version'").fetchone()
     if version is None or version[0] != SCHEMA_VERSION:
