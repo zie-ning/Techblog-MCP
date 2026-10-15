@@ -42,6 +42,7 @@ CHECK_TIMEOUT = 10  # 초. 최신 버전 확인 요청의 대기 시간
 DOWNLOAD_TIMEOUT = 30  # 초. 연결·읽기 각각의 대기 시간
 CHUNK_SIZE = 1 << 16
 STALE_DOWNLOAD_SECONDS = 600
+KEEP_RECENT_VERSIONS = 3  # 새 버전을 받을 때 지우지 않고 남기는 최근 버전 수 (이슈 #22)
 
 
 class DatabaseNotFound(Exception):
@@ -276,7 +277,11 @@ def _remove_old_versions(directory: Path, keep: set[Path]) -> None:
     # 다른 프로세스가 받는 중일 수 있어 오래된 것만 지운다
     stale_before = time.time() - STALE_DOWNLOAD_SECONDS
     stale = [p for p in directory.glob(".download-*.tmp") if p.stat().st_mtime < stale_before]
-    for old in [*directory.glob("techblog-*.sqlite"), *stale]:
+    # 먼저 기동해 계속 켜져 있는 서버 프로세스는 받아 둔 최신보다 이전 버전을 쓰고 있을 수 있다
+    # (새 DB는 다음 기동부터 쓰므로). 최근에 받은 버전 몇 개는 남겨 그 서버가 계속 열 수 있게 한다
+    versions = sorted(directory.glob("techblog-*.sqlite"), key=lambda p: p.stat().st_mtime)
+    keep = keep | set(versions[-KEEP_RECENT_VERSIONS:])
+    for old in [*versions, *stale]:
         if old not in keep:
             try:
                 old.unlink()
@@ -292,8 +297,10 @@ def connect(path: Path | None = None) -> sqlite3.Connection:
             "저장소 루트에서 `uv run python -m pipeline.build_index`로 만들거나 "
             f"{DB_PATH_ENV} 환경 변수로 경로를 지정하세요."
         )
-    # 서버는 읽기만 한다
-    conn = sqlite3.connect(f"{path.resolve().as_uri()}?mode=ro", uri=True, check_same_thread=False)
+    # 서버는 읽기만 한다. 연결은 스레드끼리 나눠 쓰지 않는다: 한 연결을 동시에 쓰면 질의 결과가
+    # 섞이거나 사라진다(이슈 #22). 기본값(check_same_thread)대로 두어 다른 스레드에서 쓰면 바로
+    # 오류가 나게 한다
+    conn = sqlite3.connect(f"{path.resolve().as_uri()}?mode=ro", uri=True)
     conn.row_factory = sqlite3.Row
     version = conn.execute("SELECT value FROM meta WHERE key = 'schema_version'").fetchone()
     if version is None or version[0] != SCHEMA_VERSION:
